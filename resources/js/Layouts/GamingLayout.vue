@@ -25,7 +25,7 @@ const user = page.props.auth.user;
                         </Link>
                     </div>
 
-                    <div class="hidden sm:flex sm:items-center sm:ms-6 space-x-6">
+                    <div v-if="user" class="hidden sm:flex sm:items-center sm:ms-6 space-x-6">
                         <!-- Stats for Players -->
                         <div v-if="user.role === 'joueur'" class="flex items-center space-x-4 bg-gaming-dark/50 px-4 py-1.5 rounded-full border border-gaming-blue/20">
                             <div class="flex items-center text-yellow-400">

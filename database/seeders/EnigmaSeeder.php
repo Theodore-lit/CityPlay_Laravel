@@ -12,10 +12,14 @@ class EnigmaSeeder extends Seeder
     {
         $amazone = Location::where('name', 'Place de l\'Amazone')->first();
         $dantokpa = Location::where('name', 'Marché Dantokpa')->first();
+        $honme = Location::where('name', 'Musée Honmè')->first();
+        $mosquee = Location::where('name', 'Grande Mosquée')->first();
+        $ganvie = Location::where('name', 'Embarcadère de Ganvié')->first();
+        $bioguera = Location::where('name', 'Place Bio Guéra')->first();
         $porteNonRetour = Location::where('name', 'Porte du Non-Retour')->first();
         $templePythons = Location::where('name', 'Temple des Pythons')->first();
 
-        // Place de l'Amazone
+        // Cotonou
         Enigma::create([
             'location_id' => $amazone->id,
             'title' => 'La statue géante',
@@ -27,7 +31,6 @@ class EnigmaSeeder extends Seeder
             'type' => 'devinette',
         ]);
 
-        // Marché Dantokpa
         Enigma::create([
             'location_id' => $dantokpa->id,
             'title' => 'Le carrefour commercial',
@@ -39,7 +42,54 @@ class EnigmaSeeder extends Seeder
             'type' => 'devinette',
         ]);
 
-        // Porte du Non-Retour
+        // Porto-Novo
+        Enigma::create([
+            'location_id' => $honme->id,
+            'title' => 'Le palais royal',
+            'content' => 'Quel roi a construit le palais Honmè ?',
+            'difficulty' => 'hard',
+            'answer' => 'Toffa',
+            'reward_coins' => 25,
+            'reward_hearts' => 1,
+            'type' => 'aventure',
+        ]);
+
+        Enigma::create([
+            'location_id' => $mosquee->id,
+            'title' => 'L\'architecture brésilienne',
+            'content' => 'De quel pays s\'inspire l\'architecture de cette mosquée ?',
+            'difficulty' => 'easy',
+            'answer' => 'Brésil',
+            'reward_coins' => 10,
+            'reward_hearts' => 0,
+            'type' => 'devinette',
+        ]);
+
+        // Calavi
+        Enigma::create([
+            'location_id' => $ganvie->id,
+            'title' => 'La cité lacustre',
+            'content' => 'Sur quel lac est bâtie la cité de Ganvié ?',
+            'difficulty' => 'medium',
+            'answer' => 'Nokoué',
+            'reward_coins' => 15,
+            'reward_hearts' => 0,
+            'type' => 'devinette',
+        ]);
+
+        // Parakou
+        Enigma::create([
+            'location_id' => $bioguera->id,
+            'title' => 'Le guerrier wassangari',
+            'content' => 'De quelle ville Bio Guéra était-il originaire ?',
+            'difficulty' => 'hard',
+            'answer' => 'N\'Dali',
+            'reward_coins' => 25,
+            'reward_hearts' => 1,
+            'type' => 'aventure',
+        ]);
+
+        // Ouidah
         Enigma::create([
             'location_id' => $porteNonRetour->id,
             'title' => 'Le symbole de l\'oubli',
@@ -51,7 +101,6 @@ class EnigmaSeeder extends Seeder
             'type' => 'aventure',
         ]);
 
-        // Temple des Pythons
         Enigma::create([
             'location_id' => $templePythons->id,
             'title' => 'Les gardiens sacrés',
