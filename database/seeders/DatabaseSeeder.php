@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
 
     private function seedTeamsAndSessions(): void
     {
-        $players = \App\Models\User::where('role', 'joueur')->get();
+        $players = User::where('role', 'joueur')->get();
         $cities = \App\Models\City::all();
         $enigmas = \App\Models\Enigma::with('location')->get();
 
@@ -46,7 +46,7 @@ class DatabaseSeeder extends Seeder
             if (!in_array($creator->id, $members)) {
                 $members[] = $creator->id;
             }
-            $team->users()->attach($members);
+            $team->members()->attach($members);
         }
 
         // Créer quelques sessions de jeu
