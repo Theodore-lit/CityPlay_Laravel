@@ -38,4 +38,9 @@ class Location extends Model
     {
         return $this->hasMany(Enigma::class);
     }
+
+    public function locationImages()
+    {
+        return $this->hasMany(LocationImage::class);
+    }
 }
