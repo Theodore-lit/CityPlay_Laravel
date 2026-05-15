@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Location;
 use App\Models\City;
+use App\Models\LocationImage;
 
 class LocationSeeder extends Seeder
 {
@@ -17,7 +18,7 @@ class LocationSeeder extends Seeder
         $ouidah = City::where('name', 'Ouidah')->first();
 
         // Cotonou
-        Location::create([
+        $amazone = Location::create([
             'city_id' => $cotonou->id,
             'name' => 'Place de l\'Amazone',
             'description' => 'Symbole de la bravoure et de la force des femmes béninoises.',
@@ -28,7 +29,12 @@ class LocationSeeder extends Seeder
             'status' => 'active',
         ]);
 
-        Location::create([
+        LocationImage::create([
+            'location_id' => $amazone->id,
+            'image_path' => 'locations/amazone_1.jpg'
+        ]);
+
+        $dantokpa = Location::create([
             'city_id' => $cotonou->id,
             'name' => 'Marché Dantokpa',
             'description' => 'Le plus grand marché à ciel ouvert de l\'Afrique de l\'Ouest.',
@@ -39,8 +45,13 @@ class LocationSeeder extends Seeder
             'status' => 'active',
         ]);
 
+        LocationImage::create([
+            'location_id' => $dantokpa->id,
+            'image_path' => 'locations/dantokpa_1.jpg'
+        ]);
+
         // Porto-Novo
-        Location::create([
+        $honme = Location::create([
             'city_id' => $portoNovo->id,
             'name' => 'Musée Honmè',
             'description' => 'Ancien palais royal des rois de Porto-Novo.',
@@ -51,7 +62,12 @@ class LocationSeeder extends Seeder
             'status' => 'active',
         ]);
 
-        Location::create([
+        LocationImage::create([
+            'location_id' => $honme->id,
+            'image_path' => 'locations/honme_1.jpg'
+        ]);
+
+        $mosquee = Location::create([
             'city_id' => $portoNovo->id,
             'name' => 'Grande Mosquée',
             'description' => 'Architecture de style afro-brésilien.',
@@ -62,8 +78,13 @@ class LocationSeeder extends Seeder
             'status' => 'active',
         ]);
 
+        LocationImage::create([
+            'location_id' => $mosquee->id,
+            'image_path' => 'locations/mosquee_1.jpg'
+        ]);
+
         // Abomey-Calavi
-        Location::create([
+        $ganvie = Location::create([
             'city_id' => $calavi->id,
             'name' => 'Embarcadère de Ganvié',
             'description' => 'Point de départ pour la Venise de l\'Afrique.',
@@ -74,8 +95,13 @@ class LocationSeeder extends Seeder
             'status' => 'active',
         ]);
 
+        LocationImage::create([
+            'location_id' => $ganvie->id,
+            'image_path' => 'locations/ganvie_1.jpg'
+        ]);
+
         // Parakou
-        Location::create([
+        $bioguera = Location::create([
             'city_id' => $parakou->id,
             'name' => 'Place Bio Guéra',
             'description' => 'Monument en l\'honneur du guerrier Bio Guéra.',
@@ -86,8 +112,13 @@ class LocationSeeder extends Seeder
             'status' => 'active',
         ]);
 
+        LocationImage::create([
+            'location_id' => $bioguera->id,
+            'image_path' => 'locations/bioguera_1.jpg'
+        ]);
+
         // Ouidah
-        Location::create([
+        $porteNonRetour = Location::create([
             'city_id' => $ouidah->id,
             'name' => 'Porte du Non-Retour',
             'description' => 'Mémorial érigé sur la plage en mémoire de la traite négrière.',
@@ -98,7 +129,12 @@ class LocationSeeder extends Seeder
             'status' => 'active',
         ]);
 
-        Location::create([
+        LocationImage::create([
+            'location_id' => $porteNonRetour->id,
+            'image_path' => 'locations/porte_1.jpg'
+        ]);
+
+        $templePythons = Location::create([
             'city_id' => $ouidah->id,
             'name' => 'Temple des Pythons',
             'description' => 'Lieu sacré du culte vodoun.',
@@ -107,6 +143,11 @@ class LocationSeeder extends Seeder
             'longitude' => 2.0850,
             'radius_meters' => 50,
             'status' => 'active',
+        ]);
+
+        LocationImage::create([
+            'location_id' => $templePythons->id,
+            'image_path' => 'locations/pythons_1.jpg'
         ]);
     }
 }

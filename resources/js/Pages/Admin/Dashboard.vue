@@ -10,7 +10,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 
 defineProps({
-    cities: Array,
+    mairies: Array,
     stats: Object,
 });
 
@@ -22,6 +22,10 @@ const form = useForm({
     password: '',
     password_confirmation: '',
 });
+
+const formCity = useForm({
+    
+})
 
 const openModal = () => {
     showingAddMairieModal.value = true;
@@ -53,7 +57,7 @@ const submit = () => {
                     @click="openModal"
                     class="bg-gaming-green hover:bg-gaming-green-dark text-white font-bold py-2 px-6 rounded-lg transition-all uppercase text-sm tracking-wider"
                 >
-                    + Ajouter un admin
+                    + Ajouter une ville
                 </button>
             </div>
         </template>
@@ -63,8 +67,8 @@ const submit = () => {
                 <!-- Stats Overview -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                     <div class="bg-gaming-surface border border-gaming-blue/10 p-6 rounded-2xl shadow-sm">
-                        <p class="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1">Parties Totales</p>
-                        <p class="text-3xl font-black text-white">{{ stats.total_sessions }}</p>
+                        <p class="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1">Totales des Mairies</p>
+                        <p class="text-3xl font-black text-white">{{ mairies.length }}</p>
                     </div>
                     <div class="bg-gaming-surface border border-gaming-green/10 p-6 rounded-2xl shadow-sm">
                         <p class="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1">Joueurs Actifs</p>
@@ -79,7 +83,7 @@ const submit = () => {
                 <!-- Cities Management -->
                 <div class="bg-gaming-surface border border-gaming-blue/10 rounded-2xl overflow-hidden">
                     <div class="p-6 border-b border-gaming-blue/10">
-                        <h3 class="text-lg font-bold text-white uppercase tracking-wider">Mes Villes</h3>
+                        <h3 class="text-lg font-bold text-white uppercase tracking-wider">Toutes les Villes</h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
@@ -92,18 +96,18 @@ const submit = () => {
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gaming-blue/5">
-                                <tr v-for="city in cities" :key="city.id" class="hover:bg-gaming-blue/5 transition-colors">
+                                <tr v-for="mairie in mairies" :key="mairie.id" class="hover:bg-gaming-blue/5 transition-colors">
                                     <td class="px-6 py-4">
-                                        <div class="font-bold text-white">{{ city.name }}</div>
-                                        <div class="text-xs text-gray-500 truncate w-48">{{ city.description }}</div>
+                                        <div class="font-bold text-white">{{ mairie.name }}</div>
+                                        <div class="text-xs text-gray-500 truncate w-48">{{ mairie.description }}</div>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <span :class="['px-2 py-1 rounded text-[10px] font-bold uppercase', city.is_active ? 'bg-gaming-green/20 text-gaming-green-light' : 'bg-gray-500/20 text-gray-500']">
-                                            {{ city.is_active ? 'Actif' : 'Inactif' }}
+                                        <span :class="['px-2 py-1 rounded text-[10px] font-bold uppercase', mairie.is_active ? 'bg-gaming-green/20 text-gaming-green-light' : 'bg-gray-500/20 text-gray-500']">
+                                            {{ mairie.is_active ? 'Actif' : 'Inactif' }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-400">
-                                        {{ city.locations_count || 0 }}
+                                        {{ mairie.locations_count || 0 }}
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex space-x-3">
@@ -176,6 +180,17 @@ const submit = () => {
                             required
                         />
                         <InputError class="mt-2" :message="form.errors.password_confirmation" />
+                    </div>
+                    <div>
+                        <InputLabel for="city" value="Confirmer" class="text-gray-400" />
+                        <TextInput
+                            id="city"
+                            type="password"
+                            class="mt-1 block w-full bg-gaming-dark border-gaming-blue/20 text-white focus:border-gaming-green focus:ring-gaming-green"
+                            v-model="form.city"
+                            required
+                        />
+                        <InputError class="mt-2" :message="form.errors.city" />
                     </div>
                 </div>
 

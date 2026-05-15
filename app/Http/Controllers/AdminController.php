@@ -8,7 +8,7 @@ use App\Models\GameSession;
 use Inertia\Inertia;
 use App\Http\Requests\StoreAdminRequest;
 use App\Http\Requests\UpdateAdminRequest;
-
+use App\Models\User;
 
 class AdminController extends Controller
 {
@@ -23,7 +23,7 @@ class AdminController extends Controller
     public function dashboard()
     {
         return Inertia::render('Admin/Dashboard', [
-            'cities' => City::where('creator_id', auth()->id())->get(),
+            'mairies' => User::where('role', 'mairie')->get(),
             'stats' => [
                 'total_sessions' => GameSession::count(),
                 'active_players' => GameSession::where('status', 'in_progress')->count(),

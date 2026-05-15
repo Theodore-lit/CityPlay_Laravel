@@ -20,6 +20,8 @@
         "vue": "^3.4.0"
     },
     "dependencies": {
-        "leaflet": "^1.9.4"
+        "@primeuix/themes": "^2.0.3",
+        "leaflet": "^1.9.4",
+        "primevue": "^4.5.5"
     }
 }
