@@ -35,8 +35,8 @@ const initMap = () => {
         attributionControl: false
     }).setView(center, 15);
 
-    // Ajout du fond de carte sombre (CartoDB Dark Matter)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // Ajout du fond de carte clair (CartoDB Voyager)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 19,
     }).addTo(map);
 

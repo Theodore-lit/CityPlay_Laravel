@@ -2,32 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Admin;
 use App\Models\City;
 use App\Models\GameSession;
 use Inertia\Inertia;
-use Illuminate\Http\Request;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\StoreAdminRequest;
+use App\Http\Requests\UpdateAdminRequest;
 
-class MairieController extends Controller
+
+class AdminController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+    public function index()
+    {
+        //
+    }
+
     public function dashboard()
     {
-       return Inertia::render('Mairie/Dashboard', [
+        return Inertia::render('Admin/Dashboard', [
             'cities' => City::where('creator_id', auth()->id())->get(),
             'stats' => [
                 'total_sessions' => GameSession::count(),
                 'active_players' => GameSession::where('status', 'in_progress')->count(),
             ]
         ]);
-    }
-    public function index()
-    {
-        //
     }
 
     /**
@@ -41,27 +42,15 @@ class MairieController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreAdminRequest $request)
     {
-       $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
-        ]);
-
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'mairie',
-        ]);
-        return redirect(route('admin.dashboard', absolute: false));
+        
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Admin $admin)
     {
         //
     }
@@ -69,7 +58,7 @@ class MairieController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Admin $admin)
     {
         //
     }
@@ -77,7 +66,7 @@ class MairieController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateAdminRequest $request, Admin $admin)
     {
         //
     }
@@ -85,7 +74,7 @@ class MairieController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Admin $admin)
     {
         //
     }

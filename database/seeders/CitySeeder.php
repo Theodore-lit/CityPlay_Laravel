@@ -10,30 +10,50 @@ class CitySeeder extends Seeder
 {
     public function run(): void
     {
-        $mairie = User::where('role', 'mairie')->first();
+        $mairieCotonou = User::where('email', 'mairie.cotonou@cityplay.bj')->first();
+        $mairiePorto = User::where('email', 'mairie.portonovo@cityplay.bj')->first();
+        $mairieCalavi = User::where('email', 'mairie.calavi@cityplay.bj')->first();
+        $mairieParakou = User::where('email', 'mairie.parakou@cityplay.bj')->first();
+        $mairieOuidah = User::where('email', 'mairie.ouidah@cityplay.bj')->first();
 
         City::create([
-            'name' => 'Cotonou Vibrante',
-            'description' => 'Explorez la capitale économique du Bénin, entre marchés animés et plages de sable fin.',
+            'name' => 'Cotonou',
+            'description' => 'La capitale économique vibrante, entre terre et mer.',
             'is_active' => true,
-            'creator_id' => $mairie->id,
+            'creator_id' => $mairieCotonou->id,
             'opening_hours' => ['start' => '07:00', 'end' => '23:00'],
         ]);
 
         City::create([
-            'name' => 'Ouidah Historique',
-            'description' => 'Plongez au cœur de l\'histoire et de la culture vodoun dans la cité des Kpassè.',
+            'name' => 'Porto-Novo',
+            'description' => 'La capitale administrative, riche en patrimoine colonial.',
             'is_active' => true,
-            'creator_id' => $mairie->id,
-            'opening_hours' => ['start' => '08:00', 'end' => '19:00'],
+            'creator_id' => $mairiePorto->id,
+            'opening_hours' => ['start' => '08:00', 'end' => '20:00'],
         ]);
 
         City::create([
-            'name' => 'Porto-Novo Impériale',
-            'description' => 'Découvrez les charmes de la capitale administrative et ses trésors coloniaux.',
+            'name' => 'Abomey-Calavi',
+            'description' => 'La cité universitaire et carrefour stratégique.',
             'is_active' => true,
-            'creator_id' => $mairie->id,
-            'opening_hours' => ['start' => '08:00', 'end' => '20:00'],
+            'creator_id' => $mairieCalavi->id,
+            'opening_hours' => ['start' => '06:00', 'end' => '22:00'],
+        ]);
+
+        City::create([
+            'name' => 'Parakou',
+            'description' => 'La métropole du Nord, carrefour commercial majeur.',
+            'is_active' => true,
+            'creator_id' => $mairieParakou->id,
+            'opening_hours' => ['start' => '07:00', 'end' => '21:00'],
+        ]);
+
+        City::create([
+            'name' => 'Ouidah',
+            'description' => 'Cité historique et spirituelle, berceau du Vodoun.',
+            'is_active' => true,
+            'creator_id' => $mairieOuidah->id,
+            'opening_hours' => ['start' => '08:00', 'end' => '19:00'],
         ]);
     }
 }
