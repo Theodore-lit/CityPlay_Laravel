@@ -188,12 +188,12 @@ const submit = () => {
                 </div>
 
                 <!-- Tabs Switcher -->
-                <div class="flex items-center space-x-1 mb-8 bg-gaming-surface/50 p-1 rounded-2xl border border-gaming-blue/5 w-fit">
+                <div class="flex items-center space-x-1 mb-8 bg-white p-1.5 rounded-2xl border border-gray-200 w-fit shadow-sm">
                     <button 
                         @click="activeTab = 'cities'"
                         :class="[
-                            'px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300',
-                            activeTab === 'cities' ? 'bg-gaming-blue text-white shadow-lg shadow-gaming-blue/20' : 'text-gray-500 hover:text-gray-300'
+                            'px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300',
+                            activeTab === 'cities' ? 'bg-gaming-orange text-white shadow-lg shadow-gaming-orange/20' : 'text-gray-400 hover:text-gray-600'
                         ]"
                     >
                         Villes ({{ mairies.length }})
@@ -201,8 +201,8 @@ const submit = () => {
                     <button 
                         @click="activeTab = 'locations'"
                         :class="[
-                            'px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300',
-                            activeTab === 'locations' ? 'bg-gaming-blue text-white shadow-lg shadow-gaming-blue/20' : 'text-gray-500 hover:text-gray-300'
+                            'px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300',
+                            activeTab === 'locations' ? 'bg-gaming-orange text-white shadow-lg shadow-gaming-orange/20' : 'text-gray-400 hover:text-gray-600'
                         ]"
                     >
                         Lieux ({{ stats.total_locations }})
@@ -215,9 +215,9 @@ const submit = () => {
                         v-model="tableSearch"
                         type="text"
                         :placeholder="activeTab === 'cities' ? 'Rechercher une ville...' : 'Rechercher un lieu...'"
-                        class="w-full bg-gaming-surface border-gaming-blue/10 text-white focus:border-gaming-blue focus:ring-gaming-blue rounded-2xl"
+                        class="w-full bg-white border-gray-200 text-gray-900 focus:border-gaming-orange focus:ring-gaming-orange rounded-2xl h-12 px-5 shadow-sm"
                     />
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">
+                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
@@ -225,34 +225,34 @@ const submit = () => {
                 </div>
 
                 <!-- Cities Cards Grid -->
-                <div v-if="activeTab === 'cities'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div v-if="activeTab === 'cities'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                     <div
                         v-for="mairie in filteredMairies"
                         :key="mairie.id"
-                        class="group bg-gaming-surface border border-gaming-blue/10 rounded-3xl overflow-hidden hover:border-gaming-blue/30 transition-all duration-500 hover:shadow-2xl hover:shadow-gaming-blue/5"
+                        class="group bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden hover:border-gaming-orange/30 transition-all duration-500 hover:shadow-2xl hover:shadow-gaming-orange/5"
                     >
                         <!-- Card Header/Image -->
-                        <div class="relative h-48 bg-gaming-dark overflow-hidden">
-                            <div class="absolute inset-0 bg-gradient-to-t from-gaming-surface to-transparent z-10"></div>
+                        <div class="relative h-56 bg-gray-100 overflow-hidden">
+                            <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent z-10"></div>
                             <img 
                                 v-if="mairie.image_path" 
                                 :src="mairie.image_path" 
-                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                             />
-                            <div v-else class="w-full h-full flex items-center justify-center text-gaming-blue/20">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div v-else class="w-full h-full flex items-center justify-center text-gray-200 bg-gray-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                 </svg>
                             </div>
                             
                             <!-- Status Badge -->
-                            <div class="absolute top-4 right-4 z-20">
+                            <div class="absolute top-6 right-6 z-20">
                                 <span
                                     :class="[
-                                        'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-md border',
+                                        'px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-md border shadow-sm',
                                         mairie.is_active
-                                            ? 'bg-gaming-green/20 text-gaming-green-light border-gaming-green/20'
-                                            : 'bg-gray-500/20 text-gray-400 border-gray-500/20',
+                                            ? 'bg-green-500/10 text-green-600 border-green-500/20'
+                                            : 'bg-gray-500/10 text-gray-400 border-gray-500/20',
                                     ]"
                                 >
                                     {{ mairie.is_active ? "Actif" : "Inactif" }}
@@ -261,46 +261,46 @@ const submit = () => {
                         </div>
 
                         <!-- Card Body -->
-                        <div class="p-6 relative">
-                            <h3 class="text-xl font-black text-white mb-2 group-hover:text-gaming-blue-light transition-colors">
+                        <div class="p-8 relative">
+                            <h3 class="text-2xl font-black text-gray-900 mb-3 group-hover:text-gaming-orange transition-colors">
                                 {{ mairie.name }}
                             </h3>
-                            <p class="text-gray-500 text-xs leading-relaxed mb-6 line-clamp-2 h-8">
-                                {{ mairie.description || 'Aucune description disponible pour cette ville.' }}
+                            <p class="text-gray-500 text-sm leading-relaxed mb-8 line-clamp-2 h-10">
+                                {{ mairie.description || 'Préparez-vous pour une aventure urbaine épique dans cette ville.' }}
                             </p>
 
                             <!-- Mini Stats -->
-                            <div class="flex items-center space-x-6 mb-8 py-4 border-y border-gaming-blue/5">
+                            <div class="flex items-center space-x-8 mb-10 py-6 border-y border-gray-100">
                                 <div class="flex flex-col">
-                                    <span class="text-[10px] text-gray-600 font-bold uppercase tracking-tighter">Lieux</span>
-                                    <span class="text-lg font-black text-white">{{ mairie.locations?.length || 0 }}</span>
+                                    <span class="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Lieux</span>
+                                    <span class="text-xl font-black text-gray-900">{{ mairie.locations?.length || 0 }}</span>
                                 </div>
-                                <div class="flex flex-col border-l border-gaming-blue/5 pl-6">
-                                    <span class="text-[10px] text-gray-600 font-bold uppercase tracking-tighter">Créateur</span>
-                                    <span class="text-xs font-bold text-gaming-blue-light truncate w-24">
-                                        {{ mairie.creator?.name || 'Inconnu' }}
+                                <div class="flex flex-col border-l border-gray-100 pl-8">
+                                    <span class="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Mairie</span>
+                                    <span class="text-sm font-bold text-gaming-orange truncate w-32">
+                                        {{ mairie.creator?.name || 'Admin' }}
                                     </span>
                                 </div>
                             </div>
 
                             <!-- Actions -->
-                            <div class="flex flex-col space-y-3">
+                            <div class="flex flex-col space-y-4">
                                 <Link
                                     :href="route('admin.city.show', mairie.id)"
-                                    class="w-full bg-gaming-blue/10 hover:bg-gaming-blue text-white font-bold py-3 px-4 rounded-xl text-center transition-all duration-300 flex items-center justify-center space-x-2 group/btn"
+                                    class="w-full bg-gaming-orange hover:bg-gaming-orange-dark text-white font-black py-4 px-6 rounded-2xl text-center transition-all duration-300 flex items-center justify-center space-x-3 group/btn shadow-lg shadow-gaming-orange/20"
                                 >
-                                    <span>Gérer la ville</span>
+                                    <span class="uppercase text-xs tracking-widest">Gérer la ville</span>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                     </svg>
                                 </Link>
                                 
-                                <div class="flex space-x-2">
-                                    <button class="flex-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors py-2">
+                                <div class="flex space-x-4">
+                                    <button class="flex-1 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 transition-colors py-2 border border-transparent hover:border-gray-200 rounded-xl">
                                         Modifier
                                     </button>
-                                    <button class="flex-1 text-[10px] font-bold uppercase tracking-widest text-red-500/50 hover:text-red-500 transition-colors py-2">
-                                        Désactiver
+                                    <button class="flex-1 text-[10px] font-black uppercase tracking-[0.2em] text-red-400 hover:text-red-600 transition-colors py-2 border border-transparent hover:border-red-100 rounded-xl">
+                                        Arrêter
                                     </button>
                                 </div>
                             </div>
@@ -309,82 +309,79 @@ const submit = () => {
                 </div>
 
                 <!-- Locations Cards Grid -->
-                <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                     <div
                         v-for="location in filteredLocations"
                         :key="location.id"
-                        class="group bg-gaming-surface border border-gaming-blue/10 rounded-3xl overflow-hidden hover:border-gaming-blue/30 transition-all duration-500 hover:shadow-2xl hover:shadow-gaming-blue/5"
+                        class="group bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden hover:border-gaming-orange/30 transition-all duration-500 hover:shadow-2xl hover:shadow-gaming-orange/5"
                     >
                         <!-- Card Header/Image -->
-                        <div class="relative h-48 bg-gaming-dark overflow-hidden">
-                            <div class="absolute inset-0 bg-gradient-to-t from-gaming-surface to-transparent z-10"></div>
+                        <div class="relative h-56 bg-gray-100 overflow-hidden">
+                            <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent z-10"></div>
                             <img 
                                 v-if="location.location_images?.length > 0" 
                                 :src="'/storage/' + location.location_images[0].image_path" 
-                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                             />
-                            <div v-else class="w-full h-full flex items-center justify-center text-gaming-blue/20">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div v-else class="w-full h-full flex items-center justify-center text-gray-200 bg-gray-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
                             
                             <!-- Category Badge -->
-                            <div class="absolute top-4 right-4 z-20">
-                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-md border bg-gaming-blue/20 text-gaming-blue-light border-gaming-blue/20">
+                            <div class="absolute top-6 right-6 z-20">
+                                <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-md border bg-white/50 text-gaming-orange border-gaming-orange/20 shadow-sm">
                                     {{ location.category }}
                                 </span>
                             </div>
                         </div>
 
                         <!-- Card Body -->
-                        <div class="p-6 relative">
-                            <div class="flex items-center space-x-2 mb-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                </svg>
-                                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{{ location.city?.name }}</span>
+                        <div class="p-8 relative">
+                            <div class="flex items-center space-x-2 mb-3">
+                                <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{{ location.city?.name }}</span>
                             </div>
-                            <h3 class="text-xl font-black text-white mb-2 group-hover:text-gaming-blue-light transition-colors">
+                            <h3 class="text-2xl font-black text-gray-900 mb-3 group-hover:text-gaming-orange transition-colors">
                                 {{ location.name }}
                             </h3>
-                            <p class="text-gray-500 text-xs leading-relaxed mb-6 line-clamp-2 h-8">
-                                {{ location.description || 'Aucune description disponible pour ce lieu.' }}
+                            <p class="text-gray-500 text-sm leading-relaxed mb-8 line-clamp-2 h-10">
+                                {{ location.description || 'Un lieu mystérieux rempli de secrets à découvrir.' }}
                             </p>
 
                             <!-- Mini Stats -->
-                            <div class="flex items-center space-x-6 mb-8 py-4 border-y border-gaming-blue/5">
+                            <div class="flex items-center space-x-8 mb-10 py-6 border-y border-gray-100">
                                 <div class="flex flex-col">
-                                    <span class="text-[10px] text-gray-600 font-bold uppercase tracking-tighter">Énigmes</span>
-                                    <span class="text-lg font-black text-white">{{ location.enigmas?.length || 0 }}</span>
+                                    <span class="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Énigmes</span>
+                                    <span class="text-xl font-black text-gray-900">{{ location.enigmas?.length || 0 }}</span>
                                 </div>
-                                <div class="flex flex-col border-l border-gaming-blue/5 pl-6">
-                                    <span class="text-[10px] text-gray-600 font-bold uppercase tracking-tighter">Popularité</span>
+                                <div class="flex flex-col border-l border-gray-100 pl-8">
+                                    <span class="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Note</span>
                                     <div class="flex items-center space-x-1">
-                                        <span class="text-lg font-black text-white">{{ location.popularity || 0 }}</span>
-                                        <span class="text-xs">⭐</span>
+                                        <span class="text-xl font-black text-gray-900">{{ location.popularity || 4.5 }}</span>
+                                        <span class="text-sm text-gaming-orange">★</span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Actions -->
-                            <div class="flex flex-col space-y-3">
+                            <div class="flex flex-col space-y-4">
                                 <Link
                                     :href="route('admin.city.show', location.city_id)"
-                                    class="w-full bg-gaming-blue/10 hover:bg-gaming-blue text-white font-bold py-3 px-4 rounded-xl text-center transition-all duration-300 flex items-center justify-center space-x-2 group/btn"
+                                    class="w-full bg-white hover:bg-gray-50 text-gaming-orange border-2 border-gaming-orange/20 hover:border-gaming-orange font-black py-4 px-6 rounded-2xl text-center transition-all duration-300 flex items-center justify-center space-x-3 group/btn shadow-sm"
                                 >
-                                    <span>Gérer les énigmes</span>
+                                    <span class="uppercase text-xs tracking-widest">Gérer les énigmes</span>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                     </svg>
                                 </Link>
 
-                                <div class="flex space-x-2">
-                                    <button class="flex-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors py-2">
-                                        Modifier
+                                <div class="flex space-x-4">
+                                    <button class="flex-1 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 transition-colors py-2 border border-transparent hover:border-gray-200 rounded-xl">
+                                        Détails
                                     </button>
-                                    <button class="flex-1 text-[10px] font-bold uppercase tracking-widest text-red-500/50 hover:text-red-500 transition-colors py-2">
+                                    <button class="flex-1 text-[10px] font-black uppercase tracking-[0.2em] text-red-400 hover:text-red-600 transition-colors py-2 border border-transparent hover:border-red-100 rounded-xl">
                                         Supprimer
                                     </button>
                                 </div>

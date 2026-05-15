@@ -14,6 +14,10 @@ import { onMounted, nextTick } from "vue";
 
 const props = defineProps({
     city: Object,
+    isMairie: {
+        type: Boolean,
+        default: false
+    }
 });
 
 const showingAddLocationModal = ref(false);
@@ -165,6 +169,8 @@ const submitLocation = () => {
         onSuccess: () => {
             showingAddLocationModal.value = false;
             locationForm.reset();
+            search.value = "";
+            searchResults.value = [];
         },
     });
 };
@@ -187,8 +193,9 @@ const submitEnigma = () => {
             <div class="flex justify-between items-center">
                 <div class="flex items-center space-x-4">
                     <Link
+                        v-if="!isMairie"
                         :href="route('admin.dashboard')"
-                        class="text-gaming-blue-light hover:text-white transition-colors"
+                        class="text-gaming-orange hover:text-gaming-orange-dark transition-colors"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -206,81 +213,105 @@ const submitEnigma = () => {
                         </svg>
                     </Link>
                     <h2
-                        class="font-black text-2xl text-white uppercase tracking-widest"
+                        class="font-black text-2xl text-gray-900 uppercase tracking-widest"
                     >
                         {{ city.name }}
                     </h2>
                 </div>
-                <button
-                    @click="openLocationModal"
-                    class="bg-gaming-blue hover:bg-gaming-blue-dark text-white font-bold py-2 px-6 rounded-xl transition-all uppercase text-sm tracking-widest shadow-lg shadow-gaming-blue/20"
-                >
-                    + Nouveau Lieu
-                </button>
+                <div class="flex items-center space-x-4">
+                    <span v-if="isMairie" class="px-4 py-1.5 rounded-full bg-gaming-orange/10 text-gaming-orange text-[10px] font-black uppercase tracking-widest border border-gaming-orange/20">
+                        Espace Mairie
+                    </span>
+                    <button
+                        @click="openLocationModal"
+                        class="bg-gaming-orange hover:bg-gaming-orange-dark text-white font-bold py-2.5 px-6 rounded-xl transition-all uppercase text-sm tracking-widest shadow-lg shadow-gaming-orange/20"
+                    >
+                        + Nouveau Lieu
+                    </button>
+                </div>
             </div>
         </template>
 
-        <div class="py-12">
+        <div class="py-12 bg-gray-50 min-h-screen">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- City Info Header -->
                 <div
-                    class="bg-gaming-surface border border-gaming-blue/10 rounded-3xl p-8 mb-12 relative overflow-hidden"
+                    class="bg-white border border-gray-100 rounded-[2.5rem] p-10 mb-12 relative overflow-hidden shadow-sm"
                 >
                     <div
-                        class="absolute top-0 right-0 w-64 h-64 bg-gaming-blue/5 rounded-full -mr-32 -mt-32 blur-3xl"
+                        class="absolute top-0 right-0 w-96 h-96 bg-gaming-orange/5 rounded-full -mr-48 -mt-48 blur-3xl"
                     ></div>
+                    
                     <div class="relative z-10">
-                        <p
-                            class="text-gaming-blue-light text-xs font-black uppercase tracking-[0.3em] mb-2 text-center md:text-left"
-                        >
-                            Détails de la ville
-                        </p>
-                        <h3
-                            class="text-gray-400 text-sm leading-relaxed max-w-2xl mb-8 text-center md:text-left"
-                        >
-                            {{
-                                city.description ||
-                                "Aucune description fournie."
-                            }}
-                        </h3>
+                        <div class="flex flex-col md:flex-row gap-10">
+                            <!-- City Image Display -->
+                            <div class="w-full md:w-1/3 h-64 rounded-3xl overflow-hidden shadow-md bg-gray-100 border border-gray-100">
+                                <img 
+                                    v-if="city.image_path" 
+                                    :src="city.image_path" 
+                                    class="w-full h-full object-cover"
+                                />
+                                <div v-else class="w-full h-full flex items-center justify-center text-gray-200">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                </div>
+                            </div>
 
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                            <div class="flex flex-col">
-                                <span
-                                    class="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-1"
-                                    >Mairie</span
+                            <div class="flex-1">
+                                <p
+                                    class="text-gaming-orange text-[10px] font-black uppercase tracking-[0.4em] mb-3"
                                 >
-                                <span class="text-white font-bold">{{
-                                    city.creator?.name
-                                }}</span>
-                            </div>
-                            <div class="flex flex-col">
-                                <span
-                                    class="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-1"
-                                    >Coordonnées</span
+                                    Détails de la ville
+                                </p>
+                                <h3
+                                    class="text-gray-500 text-base leading-relaxed max-w-2xl mb-10"
                                 >
-                                <span class="text-white font-bold text-xs"
-                                    >{{ city.latitude }},
-                                    {{ city.longitude }}</span
-                                >
-                            </div>
-                            <div class="flex flex-col">
-                                <span
-                                    class="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-1"
-                                    >Rayon de jeu</span
-                                >
-                                <span class="text-white font-bold"
-                                    >{{ city.radius_meters }}m</span
-                                >
-                            </div>
-                            <div class="flex flex-col">
-                                <span
-                                    class="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-1"
-                                    >Total Lieux</span
-                                >
-                                <span class="text-white font-bold">{{
-                                    city.locations.length
-                                }}</span>
+                                    {{
+                                        city.description ||
+                                        "Explorez, jouez et découvrez les secrets de cette ville magnifique."
+                                    }}
+                                </h3>
+
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-10">
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2"
+                                            >Géré par</span
+                                        >
+                                        <span class="text-gray-900 font-black">{{
+                                            city.creator?.name
+                                        }}</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2"
+                                            >Position</span
+                                        >
+                                        <span class="text-gray-900 font-bold text-xs"
+                                            >{{ city.latitude }},
+                                            {{ city.longitude }}</span
+                                        >
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2"
+                                            >Rayon</span
+                                        >
+                                        <span class="text-gray-900 font-black"
+                                            >{{ city.radius_meters }}m</span
+                                        >
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2"
+                                            >Points d'intérêt</span
+                                        >
+                                        <span class="text-gray-900 font-black">{{
+                                            city.locations.length
+                                        }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -288,24 +319,24 @@ const submitEnigma = () => {
 
                 <!-- Locations & Enigmas Section -->
                 <h3
-                    class="text-xl font-black text-white uppercase tracking-widest mb-8 flex items-center"
+                    class="text-2xl font-black text-gray-900 uppercase tracking-widest mb-10 flex items-center"
                 >
-                    <span class="w-8 h-1 bg-gaming-blue mr-4"></span>
+                    <span class="w-12 h-1.5 bg-gaming-orange rounded-full mr-5"></span>
                     Lieux & Énigmes
                 </h3>
 
-                <div class="space-y-6">
+                <div class="space-y-10">
                     <div
                         v-for="location in city.locations"
                         :key="location.id"
-                        class="bg-gaming-surface border border-gaming-blue/5 rounded-3xl overflow-hidden group"
+                        class="bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden group shadow-sm hover:shadow-md transition-all duration-300"
                     >
                         <div
-                            class="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6"
+                            class="p-8 flex flex-col md:flex-row md:items-center justify-between gap-8 border-b border-gray-50"
                         >
-                            <div class="flex items-center space-x-6">
+                            <div class="flex items-center space-x-8">
                                 <div
-                                    class="w-16 h-16 rounded-2xl bg-gaming-dark flex items-center justify-center border border-gaming-blue/10 group-hover:border-gaming-blue/30 transition-colors overflow-hidden"
+                                    class="w-24 h-24 rounded-3xl bg-gray-100 flex items-center justify-center border border-gray-100 group-hover:border-gaming-orange/20 transition-all overflow-hidden shadow-inner"
                                 >
                                     <img 
                                         v-if="location.location_images && location.location_images.length > 0" 
@@ -315,7 +346,7 @@ const submitEnigma = () => {
                                     <svg
                                         v-else
                                         xmlns="http://www.w3.org/2000/svg"
-                                        class="h-8 w-8 text-gaming-blue-light"
+                                        class="h-10 w-10 text-gray-300"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
@@ -336,112 +367,119 @@ const submitEnigma = () => {
                                 </div>
                                 <div>
                                     <div
-                                        class="flex items-center space-x-3 mb-1"
+                                        class="flex items-center space-x-4 mb-2"
                                     >
                                         <h4
-                                            class="text-lg font-black text-white uppercase tracking-wider"
+                                            class="text-xl font-black text-gray-900 uppercase tracking-wider"
                                         >
                                             {{ location.name }}
                                         </h4>
                                         <span
-                                            class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest bg-gaming-blue/10 text-gaming-blue-light border border-gaming-blue/20"
+                                            class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-gray-100 text-gray-500 border border-gray-200"
                                         >
                                             {{ location.category }}
                                         </span>
                                     </div>
                                     <p
-                                        class="text-xs text-gray-500 line-clamp-1"
+                                        class="text-sm text-gray-400 line-clamp-1 italic"
                                     >
                                         {{ location.description }}
                                     </p>
                                 </div>
                             </div>
 
-                            <div class="flex items-center space-x-4">
-                                <div class="text-right hidden md:block">
+                            <div class="flex items-center space-x-6">
+                                <div class="text-right hidden md:block border-r border-gray-100 pr-6">
                                     <p
-                                        class="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-1"
+                                        class="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1"
                                     >
                                         Énigmes
                                     </p>
-                                    <p class="text-white font-black">
+                                    <p class="text-gray-900 font-black text-lg">
                                         {{ location.enigmas?.length || 0 }}
                                     </p>
                                 </div>
                                 <button
                                     @click="openEnigmaModal(location.id)"
-                                    class="bg-gaming-green/10 hover:bg-gaming-green text-gaming-green-light hover:text-white font-bold py-2 px-4 rounded-xl text-[10px] uppercase tracking-widest transition-all border border-gaming-green/20"
+                                    class="bg-white hover:bg-gaming-orange text-gaming-orange hover:text-white font-black py-3 px-6 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all border-2 border-gaming-orange/20 hover:border-gaming-orange shadow-sm"
                                 >
                                     + Ajouter Énigme
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Enigmas List for this Location -->
+                        <!-- Enigmas List -->
                         <div
-                            v-if="
-                                location.enigmas && location.enigmas.length > 0
-                            "
-                            class="px-6 pb-6 pt-2 grid grid-cols-1 md:grid-cols-2 gap-4"
+                            v-if="location.enigmas && location.enigmas.length > 0"
+                            class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50/50"
                         >
                             <div
                                 v-for="enigma in location.enigmas"
                                 :key="enigma.id"
-                                class="bg-gaming-dark/40 border border-gaming-blue/5 rounded-2xl p-4 hover:border-gaming-blue/20 transition-all"
+                                class="bg-white border border-gray-100 rounded-3xl p-6 hover:border-gaming-orange/30 hover:shadow-md transition-all flex gap-6"
                             >
-                                <div
-                                    class="flex justify-between items-start mb-3"
-                                >
-                                    <h5
-                                        class="text-sm font-bold text-white uppercase tracking-wide"
-                                    >
-                                        {{ enigma.title }}
-                                    </h5>
-                                    <span
-                                        :class="[
-                                            'text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded border',
-                                            enigma.difficulty === 'hard'
-                                                ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                                                : enigma.difficulty === 'medium'
-                                                  ? 'bg-orange-500/10 text-orange-500 border-orange-500/20'
-                                                  : 'bg-gaming-green/10 text-gaming-green-light border-gaming-green/20',
-                                        ]"
-                                    >
-                                        {{ enigma.difficulty }}
-                                    </span>
+                                <!-- Enigma Image -->
+                                <div class="w-24 h-24 rounded-2xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100 shadow-inner">
+                                    <img 
+                                        v-if="enigma.image_path" 
+                                        :src="'/storage/' + enigma.image_path" 
+                                        class="w-full h-full object-cover"
+                                    />
+                                    <div v-else class="w-full h-full flex items-center justify-center text-gray-200">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
                                 </div>
-                                <p
-                                    class="text-[10px] text-gray-500 line-clamp-2 mb-4 italic"
-                                >
-                                    "{{ enigma.content }}"
-                                </p>
-                                <div
-                                    class="flex items-center justify-between text-[9px] font-black uppercase tracking-widest"
-                                >
-                                    <span class="text-gaming-blue-light"
-                                        >Réponse: {{ enigma.answer }}</span
+
+                                <div class="flex-1">
+                                    <div
+                                        class="flex justify-between items-start mb-3"
                                     >
-                                    <div class="flex space-x-3 text-gray-600">
-                                        <span
-                                            >🪙 {{ enigma.reward_coins }}</span
+                                        <h5
+                                            class="text-base font-black text-gray-900 uppercase tracking-wide"
                                         >
+                                            {{ enigma.title }}
+                                        </h5>
                                         <span
-                                            >❤️ {{ enigma.reward_hearts }}</span
+                                            :class="[
+                                                'text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full border shadow-sm',
+                                                enigma.difficulty === 'hard'
+                                                    ? 'bg-red-50 text-red-600 border-red-100'
+                                                    : enigma.difficulty === 'medium'
+                                                      ? 'bg-gaming-orange/5 text-gaming-orange border-gaming-orange/10'
+                                                      : 'bg-green-50 text-green-600 border-green-100',
+                                            ]"
                                         >
+                                            {{ enigma.difficulty }}
+                                        </span>
+                                    </div>
+                                    <p
+                                        class="text-xs text-gray-500 line-clamp-2 mb-4 italic leading-relaxed"
+                                    >
+                                        "{{ enigma.content }}"
+                                    </p>
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
+                                        <div class="flex flex-col">
+                                            <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest">Réponse</span>
+                                            <span class="text-xs font-bold text-gaming-orange">{{ enigma.answer || 'Choix multiples' }}</span>
+                                        </div>
+                                        <div class="flex space-x-4 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
+                                            <span class="text-[10px] font-black">🪙 {{ enigma.reward_coins }}</span>
+                                            <span class="text-[10px] font-black text-red-500">❤️ {{ enigma.reward_hearts }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="px-6 pb-6 pt-2">
-                            <div
-                                class="bg-gaming-dark/20 border border-dashed border-gaming-blue/5 rounded-2xl p-4 text-center"
+                        <div v-else class="p-10 text-center bg-gray-50/50">
+                            <p
+                                class="text-[10px] text-gray-400 font-black uppercase tracking-[0.3em] italic"
                             >
-                                <p
-                                    class="text-[10px] text-gray-600 uppercase tracking-widest italic"
-                                >
-                                    Aucune énigme pour ce lieu
-                                </p>
-                            </div>
+                                Aucune énigme pour ce lieu. Commencez l'aventure !
+                            </p>
                         </div>
                     </div>
                 </div>

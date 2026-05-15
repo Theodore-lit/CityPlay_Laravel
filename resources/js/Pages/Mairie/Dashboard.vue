@@ -44,7 +44,7 @@ defineProps({
                 <!-- Cities Management -->
                 <div class="bg-gaming-surface border border-gaming-blue/10 rounded-2xl overflow-hidden">
                     <div class="p-6 border-b border-gaming-blue/10">
-                        <h3 class="text-lg font-bold text-white uppercase tracking-wider">Mes Villes</h3>
+                        <h3 class="text-lg font-bold text-white uppercase tracking-wider">Ma Ville</h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">

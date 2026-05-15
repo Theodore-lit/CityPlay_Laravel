@@ -18,12 +18,23 @@ class MairieController extends Controller
      */
     public function dashboard()
     {
-       return Inertia::render('Mairie/Dashboard', [
-            'cities' => Location::where('creator_id', auth()->id())->get(),
-            'stats' => [
-                'total_sessions' => GameSession::count(),
-                'active_players' => GameSession::where('status', 'in_progress')->count(),
-            ]
+        $user = auth()->user();
+        $city = City::where('creator_id', $user->id)->first();
+
+        if (!$city) {
+            return Inertia::render('Mairie/Dashboard', [
+                'city' => null,
+                'locations' => [],
+                'stats' => [
+                    'total_sessions' => 0,
+                    'active_players' => 0,
+                ]
+            ]);
+        }
+
+        return Inertia::render('Admin/CityShow', [
+            'city' => $city->load('locations.enigmas.responses', 'creator'),
+            'isMairie' => true
         ]);
     }
     public function index()
