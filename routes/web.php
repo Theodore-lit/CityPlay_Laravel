@@ -40,7 +40,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     // Admin Routes
     Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/admin/city/{city}', [AdminController::class, 'showCity'])->name('admin.city.show');
     Route::post('/admin/mairie', [MairieController::class, 'store'])->name('admin.mairie.store');
+    Route::post('/admin/location', [AdminController::class, 'storeLocation'])->name('admin.location.store');
+    Route::post('/admin/enigma', [AdminController::class, 'storeEnigma'])->name('admin.enigma.store');
     // Mairie Routes
     Route::get('/mairie', [MairieController::class, 'dashboard'])->name('mairie.dashboard');
 

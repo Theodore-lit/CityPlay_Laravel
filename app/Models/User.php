@@ -34,6 +34,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(City::class, 'creator_id');
     }
+    public function mairie()
+    {
+        return $this->belongsTo(City::class, 'mairie_id');
+    }
 
     public function teams()
     {

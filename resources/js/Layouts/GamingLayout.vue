@@ -70,14 +70,11 @@ const user = page.props.auth.user;
         </header>
 
         <!-- Page Content -->
-        <main class="flex-1 flex flex-col overflow-hidden">
+        <main class="flex-1">
             <slot />
         </main>
     </div>
 </template>
 
 <style scoped>
-:deep(main) {
-    height: calc(100vh - 4rem);
-}
 </style>

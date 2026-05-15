@@ -23,7 +23,8 @@ class CitySeeder extends Seeder
             'longitude' => 2.4333,
             'radius_meters' => 5000,
             'is_active' => true,
-            'creator_id' => $mairieCotonou->id,
+            'creator_id' => 1,
+            'mairie_id' => $mairieCotonou->id,
             'opening_hours' => ['start' => '07:00', 'end' => '23:00'],
         ]);
 
@@ -34,7 +35,9 @@ class CitySeeder extends Seeder
             'longitude' => 2.6289,
             'radius_meters' => 4000,
             'is_active' => true,
-            'creator_id' => $mairiePorto->id,
+            'creator_id' => 1,
+
+            'mairie_id' =>    $mairiePorto->id,
             'opening_hours' => ['start' => '08:00', 'end' => '20:00'],
         ]);
 
@@ -45,7 +48,9 @@ class CitySeeder extends Seeder
             'longitude' => 2.3557,
             'radius_meters' => 6000,
             'is_active' => true,
-            'creator_id' => $mairieCalavi->id,
+            'creator_id' => 1,
+
+            'mairie_id' =>  $mairieCalavi->id,
             'opening_hours' => ['start' => '06:00', 'end' => '22:00'],
         ]);
 
@@ -56,7 +61,8 @@ class CitySeeder extends Seeder
             'longitude' => 2.6303,
             'radius_meters' => 7000,
             'is_active' => true,
-            'creator_id' => $mairieParakou->id,
+            'creator_id' => 1,
+            'mairie_id' => $mairieParakou->id,
             'opening_hours' => ['start' => '07:00', 'end' => '21:00'],
         ]);
 
@@ -67,7 +73,9 @@ class CitySeeder extends Seeder
             'longitude' => 2.0850,
             'radius_meters' => 3000,
             'is_active' => true,
-            'creator_id' => $mairieOuidah->id,
+            'creator_id' => 1,
+
+            'mairie_id' => $mairieOuidah->id,
             'opening_hours' => ['start' => '08:00', 'end' => '19:00'],
         ]);
     }

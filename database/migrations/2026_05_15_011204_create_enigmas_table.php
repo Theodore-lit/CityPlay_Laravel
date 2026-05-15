@@ -17,8 +17,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('content');
             $table->string('difficulty'); // easy, medium, hard
-            $table->json('indices')->nullable();
-            $table->string('answer');
+            $table->string('answer')->nullable();
             $table->integer('reward_coins')->default(0);
             $table->integer('reward_hearts')->default(0);
             $table->integer('penalty_seconds')->default(0);

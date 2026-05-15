@@ -51,6 +51,10 @@ class City extends Model
     {
         return $this->belongsTo(User::class, 'creator_id');
     }
+    public function mairie()
+    {
+        return $this->belongsTo(User::class, 'mairie_id');
+    }
 
     /**
      * Relation : Une ville contient plusieurs lieux (Locations).

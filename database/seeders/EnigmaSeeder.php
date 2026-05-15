@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Enigma;
 use App\Models\Location;
+use App\Models\EnigmaResponse;
 
 class EnigmaSeeder extends Seeder
 {
@@ -20,7 +21,7 @@ class EnigmaSeeder extends Seeder
         $templePythons = Location::where('name', 'Temple des Pythons')->first();
 
         // Cotonou
-        Enigma::create([
+        $enigma1 = Enigma::create([
             'location_id' => $amazone->id,
             'title' => 'La statue géante',
             'content' => 'Quelle est la hauteur approximative (en mètres) de la statue de l\'Amazone ?',
@@ -29,9 +30,14 @@ class EnigmaSeeder extends Seeder
             'reward_coins' => 15,
             'reward_hearts' => 0,
             'type' => 'devinette',
+            'image_path' => 'enigmas/amazone_statue.jpg'
         ]);
 
-        Enigma::create([
+        EnigmaResponse::create(['enigma_id' => $enigma1->id, 'content' => '20', 'is_correct' => false]);
+        EnigmaResponse::create(['enigma_id' => $enigma1->id, 'content' => '30', 'is_correct' => true]);
+        EnigmaResponse::create(['enigma_id' => $enigma1->id, 'content' => '40', 'is_correct' => false]);
+
+        $enigma2 = Enigma::create([
             'location_id' => $dantokpa->id,
             'title' => 'Le carrefour commercial',
             'content' => 'Quel fleuve borde le marché Dantokpa ?',
@@ -40,10 +46,15 @@ class EnigmaSeeder extends Seeder
             'reward_coins' => 10,
             'reward_hearts' => 0,
             'type' => 'devinette',
+            'image_path' => 'enigmas/dantokpa_market.jpg'
         ]);
 
+        EnigmaResponse::create(['enigma_id' => $enigma2->id, 'content' => 'Ouémé', 'is_correct' => true]);
+        EnigmaResponse::create(['enigma_id' => $enigma2->id, 'content' => 'Niger', 'is_correct' => false]);
+        EnigmaResponse::create(['enigma_id' => $enigma2->id, 'content' => 'Mono', 'is_correct' => false]);
+
         // Porto-Novo
-        Enigma::create([
+        $enigma3 = Enigma::create([
             'location_id' => $honme->id,
             'title' => 'Le palais royal',
             'content' => 'Quel roi a construit le palais Honmè ?',
@@ -54,7 +65,11 @@ class EnigmaSeeder extends Seeder
             'type' => 'aventure',
         ]);
 
-        Enigma::create([
+        EnigmaResponse::create(['enigma_id' => $enigma3->id, 'content' => 'Ghézo', 'is_correct' => false]);
+        EnigmaResponse::create(['enigma_id' => $enigma3->id, 'content' => 'Toffa', 'is_correct' => true]);
+        EnigmaResponse::create(['enigma_id' => $enigma3->id, 'content' => 'Béhanzin', 'is_correct' => false]);
+
+        $enigma4 = Enigma::create([
             'location_id' => $mosquee->id,
             'title' => 'L\'architecture brésilienne',
             'content' => 'De quel pays s\'inspire l\'architecture de cette mosquée ?',
@@ -65,8 +80,12 @@ class EnigmaSeeder extends Seeder
             'type' => 'devinette',
         ]);
 
+        EnigmaResponse::create(['enigma_id' => $enigma4->id, 'content' => 'Portugal', 'is_correct' => false]);
+        EnigmaResponse::create(['enigma_id' => $enigma4->id, 'content' => 'Brésil', 'is_correct' => true]);
+        EnigmaResponse::create(['enigma_id' => $enigma4->id, 'content' => 'Espagne', 'is_correct' => false]);
+
         // Calavi
-        Enigma::create([
+        $enigma5 = Enigma::create([
             'location_id' => $ganvie->id,
             'title' => 'La cité lacustre',
             'content' => 'Sur quel lac est bâtie la cité de Ganvié ?',
@@ -77,8 +96,12 @@ class EnigmaSeeder extends Seeder
             'type' => 'devinette',
         ]);
 
+        EnigmaResponse::create(['enigma_id' => $enigma5->id, 'content' => 'Ahémé', 'is_correct' => false]);
+        EnigmaResponse::create(['enigma_id' => $enigma5->id, 'content' => 'Nokoué', 'is_correct' => true]);
+        EnigmaResponse::create(['enigma_id' => $enigma5->id, 'content' => 'Togo', 'is_correct' => false]);
+
         // Parakou
-        Enigma::create([
+        $enigma6 = Enigma::create([
             'location_id' => $bioguera->id,
             'title' => 'Le guerrier wassangari',
             'content' => 'De quelle ville Bio Guéra était-il originaire ?',
@@ -89,8 +112,12 @@ class EnigmaSeeder extends Seeder
             'type' => 'aventure',
         ]);
 
+        EnigmaResponse::create(['enigma_id' => $enigma6->id, 'content' => 'Parakou', 'is_correct' => false]);
+        EnigmaResponse::create(['enigma_id' => $enigma6->id, 'content' => 'N\'Dali', 'is_correct' => true]);
+        EnigmaResponse::create(['enigma_id' => $enigma6->id, 'content' => 'Nikki', 'is_correct' => false]);
+
         // Ouidah
-        Enigma::create([
+        $enigma7 = Enigma::create([
             'location_id' => $porteNonRetour->id,
             'title' => 'Le symbole de l\'oubli',
             'content' => 'Combien de piliers principaux soutiennent la structure de la Porte du Non-Retour ?',
@@ -101,7 +128,11 @@ class EnigmaSeeder extends Seeder
             'type' => 'aventure',
         ]);
 
-        Enigma::create([
+        EnigmaResponse::create(['enigma_id' => $enigma7->id, 'content' => '2', 'is_correct' => false]);
+        EnigmaResponse::create(['enigma_id' => $enigma7->id, 'content' => '4', 'is_correct' => true]);
+        EnigmaResponse::create(['enigma_id' => $enigma7->id, 'content' => '6', 'is_correct' => false]);
+
+        $enigma8 = Enigma::create([
             'location_id' => $templePythons->id,
             'title' => 'Les gardiens sacrés',
             'content' => 'Quelle espèce de python est vénérée dans ce temple ?',
@@ -111,5 +142,9 @@ class EnigmaSeeder extends Seeder
             'reward_hearts' => 0,
             'type' => 'devinette',
         ]);
+
+        EnigmaResponse::create(['enigma_id' => $enigma8->id, 'content' => 'Python de Seba', 'is_correct' => false]);
+        EnigmaResponse::create(['enigma_id' => $enigma8->id, 'content' => 'Python royal', 'is_correct' => true]);
+        EnigmaResponse::create(['enigma_id' => $enigma8->id, 'content' => 'Python birman', 'is_correct' => false]);
     }
 }
