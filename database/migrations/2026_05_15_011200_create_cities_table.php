@@ -22,6 +22,7 @@ return new class extends Migration
             $table->json('opening_hours')->nullable();
             $table->json('forbidden_zones')->nullable();
             $table->foreignId('creator_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('mairie_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

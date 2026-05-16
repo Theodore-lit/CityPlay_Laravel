@@ -50,6 +50,19 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        $user = Auth::user();
+
+        // Vérifier si le compte est actif
+        if (!$user->is_active) {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'email' => 'Votre compte est désactivé. Veuillez contacter l\'administrateur.',
+            ]);
+        }
+
+        // Mettre à jour la dernière activité lors de la connexion
+        $user->update(['last_active_at' => now()]);
+
         RateLimiter::clear($this->throttleKey());
     }
 

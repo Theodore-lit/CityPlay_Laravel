@@ -31,11 +31,16 @@ class Location extends Model
 
     public function city()
     {
-        return $this->belongsTo(City::class);
+        return $this->belongsTo(City::class, 'city_id');
     }
 
     public function enigmas()
     {
         return $this->hasMany(Enigma::class);
+    }
+
+    public function locationImages()
+    {
+        return $this->hasMany(LocationImage::class);
     }
 }

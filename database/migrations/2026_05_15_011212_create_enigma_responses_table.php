@@ -13,12 +13,9 @@ return new class extends Migration
     {
         Schema::create('enigma_responses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('game_session_id')->constrained()->onDelete('cascade');
             $table->foreignId('enigma_id')->constrained()->onDelete('cascade');
-            $table->string('status')->default('pending'); // pending, solved, failed
-            $table->integer('attempts')->default(0);
-            $table->integer('time_spent_seconds')->default(0);
-            $table->integer('indices_used_count')->default(0);
+            $table->string('content');
+            $table->boolean('is_correct')->default(false);
             $table->timestamps();
         });
     }

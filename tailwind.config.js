@@ -17,6 +17,11 @@ export default {
             },
             colors: {
                 gaming: {
+                    orange: {
+                        light: '#ff9d66',
+                        DEFAULT: '#f97316',
+                        dark: '#c2410c',
+                    },
                     blue: {
                         light: '#60a5fa',
                         DEFAULT: '#2563eb',
@@ -27,8 +32,8 @@ export default {
                         DEFAULT: '#16a34a',
                         dark: '#15803d',
                     },
-                    dark: '#0f172a',
-                    surface: '#1e293b',
+                    dark: '#18181b',
+                    surface: '#ffffff',
                 }
             },
             boxShadow: {

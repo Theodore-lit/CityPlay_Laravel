@@ -10,6 +10,7 @@ const form = useForm({
     name: '',
     email: '',
     password: '',
+    accepts_terms: false,
     password_confirmation: '',
 });
 
@@ -89,6 +90,22 @@ const submit = () => {
                 <InputError
                     class="mt-2"
                     :message="form.errors.password_confirmation"
+                />
+            </div>
+
+            <div class="mt-4">
+                <InputLabel
+                    for="accepts_terms"
+                    value="Accept Terms"
+                />
+
+                <TextInput
+                    id="accepts_terms"
+                    type="checkbox"
+                    class="mt-1 block w-full"
+                    v-model="form.accepts_terms"
+                    required
+                    autocomplete="new-password"
                 />
             </div>
 
