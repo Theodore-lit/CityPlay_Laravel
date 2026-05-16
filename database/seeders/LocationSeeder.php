@@ -27,6 +27,7 @@ class LocationSeeder extends Seeder
             'longitude' => 2.4419,
             'radius_meters' => 100,
             'status' => 'active',
+            'order' => 1
         ]);
 
         LocationImage::create([
@@ -43,6 +44,7 @@ class LocationSeeder extends Seeder
             'longitude' => 2.4358,
             'radius_meters' => 200,
             'status' => 'active',
+            'order' => 2
         ]);
 
         LocationImage::create([
@@ -60,6 +62,7 @@ class LocationSeeder extends Seeder
             'longitude' => 2.6258,
             'radius_meters' => 100,
             'status' => 'active',
+            'order' => 3
         ]);
 
         LocationImage::create([
@@ -76,6 +79,7 @@ class LocationSeeder extends Seeder
             'longitude' => 2.6288,
             'radius_meters' => 80,
             'status' => 'active',
+            'order' => 4
         ]);
 
         LocationImage::create([
@@ -93,6 +97,7 @@ class LocationSeeder extends Seeder
             'longitude' => 2.4056,
             'radius_meters' => 150,
             'status' => 'active',
+            'order' => 5
         ]);
 
         LocationImage::create([
@@ -110,6 +115,7 @@ class LocationSeeder extends Seeder
             'longitude' => 2.6303,
             'radius_meters' => 100,
             'status' => 'active',
+            'order' => 6
         ]);
 
         LocationImage::create([
@@ -127,6 +133,7 @@ class LocationSeeder extends Seeder
             'longitude' => 2.0854,
             'radius_meters' => 100,
             'status' => 'active',
+            'order' => 7
         ]);
 
         LocationImage::create([
@@ -143,6 +150,7 @@ class LocationSeeder extends Seeder
             'longitude' => 2.0850,
             'radius_meters' => 50,
             'status' => 'active',
+            'order' => 8
         ]);
 
         LocationImage::create([

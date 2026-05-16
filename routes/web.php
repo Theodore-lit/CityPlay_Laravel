@@ -37,15 +37,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/player', [PlayerController::class, 'dashboard'])->name('player.dashboard');
     Route::get('/player/game/{city}', [PlayerController::class, 'game'])->name('player.game');
 
-    });
     // Admin Routes
     Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/admin/city/{city}', [AdminController::class, 'showCity'])->name('admin.city.show');
     Route::post('/admin/mairie', [MairieController::class, 'store'])->name('admin.mairie.store');
     Route::post('/admin/location', [AdminController::class, 'storeLocation'])->name('admin.location.store');
     Route::post('/admin/enigma', [AdminController::class, 'storeEnigma'])->name('admin.enigma.store');
+    Route::post('/admin/user/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('admin.user.toggle-status');
     // Mairie Routes
     Route::get('/mairie', [MairieController::class, 'dashboard'])->name('mairie.dashboard');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

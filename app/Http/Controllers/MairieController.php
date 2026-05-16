@@ -8,7 +8,6 @@ use App\Models\Location;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class MairieController extends Controller
@@ -19,10 +18,11 @@ class MairieController extends Controller
     public function dashboard()
     {
         $user = auth()->user();
-        $city = City::where('creator_id', $user->id)->first();
+        // On cherche la ville où l'utilisateur est assigné comme maire (mairie_id)
+        $city = City::where('mairie_id', $user->id)->first();
 
         if (!$city) {
-            return Inertia::render('Mairie/Dashboard', [
+            return Inertia::render('Admin/CityShow', [
                 'city' => null,
                 'locations' => [],
                 'stats' => [
@@ -33,7 +33,7 @@ class MairieController extends Controller
         }
 
         return Inertia::render('Admin/CityShow', [
-            'city' => $city->load('locations.enigmas.responses', 'creator'),
+            'city' => $city->load('locations.locationImages', 'locations.enigmas.responses', 'creator', 'mairie'),
             'isMairie' => true
         ]);
     }
@@ -55,39 +55,45 @@ class MairieController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
-        dd($user);
-       $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
-            'description' => 'required|string|max:255',
-            'latitude' => 'required|decimal',
-            'longitude' => 'required|decimal',
-            'image_path'=> 'nullable|string',
-            'radius_meters' => 5000,
-            'is_active' => true,
-            'creator_id' => Auth::user()->id,
-            'opening_hours' => 'nullable|Array',
+        $user = auth()->user();
+        // dd($request);
+
+        $validated = $request->validate([
+            'city_name' => 'required|string|max:255',
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
+            'description' => 'nullable|string|max:255',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'image' => 'nullable|image|max:2048',
+            'opening_hours' => 'nullable|array',
         ]);
 
+
         $marie = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name' => $validated['city_name'],
+            'email' => $validated['email'],
+            'password' => Hash::make('password'),
             'role' => 'mairie',
         ]);
+
+        $cityDataImage = null;
+        if ($request->hasFile('image')) {
+            $cityDataImage = $request->file('image')->store('cities', 'public');
+        }
+
         City::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'radius_meters' => $request->radius_meters,
-            'is_active' => $request->is_active,
-            'creator_id' => 1,
+            'name' => $validated['city_name'],
+            'description' => $validated['description'],
+            'latitude' => $validated['latitude'],
+            'longitude' => $validated['longitude'],
+            'radius_meters' => $request->input('radius_meters', 5000),
+            'is_active' => $request->input('is_active', true),
+            'creator_id' => $user->id,
             'mairie_id' => $marie->id,
-            'opening_hours' => $request->opening_hours,
+            'image_path' => $cityDataImage,
+            'opening_hours' => $validated['opening_hours'],
         ]);
+
         return redirect(route('admin.dashboard', absolute: false));
     }
 

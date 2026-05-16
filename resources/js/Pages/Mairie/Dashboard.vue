@@ -5,6 +5,7 @@ import { Head, Link } from '@inertiajs/vue3';
 defineProps({
     cities: Array,
     stats: Object,
+    auth: Object,
 });
 </script>
 

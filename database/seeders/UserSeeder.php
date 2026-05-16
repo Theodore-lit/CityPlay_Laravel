@@ -14,8 +14,10 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'Super Admin',
             'email' => 'admin@cityplay.com',
-            'password' => Hash::make('password123'),
+            'password' => Hash::make('password'),
             'role' => 'super_admin',
+            'accepts_terms'=> true,
+            'is_active' => true,
         ]);
 
         // Mairies
@@ -25,14 +27,18 @@ class UserSeeder extends Seeder
             'Calavi' => 'mairie.calavi@cityplay.bj',
             'Parakou' => 'mairie.parakou@cityplay.bj',
             'Ouidah' => 'mairie.ouidah@cityplay.bj',
+            'accepts_terms'=> true,
+            'is_active' => true,
         ];
 
         foreach ($mairies as $name => $email) {
             User::create([
                 'name' => "Mairie de $name",
                 'email' => $email,
-                'password' => Hash::make('password123'),
+                'password' => Hash::make('password'),
                 'role' => 'mairie',
+                'accepts_terms'=> true,
+                'is_active' => true,
             ]);
         }
 
@@ -41,10 +47,12 @@ class UserSeeder extends Seeder
             User::create([
                 'name' => "Joueur $i",
                 'email' => "player$i@example.com",
-                'password' => Hash::make('password123'),
+                'password' => Hash::make('password'),
                 'role' => 'joueur',
                 'coins' => rand(0, 100),
                 'hearts' => rand(1, 5),
+                'accepts_terms'=> true,
+                'is_active' => true,
             ]);
         }
     }

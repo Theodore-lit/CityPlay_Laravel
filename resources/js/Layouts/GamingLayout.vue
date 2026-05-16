@@ -1,15 +1,40 @@
 <script setup>
 import { ref } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage, useForm } from '@inertiajs/vue3';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
+import Modal from '@/Components/Modal.vue';
+import DangerButton from '@/Components/DangerButton.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
 
 const showingNavigationDropdown = ref(false);
 const page = usePage();
 const user = page.props.auth.user;
+
+const showingLogoutModal = ref(false);
+const logoutForm = useForm({
+    deactivate: false
+});
+
+const handleLogoutClick = () => {
+    if (user.role === 'joueur') {
+        showingLogoutModal.value = true;
+    } else {
+        performLogout();
+    }
+};
+
+const performLogout = (deactivate = false) => {
+    logoutForm.deactivate = deactivate;
+    logoutForm.post(route('logout'), {
+        onFinish: () => {
+            showingLogoutModal.value = false;
+        }
+    });
+};
 </script>
 
 <template>
@@ -53,7 +78,12 @@ const user = page.props.auth.user;
                                 </template>
                                 <template #content>
                                     <DropdownLink :href="route('profile.edit')"> Mon Profil </DropdownLink>
-                                    <DropdownLink :href="route('logout')" method="post" as="button"> Se déconnecter </DropdownLink>
+                                    <button 
+                                        @click="handleLogoutClick"
+                                        class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out"
+                                    >
+                                        Se déconnecter
+                                    </button>
                                 </template>
                             </Dropdown>
                         </div>
@@ -73,6 +103,28 @@ const user = page.props.auth.user;
         <main class="flex-1">
             <slot />
         </main>
+
+        <!-- Logout/Deactivation Modal -->
+        <Modal :show="showingLogoutModal" @close="showingLogoutModal = false">
+            <div class="p-6">
+                <h2 class="text-lg font-black text-gray-900 uppercase tracking-widest mb-4">
+                    Déconnexion
+                </h2>
+                <p class="text-sm text-gray-600 mb-6">
+                    Voulez-vous désactiver votre compte avant de vous déconnecter ? 
+                    <br><br>
+                    <span class="italic text-xs">Note : Si vous ne désactivez pas votre compte, il restera actif pendant 2 mois d'inactivité avant d'être archivé automatiquement.</span>
+                </p>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <SecondaryButton @click="performLogout(false)">
+                        Non, juste déconnexion
+                    </SecondaryButton>
+                    <DangerButton @click="performLogout(true)">
+                        Oui, désactiver mon compte
+                    </DangerButton>
+                </div>
+            </div>
+        </Modal>
     </div>
 </template>
 

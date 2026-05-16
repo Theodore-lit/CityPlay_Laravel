@@ -12,6 +12,7 @@ import debounce from "lodash/debounce";
 import L from 'leaflet';
 import { onMounted, nextTick } from "vue";
 
+
 const props = defineProps({
     city: Object,
     isMairie: {
@@ -19,6 +20,12 @@ const props = defineProps({
         default: false
     }
 });
+
+const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        alert("Lien copié dans le presse-papier !");
+    });
+};
 
 const showingAddLocationModal = ref(false);
 const showingAddEnigmaModal = ref(false);
@@ -94,7 +101,32 @@ const searchPlaces = debounce(async (query) => {
     } finally {
         isSearching.value = false;
     }
-}, 500);
+}, 200);
+
+
+
+// Web Share API (natif sur mobile)
+const share = async(lien)=> {
+    const shareData =  {
+    title: `CityPlay`,
+    text: 'Découvrez le Bénin avec CitPlay 😅' ,
+    url: lien,
+  }
+      if (navigator.share && navigator.canShare?.(shareData)) {
+    try {
+      await navigator.share(shareData)
+    } catch (err) {
+      // L'utilisateur a annulé ou une erreur est survenue
+      if (err.name !== 'AbortError') {
+          copyToClipboard(lien)
+        console.error('Erreur de partage :', err)
+      }
+    }
+  } else {
+    // Fallback pour desktop ou navigateurs non supportés
+     copyToClipboard(lien)
+  }
+}
 
 watch(search, (newQuery) => {
     searchPlaces(newQuery);
@@ -248,7 +280,7 @@ const submitEnigma = () => {
                             <div class="w-full md:w-1/3 h-64 rounded-3xl overflow-hidden shadow-md bg-gray-100 border border-gray-100">
                                 <img 
                                     v-if="city.image_path" 
-                                    :src="city.image_path" 
+                                    :src="'/storage/' + city.image_path" 
                                     class="w-full h-full object-cover"
                                 />
                                 <div v-else class="w-full h-full flex items-center justify-center text-gray-200">
@@ -280,7 +312,7 @@ const submitEnigma = () => {
                                             >Géré par</span
                                         >
                                         <span class="text-gray-900 font-black">{{
-                                            city.creator?.name
+                                            city.mairie?.name || city.creator?.name
                                         }}</span>
                                     </div>
                                     <div class="flex flex-col">
@@ -311,6 +343,29 @@ const submitEnigma = () => {
                                             city.locations.length
                                         }}</span>
                                     </div>
+                                </div>
+
+                                <!-- Sharing Link for City -->
+                                <div class="mt-10 p-6 bg-gaming-orange/5 border border-gaming-orange/10 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6">
+                                    <div class="flex items-center space-x-4">
+                                        <div @click="share(route('player.game', city.id))" class="cursor-pointer bg-gaming-orange text-white p-3 rounded-2xl shadow-lg shadow-gaming-orange/20">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] text-gaming-orange font-black uppercase tracking-[0.2em] mb-1">Lien de partage joueur</p>
+                                            <p class="text-gray-900 font-bold text-sm truncate max-w-[200px] md:max-w-md">
+                                                {{ route('player.game', city.id) }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        @click="copyToClipboard(route('player.game', city.id))"
+                                        class="bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 font-black py-3 px-8 rounded-2xl transition-all shadow-sm flex items-center space-x-2"
+                                    >
+                                        <span class="text-[10px] uppercase tracking-widest">Copier le lien</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>

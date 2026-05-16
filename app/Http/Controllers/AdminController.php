@@ -29,25 +29,38 @@ class AdminController extends Controller
     public function dashboard()
     {
         return Inertia::render('Admin/Dashboard', [
-            'mairies' => City::with('creator', 'locations')->get(),
+            'mairies' => City::with('creator', 'mairie', 'locations')->get(),
             'locations' => Location::with('city', 'locationImages', 'enigmas')->latest()->take(6)->get(),
+            'users' => User::whereIn('role', ['joueur', 'mairie'])->latest()->get(),
+            'players' => User::where('role', 'joueur')->latest()->get(),
             'stats' => [
                 'total_sessions' => GameSession::count(),
                 'active_players' => GameSession::where('status', 'in_progress')->count(),
                 'total_locations' => Location::count(),
+                'total_players' => User::where('role', 'joueur')->count(),
             ]
         ]);
+    } 
+
+    public function toggleUserStatus(User $user)
+    {
+        $user->update([
+            'is_active' => !$user->is_active
+        ]);
+
+        return back()->with('success', 'Statut de l\'utilisateur mis à jour');
     }
 
     public function showCity(City $city)
     {
         return Inertia::render('Admin/CityShow', [
-            'city' => $city->load('locations.enigmas.responses', 'creator'),
+            'city' => $city->load('locations.locationImages', 'locations.enigmas.responses', 'creator', 'mairie'),
         ]);
     }
 
     public function storeLocation(Request $request)
     {
+        $total = Location::count();
         $validated = $request->validate([
             'city_id' => 'required|exists:cities,id',
             'name' => 'required|string|max:255',
@@ -56,8 +69,8 @@ class AdminController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'radius_meters' => 'required|integer',
-            'images.*' => 'nullable|image|max:2048',
         ]);
+        $validated['order']  = $total + 1;
 
         $location = Location::create($validated);
 
@@ -90,7 +103,7 @@ class AdminController extends Controller
 
         $enigmaData = $validated;
         unset($enigmaData['responses']);
-        
+
         if ($request->hasFile('image')) {
             $enigmaData['image_path'] = $request->file('image')->store('enigmas', 'public');
         }
@@ -115,10 +128,7 @@ class AdminController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreAdminRequest $request)
-    {
-        
-    }
+    public function store(StoreAdminRequest $request) {}
 
     /**
      * Display the specified resource.

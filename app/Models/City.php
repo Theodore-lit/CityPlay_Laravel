@@ -29,6 +29,7 @@ class City extends Model
         'opening_hours',    // Horaires de jeu autorisés (JSON)
         'forbidden_zones',  // Zones hors-jeu (JSON)
         'creator_id',       // ID de l'utilisateur (mairie/admin) créateur
+        'mairie_id',        // ID de l'utilisateur (mairie)
     ];
 
     /**
