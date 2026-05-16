@@ -14,7 +14,7 @@ Route::get('/', function () {
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
-});
+})->name('welcome');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
@@ -27,10 +27,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Player Routes
     Route::get('/player', [PlayerController::class, 'dashboard'])->name('player.dashboard');
+    Route::get('/cities', [PlayerController::class, 'cities'])->name('player.cities');
+    Route::get('/modes', [PlayerController::class, 'modes'])->name('player.modes');
+    Route::get('/leaderboard', [PlayerController::class, 'leaderboard'])->name('player.leaderboard');
+    Route::get('/rewards', [PlayerController::class, 'rewards'])->name('player.rewards');
+    Route::get('/quiz/{quiz?}', [PlayerController::class, 'quiz'])->name('player.quiz');
+    Route::post('/quiz/{quiz}/submit', [PlayerController::class, 'submitQuiz'])->name('player.quiz.submit');
     Route::get('/player/game/{city}', [PlayerController::class, 'game'])->name('player.game');
 
     // Mairie Routes
     Route::get('/mairie', [MairieController::class, 'dashboard'])->name('mairie.dashboard');
+    Route::patch('/mairie/city/{city}/toggle', [MairieController::class, 'toggleStatus'])->name('mairie.city.toggle');
 });
 
 Route::middleware('auth')->group(function () {

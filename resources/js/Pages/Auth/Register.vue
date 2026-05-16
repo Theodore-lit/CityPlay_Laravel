@@ -1,10 +1,9 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
+import AuthLayout from '@/Layouts/AuthLayout.vue';
+import GlowInput from '@/Components/GlowInput.vue';
+import NeonButton from '@/Components/NeonButton.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { UserPlus, ArrowRight } from 'lucide-vue-next';
 
 const form = useForm({
     name: '',
@@ -21,93 +20,69 @@ const submit = () => {
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Register" />
+    <AuthLayout 
+        title="Nouvelle Légende" 
+        subtitle="Créez votre compte pour commencer votre quête au Bénin."
+    >
+        <Head title="Inscription — CityPlay" />
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="name" value="Name" />
+        <form @submit.prevent="submit" class="space-y-4">
+            <GlowInput
+                label="Nom complet"
+                type="text"
+                v-model="form.name"
+                placeholder="Ex: Kossi Mensah"
+                required
+                autofocus
+                autocomplete="name"
+                :error="form.errors.name"
+            />
 
-                <TextInput
-                    id="name"
-                    type="text"
-                    class="mt-1 block w-full"
-                    v-model="form.name"
-                    required
-                    autofocus
-                    autocomplete="name"
-                />
+            <GlowInput
+                label="Email"
+                type="email"
+                v-model="form.email"
+                placeholder="votre@aventure.bj"
+                required
+                autocomplete="username"
+                :error="form.errors.email"
+            />
 
-                <InputError class="mt-2" :message="form.errors.name" />
-            </div>
+            <GlowInput
+                label="Mot de passe"
+                type="password"
+                v-model="form.password"
+                placeholder="••••••••"
+                required
+                autocomplete="new-password"
+                :error="form.errors.password"
+            />
 
-            <div class="mt-4">
-                <InputLabel for="email" value="Email" />
+            <GlowInput
+                label="Confirmer le mot de passe"
+                type="password"
+                v-model="form.password_confirmation"
+                placeholder="••••••••"
+                required
+                autocomplete="new-password"
+                :error="form.errors.password_confirmation"
+            />
 
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autocomplete="username"
-                />
-
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="new-password"
-                />
-
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel
-                    for="password_confirmation"
-                    value="Confirm Password"
-                />
-
-                <TextInput
-                    id="password_confirmation"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password_confirmation"
-                    required
-                    autocomplete="new-password"
-                />
-
-                <InputError
-                    class="mt-2"
-                    :message="form.errors.password_confirmation"
-                />
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    :href="route('login')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                    Already registered?
-                </Link>
-
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
+            <div class="pt-2">
+                <NeonButton
+                    class="w-full"
                     :disabled="form.processing"
                 >
-                    Register
-                </PrimaryButton>
+                    Rejoindre l'Aventure <UserPlus class="h-4 w-4 ml-2" />
+                </NeonButton>
             </div>
         </form>
-    </GuestLayout>
+
+        <template #footer>
+            Déjà inscrit ? 
+            <Link :href="route('login')" class="text-electric font-bold hover:underline">
+                Se connecter
+            </Link>
+        </template>
+    </AuthLayout>
 </template>
