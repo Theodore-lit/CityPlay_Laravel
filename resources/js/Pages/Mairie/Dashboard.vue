@@ -5,6 +5,7 @@ import { Head, Link } from '@inertiajs/vue3';
 defineProps({
     cities: Array,
     stats: Object,
+    auth: Object,
 });
 </script>
 
@@ -18,7 +19,7 @@ defineProps({
                     Tableau de bord Mairie
                 </h2>
                 <button class="bg-gaming-green hover:bg-gaming-green-dark text-white font-bold py-2 px-6 rounded-lg transition-all uppercase text-sm tracking-wider">
-                    + Créer une ville
+                    + Créer un Lieu
                 </button>
             </div>
         </template>

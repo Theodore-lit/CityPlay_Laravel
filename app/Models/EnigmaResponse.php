@@ -10,12 +10,13 @@ class EnigmaResponse extends Model
     use HasFactory;
 
     protected $fillable = [
-        'game_session_id',
         'enigma_id',
-        'status',
-        'attempts',
-        'time_spent_seconds',
-        'indices_used_count',
+        'content',
+        'is_correct',
+    ];
+
+    protected $casts = [
+        'is_correct' => 'boolean',
     ];
 
     public function gameSession()

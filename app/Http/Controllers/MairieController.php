@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\City;
 use App\Models\GameSession;
+use App\Models\Location;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class MairieController extends Controller
@@ -17,12 +17,24 @@ class MairieController extends Controller
      */
     public function dashboard()
     {
-       return Inertia::render('Mairie/Dashboard', [
-            'cities' => City::where('creator_id', auth()->id())->get(),
-            'stats' => [
-                'total_sessions' => GameSession::count(),
-                'active_players' => GameSession::where('status', 'in_progress')->count(),
-            ]
+        $user = auth()->user();
+        // On cherche la ville où l'utilisateur est assigné comme maire (mairie_id)
+        $city = City::where('mairie_id', $user->id)->first();
+
+        if (!$city) {
+            return Inertia::render('Admin/CityShow', [
+                'city' => null,
+                'locations' => [],
+                'stats' => [
+                    'total_sessions' => 0,
+                    'active_players' => 0,
+                ]
+            ]);
+        }
+
+        return Inertia::render('Admin/CityShow', [
+            'city' => $city->load('locations.locationImages', 'locations.enigmas.responses', 'creator', 'mairie'),
+            'isMairie' => true
         ]);
     }
     public function index()
@@ -43,18 +55,45 @@ class MairieController extends Controller
      */
     public function store(Request $request)
     {
-       $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
+        $user = auth()->user();
+        // dd($request);
+
+        $validated = $request->validate([
+            'city_name' => 'required|string|max:255',
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
+            'description' => 'nullable|string|max:255',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'image' => 'nullable|image|max:2048',
+            'opening_hours' => 'nullable|array',
         ]);
 
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+
+        $marie = User::create([
+            'name' => $validated['city_name'],
+            'email' => $validated['email'],
+            'password' => Hash::make('password'),
             'role' => 'mairie',
         ]);
+
+        $cityDataImage = null;
+        if ($request->hasFile('image')) {
+            $cityDataImage = $request->file('image')->store('cities', 'public');
+        }
+
+        City::create([
+            'name' => $validated['city_name'],
+            'description' => $validated['description'],
+            'latitude' => $validated['latitude'],
+            'longitude' => $validated['longitude'],
+            'radius_meters' => $request->input('radius_meters', 5000),
+            'is_active' => $request->input('is_active', true),
+            'creator_id' => $user->id,
+            'mairie_id' => $marie->id,
+            'image_path' => $cityDataImage,
+            'opening_hours' => $validated['opening_hours'],
+        ]);
+
         return redirect(route('admin.dashboard', absolute: false));
     }
 

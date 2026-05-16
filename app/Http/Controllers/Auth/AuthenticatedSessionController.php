@@ -41,6 +41,15 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+
+        if ($user && $request->input('deactivate')) {
+            $user->update([
+                'is_active' => false,
+                'expired_at' => now()
+            ]);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
