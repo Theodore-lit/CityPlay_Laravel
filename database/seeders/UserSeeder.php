@@ -16,6 +16,7 @@ class UserSeeder extends Seeder
             'email' => 'admin@cityplay.com',
             'password' => Hash::make('password'),
             'role' => 'super_admin',
+            'is_verified' => true,
         ]);
 
         // Comptes Mairies pour les villes principales
@@ -26,6 +27,7 @@ class UserSeeder extends Seeder
                 'email' => strtolower($cityName) . '@mairie.bj',
                 'password' => Hash::make('password'),
                 'role' => 'mairie',
+                'is_verified' => true,
             ]);
         }
 
@@ -59,6 +61,7 @@ class UserSeeder extends Seeder
                 'email' => $playerData['email'],
                 'password' => Hash::make('password'),
                 'role' => 'joueur',
+                'is_verified' => true,
                 'coins' => rand(50, 500),
                 'hearts' => rand(1, 5),
                 'xp' => rand(100, 5000),

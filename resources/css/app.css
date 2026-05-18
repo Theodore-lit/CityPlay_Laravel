@@ -5,213 +5,190 @@
 @tailwind utilities;
 
 :root {
-  --radius: 0.75rem;
+  --radius: 1rem;
 
-  /* STYLE CLAIR : Simple, Joyeux, Coloré (Blanc/Bleu/Orange) */
+  /* STYLE CLAIR : Visibilité Maximale & Gaming */
   --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --font-display: "Space Grotesk", "Plus Jakarta Sans", system-ui, sans-serif;
 
-  --background: oklch(0.98 0.01 240);
-  --foreground: oklch(0.20 0.05 250);
+  --background: oklch(0.96 0.01 240); /* Fond gris perle doux */
+  --foreground: oklch(0.15 0.02 240); /* Texte quasi noir pour lisibilité parfaite */
 
-  --primary: oklch(0.55 0.22 255); /* Bleu vibrant */
+  /* Couleur Primaire basée sur NeonButton */
+  --primary: oklch(0.60 0.20 255);
   --primary-foreground: #ffffff;
 
-  --secondary: oklch(0.65 0.18 180); /* Teal joyeux */
-  --secondary-foreground: #ffffff;
+  --secondary: oklch(0.85 0.05 200);
+  --secondary-foreground: var(--foreground);
 
-  --accent: oklch(0.65 0.25 45); /* Orange solaire */
+  --accent: oklch(0.65 0.25 350); /* Rose/Violet gaming pour contraste */
   --accent-foreground: #ffffff;
 
-  --electric: var(--primary);
-  --cyan-neon: var(--secondary);
-  --purple-neon: var(--accent);
+  --card: #ffffff; /* Cartes blanches sur fond gris */
+  --card-foreground: var(--foreground);
 
-  --card: #ffffff;
-  --card-foreground: oklch(0.20 0.05 250);
+  --muted: oklch(0.90 0.01 240);
+  --muted-foreground: oklch(0.40 0.02 240);
 
-  --muted: oklch(0.95 0.01 240);
-  --muted-foreground: oklch(0.50 0.02 250);
-
-  --success: oklch(0.65 0.20 150);
-  --warning: oklch(0.80 0.15 80);
-  --destructive: oklch(0.55 0.22 25);
-
-  --border: oklch(0.90 0.02 240);
+  --border: oklch(0.20 0.04 240 / 0.15); /* Bordures visibles */
   --input: #ffffff;
-  --ring: var(--primary);
+  --input-border: oklch(0.20 0.04 240 / 0.2);
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-neon: 0 10px 25px -5px oklch(0.60 0.20 255 / 0.3);
+  --shadow-neon-hover: 0 15px 35px -5px oklch(0.60 0.20 255 / 0.5);
 
-  --shadow-neon: var(--shadow-md);
-  --shadow-neon-hover: var(--shadow-lg);
-  --shadow-purple: var(--shadow-md);
-  --shadow-purple-hover: var(--shadow-lg);
-  --shadow-elevated: var(--shadow-lg);
-
-  --gaming-darker: var(--background);
-  --gaming-dark: oklch(0.95 0.01 240);
-  --gaming-panel: var(--card);
+  --gaming-darker: oklch(0.94 0.01 240);
+  --gaming-dark: oklch(0.92 0.01 240);
+  --gaming-panel: #ffffff;
 }
 
-/* STYLE SOMBRE : Futuriste, Néon, Cyberpunk */
+/* STYLE SOMBRE : Futuriste Haute Visibilité */
 html.dark, .dark {
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-display: "Orbitron", "Space Grotesk", system-ui, sans-serif;
+  --background: oklch(0.10 0.02 240); /* Noir profond */
+  --foreground: oklch(0.98 0.01 240); /* Blanc éclatant */
 
-  --background: oklch(0.14 0.06 255);
-  --foreground: oklch(0.98 0.01 240);
+  --primary: oklch(0.70 0.18 250); /* Cyan électrique */
+  --primary-foreground: #000000;
 
-  --primary: oklch(0.78 0.12 232); /* Electric Blue */
-  --primary-foreground: #ffffff;
-
-  --secondary: oklch(0.85 0.10 200); /* Cyan Neon */
+  --secondary: oklch(0.18 0.03 240);
   --secondary-foreground: #ffffff;
 
-  --accent: oklch(0.68 0.15 300); /* Purple Neon */
-  --accent-foreground: #ffffff;
+  --card: oklch(0.15 0.03 240);
+  --card-foreground: var(--foreground);
 
-  --electric: var(--primary);
-  --cyan-neon: var(--secondary);
-  --purple-neon: var(--accent);
+  --muted: oklch(0.22 0.03 240);
+  --muted-foreground: oklch(0.70 0.02 240);
 
-  --card: oklch(0.18 0.07 255);
-  --card-foreground: oklch(0.98 0.01 240);
+  --border: oklch(0.98 0.01 240 / 0.12);
+  --input: oklch(0.08 0.02 240);
 
-  --muted: oklch(0.20 0.04 262);
-  --muted-foreground: oklch(0.68 0.04 248);
+  --shadow-neon: 0 0 25px oklch(0.70 0.18 250 / 0.4);
+  --shadow-neon-hover: 0 0 45px oklch(0.70 0.18 250 / 0.6);
 
-  --border: oklch(0.78 0.18 232 / 20%);
-  --input: oklch(0.16 0.05 255);
-  --ring: var(--primary);
-
-  --shadow-neon: 0 0 18px oklch(0.78 0.12 232 / 0.28), 0 0 48px oklch(0.78 0.12 232 / 0.10);
-  --shadow-neon-hover: 0 0 40px oklch(0.78 0.12 232 / 0.7);
-  --shadow-purple: 0 0 18px oklch(0.68 0.15 300 / 0.28);
-  --shadow-purple-hover: 0 0 36px oklch(0.68 0.15 300 / 0.7);
-  --shadow-elevated: 0 24px 80px -20px oklch(0 0 0 / 0.6);
-
-  --gaming-darker: oklch(0.14 0.06 255);
-  --gaming-dark: oklch(0.18 0.07 255);
-  --gaming-panel: oklch(0.22 0.08 257);
+  --gaming-darker: oklch(0.06 0.02 240);
+  --gaming-dark: oklch(0.12 0.02 240);
+  --gaming-panel: oklch(0.16 0.03 240);
 }
 
 @layer base {
   * { border-color: var(--border); }
-  html, body { background: var(--background); color: var(--foreground); transition: background-color 0.3s ease, color 0.3s ease; }
-  body {
-    min-height: 100vh;
+  html, body {
+    background: var(--background);
+    color: var(--foreground);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Effets spécifiques au Dark Mode */
-  .dark body {
-    background-image:
-      radial-gradient(circle at 20% 10%, oklch(0.78 0.18 232 / 0.10), transparent 40%),
-      radial-gradient(circle at 80% 80%, oklch(0.65 0.25 300 / 0.10), transparent 45%);
+  /* Forcer la visibilité des textes d'input */
+  input, textarea, select {
+    color: var(--foreground) !important;
+    background-color: var(--input) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Fix pour les textes blancs qui devraient être sombres en mode clair */
+  .light .text-white:not(.bg-primary *, .bg-electric *, .bg-gradient-premium *, .bg-gradient-accent *) {
+    color: var(--foreground) !important;
+  }
+
+  input::placeholder {
+    color: var(--muted-foreground) !important;
+    opacity: 0.6;
+  }
+
+  body {
+    min-height: 100vh;
     background-attachment: fixed;
   }
 
-  h1, h2, h3, .font-display { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.01em; }
-  .dark h1, .dark h2, .dark h3, .dark .font-display { letter-spacing: 0.05em; }
+  .dark body {
+    background-image:
+      radial-gradient(circle at 20% 10%, oklch(0.78 0.15 232 / 0.12), transparent 45%),
+      radial-gradient(circle at 80% 80%, oklch(0.72 0.18 300 / 0.12), transparent 45%);
+  }
+
+  h1, h2, h3, .font-display { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; }
+  .dark h1, .dark h2, .dark h3, .dark .font-display { letter-spacing: 0.08em; text-transform: uppercase; }
 }
 
 @layer utilities {
-  /* GLASSMORPHISM - Uniquement en Dark Mode ou très léger en Light */
+  /* GLASSMORPHISM PREMIUM */
   .glass {
     background: var(--card);
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
-  }
-  .dark .glass {
-    background: oklch(0.25 0.06 262 / 0.65);
-    backdrop-filter: blur(16px) saturate(160%);
-    border: 1px solid oklch(0.78 0.18 232 / 0.25);
   }
 
   .glass-strong {
     background: var(--card);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-md);
   }
+
   .dark .glass-strong {
-    background: oklch(0.22 0.05 262 / 0.85);
-    backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid oklch(0.78 0.18 232 / 0.35);
+    background: oklch(0.16 0.06 255 / 0.6);
+    border: 1px solid oklch(0.78 0.15 232 / 0.25);
   }
 
-  /* NEON TEXT - Uniquement en Dark Mode */
-  .dark .neon-text { text-shadow: 0 0 12px oklch(0.78 0.18 232 / 0.7), 0 0 28px oklch(0.78 0.18 232 / 0.35); }
-  .dark .neon-text-purple { text-shadow: 0 0 12px oklch(0.68 0.15 300 / 0.7), 0 0 28px oklch(0.68 0.15 300 / 0.35); }
-
-  /* GRID BG - Uniquement en Dark Mode */
-  .dark .grid-bg {
-    background-image:
-      linear-gradient(oklch(0.78 0.18 232 / 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, oklch(0.78 0.18 232 / 0.08) 1px, transparent 1px);
-    background-size: 48px 48px;
+  /* GAME UI EFFECTS */
+  .hover-game {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .hover-game:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
   }
 
-  .hover-lift { transition: transform .2s ease, box-shadow .2s ease; }
-  .hover-lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-neon-hover); }
-
-  /* ANIMATIONS - Uniquement en Dark Mode pour le côté "Gaming" */
-  @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 16px oklch(0.78 0.18 232 / 0.4); }
-    50% { box-shadow: 0 0 36px oklch(0.78 0.18 232 / 0.7); }
+  .neon-text {
+    transition: text-shadow 0.3s ease;
   }
-  .dark .animate-pulse-glow { animation: pulse-glow 2.4s ease-in-out infinite; }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
+  .dark .neon-text {
+    text-shadow: 0 0 15px oklch(var(--primary) / 0.6);
   }
-  .animate-float { animation: float 5s ease-in-out infinite; }
-
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
-  .dark .animate-shimmer {
-    background: linear-gradient(90deg, transparent, oklch(0.78 0.18 232 / 0.4), transparent);
-    background-size: 200% 100%;
-    animation: shimmer 2s linear infinite;
+  .light .neon-text {
+    text-shadow: 0 2px 10px oklch(var(--primary) / 0.2);
   }
 
-  .bg-gradient-electric {
-    background: var(--primary);
+  .grid-bg {
+    background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
   }
-  .dark .bg-gradient-electric {
+
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(0.98); }
+  }
+  .animate-pulse-soft { animation: pulse-soft 3s ease-in-out infinite; }
+
+  @keyframes float-game {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    33% { transform: translateY(-10px) rotate(1deg); }
+    66% { transform: translateY(-5px) rotate(-1deg); }
+  }
+  .animate-float-game { animation: float-game 6s ease-in-out infinite; }
+
+  /* Gradient Variants */
+  .bg-gradient-premium {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
   }
-
-  .bg-gradient-purple {
-    background: var(--accent);
-  }
-  .dark .bg-gradient-purple {
-    background: linear-gradient(135deg, var(--accent), oklch(0.50 0.15 320));
+  .bg-gradient-accent {
+    background: linear-gradient(135deg, var(--accent), oklch(0.85 0.20 60));
   }
 }
 
-/* Custom Leaflet Styles for Gaming UI */
-.leaflet-container {
-    background: var(--background) !important;
+/* Scrollbar Style */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb {
+    background: var(--muted);
+    border-radius: 10px;
+    border: 2px solid var(--background);
 }
-
-.leaflet-bar a {
-    background-color: var(--card) !important;
-    color: var(--primary) !important;
-    border-color: var(--border) !important;
-}
-
-.leaflet-bar a:hover {
-    background-color: var(--primary) !important;
-    color: var(--primary-foreground) !important;
-}
-
-.leaflet-popup-content-wrapper, .leaflet-popup-tip {
-    background: var(--card) !important;
-    color: var(--foreground) !important;
-    border: 1px solid var(--border);
-}
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }

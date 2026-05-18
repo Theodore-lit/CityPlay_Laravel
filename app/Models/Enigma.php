@@ -36,6 +36,11 @@ class Enigma extends Model
         return $this->belongsTo(Location::class);
     }
 
+    public function questions()
+    {
+        return $this->hasMany(EnigmaQuestion::class);
+    }
+
     public function responses()
     {
         return $this->hasMany(EnigmaResponse::class);

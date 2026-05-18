@@ -20,11 +20,14 @@ class GameSession extends Model
         'total_coins',
         'total_hearts',
         'current_enigma_id',
+        'current_location_id',
+        'discovery_sequence',
     ];
 
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
+        'discovery_sequence' => 'array',
     ];
 
     public function user()
@@ -45,6 +48,11 @@ class GameSession extends Model
     public function currentEnigma()
     {
         return $this->belongsTo(Enigma::class, 'current_enigma_id');
+    }
+
+    public function currentLocation()
+    {
+        return $this->belongsTo(Location::class, 'current_location_id');
     }
 
     public function enigmaResponses()

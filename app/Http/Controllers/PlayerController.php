@@ -78,8 +78,8 @@ class PlayerController extends Controller
                     return $location->userProgress->where('is_discovered', true)->isNotEmpty();
                 })->count();
 
-                $city->progress_percentage = $totalLocations > 0 
-                    ? round(($discoveredLocations / $totalLocations) * 100) 
+                $city->progress_percentage = $totalLocations > 0
+                    ? round(($discoveredLocations / $totalLocations) * 100)
                     : 0;
                 $city->discovered_count = $discoveredLocations;
                 $city->total_count = $totalLocations;
@@ -131,7 +131,9 @@ class PlayerController extends Controller
     public function submitQuiz(\Illuminate\Http\Request $request, \App\Models\Quiz $quiz)
     {
         $answers = $request->input('answers');
-        
+        $hintsUsed = $request->input('hints_used', 0);
+        $heartsLeft = $request->input('hearts_left', 3);
+
         $score = 0;
         $total = $quiz->questions->count();
 
@@ -258,20 +260,35 @@ class PlayerController extends Controller
             ]);
         }
 
-        $city->load(['locations.enigmas']);
+        // Get current session
+        $session = \App\Models\GameSession::where('user_id', $user->id)
+            ->where('city_id', $city->id)
+            ->where('status', 'in_progress')
+            ->first();
 
-        $locations = $city->locations->map(function ($location) use ($user) {
+        $city->load(['locations.enigmas.questions.options']);
+
+        $locations = $city->locations->map(function ($location) use ($user, $session) {
             $progress = $location->userProgress->where('user_id', $user->id)->first();
-            
+
             $location->is_discovered = $progress ? $progress->is_discovered : false;
             $location->stars = $progress ? $progress->stars : 0;
 
-            if (!$location->is_discovered) {
+            // Determine if this is the current target in the sequence
+            $location->is_current_target = $session && $session->current_location_id == $location->id;
+
+            if (!$location->is_discovered && !$location->is_current_target) {
                 $location->display_name = "???";
                 $location->display_description = "Zone inconnue";
+                $location->status = 'locked'; // Padlock
+            } elseif (!$location->is_discovered && $location->is_current_target) {
+                $location->display_name = "Prochaine destination";
+                $location->display_description = "Résolvez l'énigme pour localiser";
+                $location->status = 'target'; // Question mark
             } else {
                 $location->display_name = $location->name;
                 $location->display_description = $location->description;
+                $location->status = 'discovered';
             }
 
             return $location;
@@ -281,19 +298,112 @@ class PlayerController extends Controller
             'city' => $city,
             'locations' => $locations,
             'gameMode' => session('game_mode', 'aventure'),
+            'currentSession' => $session,
         ]);
+    }
+
+    public function adventureSetup(City $city)
+    {
+        return Inertia::render('Player/AdventureSetup', [
+            'city' => $city,
+            'teams' => auth()->user()->teams()->withCount('members')->get()
+        ]);
+    }
+
+    public function startSoloQuest(Request $request, City $city)
+    {
+        $user = auth()->user();
+        $lat = $request->input('lat');
+        $lng = $request->input('lng');
+
+        $availableLocations = $city->locations()->get()->collect();
+        $sequence = [];
+
+        if ($lat && $lng && $availableLocations->isNotEmpty()) {
+            $currentLat = $lat;
+            $currentLng = $lng;
+
+            while ($availableLocations->isNotEmpty()) {
+                // Trouver le lieu le plus proche de la position actuelle
+                $closest = $availableLocations->sortBy(function ($location) use ($currentLat, $currentLng) {
+                    return $this->calculateDistance($currentLat, $currentLng, $location->latitude, $location->longitude);
+                })->first();
+
+                $sequence[] = $closest->id;
+
+                // Mettre à jour la position actuelle pour le prochain calcul
+                $currentLat = $closest->latitude;
+                $currentLng = $closest->longitude;
+
+                // Retirer le lieu trouvé de la liste des lieux disponibles
+                $availableLocations = $availableLocations->reject(fn($l) => $l->id === $closest->id);
+            }
+        } else {
+            $sequence = $availableLocations->pluck('id')->toArray();
+        }
+
+        // Create or update game session for solo
+        $session = \App\Models\GameSession::updateOrCreate(
+            ['user_id' => $user->id, 'city_id' => $city->id, 'team_id' => null, 'status' => 'in_progress'],
+            [
+                'start_time' => now(),
+                'discovery_sequence' => $sequence,
+                'current_location_id' => $sequence[0] ?? null,
+                'current_enigma_id' => \App\Models\Enigma::where('location_id', $sequence[0] ?? null)
+                    ->where('is_site_specific', false)
+                    ->first()->id ?? null,
+            ]
+        );
+
+        return redirect()->route('player.game', $city->id);
+    }
+
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371000; // meters
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return $earthRadius * $c;
     }
 
     public function unlockLocation(Request $request, \App\Models\Location $location)
     {
         $user = auth()->user();
-        
-        \App\Models\UserLocationProgress::updateOrCreate(
-            ['user_id' => $user->id, 'location_id' => $location->id],
-            ['is_discovered' => true, 'discovered_at' => now()]
-        );
+        $teamId = $request->input('team_id');
 
-        return back()->with('success', 'Lieu débloqué !');
+        $session = \App\Models\GameSession::where('city_id', $location->city_id)
+            ->where('status', 'in_progress');
+
+        if ($teamId) {
+            $session = $session->where('team_id', $teamId);
+        } else {
+            $session = $session->where('user_id', $user->id)->whereNull('team_id');
+        }
+
+        $session = $session->first();
+
+        if ($session) {
+            // Move to site-specific enigma
+            $siteEnigma = $location->enigmas()->where('is_site_specific', true)->first();
+            $session->update([
+                'current_enigma_id' => $siteEnigma->id ?? $session->current_enigma_id
+            ]);
+
+            // Award XP for unlocking
+            $difficulty = $request->input('difficulty', 'easy');
+            $xp = 100;
+            if ($difficulty === 'medium') $xp = 250;
+            if ($difficulty === 'hard') $xp = 500;
+
+            $user->xp += $xp;
+            $user->save();
+        }
+
+        return back()->with('success', 'Lieu localisé ! Allez-y maintenant.');
     }
 
     public function completeLocation(Request $request, \App\Models\Location $location)
@@ -301,19 +411,49 @@ class PlayerController extends Controller
         $user = auth()->user();
         $stars = $request->input('stars', 1);
         $xp = $request->input('xp', 250);
+        $teamId = $request->input('team_id');
 
-        $progress = \App\Models\UserLocationProgress::where('user_id', $user->id)
-            ->where('location_id', $location->id)
-            ->first();
+        // Mark as discovered for the user
+        \App\Models\UserLocationProgress::updateOrCreate(
+            ['user_id' => $user->id, 'location_id' => $location->id],
+            ['is_discovered' => true, 'stars' => max(1, $stars), 'discovered_at' => now()]
+        );
 
-        if ($progress) {
-            $progress->stars = max($progress->stars, $stars);
-            $progress->save();
+        // Advance session to next location in sequence
+        $session = \App\Models\GameSession::where('city_id', $location->city_id)
+            ->where('status', 'in_progress');
+
+        if ($teamId) {
+            $session = $session->where('team_id', $teamId);
+        } else {
+            $session = $session->where('user_id', $user->id)->whereNull('team_id');
+        }
+
+        $session = $session->first();
+
+        if ($session && $session->discovery_sequence) {
+            $sequence = $session->discovery_sequence;
+            $currentIndex = array_search($location->id, $sequence);
+
+            if ($currentIndex !== false && isset($sequence[$currentIndex + 1])) {
+                $nextLocationId = $sequence[$currentIndex + 1];
+                $nextEnigma = \App\Models\Enigma::where('location_id', $nextLocationId)
+                    ->where('is_site_specific', false)
+                    ->first();
+
+                $session->update([
+                    'current_location_id' => $nextLocationId,
+                    'current_enigma_id' => $nextEnigma->id ?? \App\Models\Enigma::where('location_id', $nextLocationId)->first()->id ?? null
+                ]);
+            } else {
+                // End of city!
+                $session->update(['status' => 'completed', 'end_time' => now()]);
+            }
         }
 
         $user->xp += $xp;
         $user->save();
 
-        return back()->with('success', 'Mission terminée !');
+        return back()->with('success', 'Félicitations ! Lieu découvert.');
     }
 }
