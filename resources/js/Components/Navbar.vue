@@ -60,14 +60,14 @@ const isActive = (routeName) => route().current(routeName);
 </script>
 
 <template>
-  <header class="sticky top-0 z-50 glass-strong border-b border-electric/20">
+  <header class="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
     <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
       <Link :href="route('dashboard')" class="flex items-center gap-2 group">
-        <div class="relative h-9 w-9 rounded-lg bg-white/5 border border-electric/20 grid place-items-center shadow-neon">
-          <Compass class="h-5 w-5 text-electric neon-text" />
+        <div class="relative h-9 w-9 rounded-lg bg-primary/10 border border-primary/20 grid place-items-center">
+          <Compass class="h-5 w-5 text-primary neon-text" />
         </div>
-        <div class="font-display font-black tracking-widest text-sm sm:text-base text-white">
-          CITY<span class="text-electric neon-text">PLAY</span>
+        <div class="font-display font-black tracking-widest text-sm sm:text-base text-foreground">
+          CITY<span class="text-primary neon-text">PLAY</span>
         </div>
       </Link>
 
@@ -78,8 +78,8 @@ const isActive = (routeName) => route().current(routeName);
             :class="cn(
               'px-4 py-2 rounded-lg text-sm font-medium tracking-wide transition-colors',
               isActive(l.to)
-                ? 'text-electric bg-electric/10 neon-border'
-                : 'text-muted-foreground hover:text-foreground hover:bg-electric/5'
+                ? 'text-primary bg-primary/10'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             )"
           >
             {{ l.label }}
@@ -90,12 +90,12 @@ const isActive = (routeName) => route().current(routeName);
       <div class="hidden md:block">
         <div class="flex items-center gap-2">
           <template v-if="user">
-            <div class="flex items-center gap-4 mr-4 bg-gaming-dark/50 px-4 py-1.5 rounded-full border border-electric/20">
-              <div class="flex items-center text-yellow-400">
+            <div class="flex items-center gap-4 mr-4 bg-muted px-4 py-1.5 rounded-full border border-border">
+              <div class="flex items-center text-accent neon-text-purple">
                   <span class="text-lg mr-1">🪙</span>
                   <span class="font-bold">{{ user.coins || 0 }}</span>
               </div>
-              <div class="flex items-center text-red-500">
+              <div class="flex items-center text-destructive">
                   <span class="text-lg mr-1">❤️</span>
                   <span class="font-bold">{{ user.hearts || 0 }}</span>
               </div>
@@ -128,11 +128,11 @@ const isActive = (routeName) => route().current(routeName);
     <Modal :show="showLogoutModal" @close="showLogoutModal = false">
         <div class="p-6 bg-gaming-darker border border-electric/20 rounded-3xl overflow-hidden relative">
             <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-            
+
             <div class="relative z-10">
                 <h2 class="font-display text-2xl text-white mb-4">Fin de Session Tactique</h2>
                 <p class="text-muted-foreground text-sm mb-6 leading-relaxed">
-                    Voulez-vous archiver votre compte ? 
+                    Voulez-vous archiver votre compte ?
                     Celui-ci sera désactivé et vous devrez contacter un administrateur pour le réactiver.
                 </p>
 

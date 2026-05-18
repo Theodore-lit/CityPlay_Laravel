@@ -36,7 +36,7 @@ const players = computed(() => {
     <div class="mx-auto max-w-5xl px-4 sm:px-6 py-10 pb-28 md:pb-12">
       <div class="text-center">
         <Trophy class="h-10 w-10 mx-auto text-electric animate-pulse-glow rounded-lg p-1" />
-        <h1 class="font-display text-3xl md:text-5xl mt-3 text-white">Panthéon des <span class="text-electric neon-text">Légendes</span></h1>
+        <h1 class="font-display text-3xl md:text-5xl mt-3 text-foreground">Panthéon des <span class="text-electric neon-text">Légendes</span></h1>
         <p class="mt-2 text-muted-foreground">Affrontez des explorateurs du monde entier.</p>
       </div>
 
@@ -57,20 +57,20 @@ const players = computed(() => {
       <!-- PODIUM -->
       <div class="grid grid-cols-3 gap-3 md:gap-6 mb-8 items-end">
         <template v-for="pos in [1, 0, 2]" :key="pos">
-          <div v-if="players[pos]" 
+          <div v-if="players[pos]"
                :class="cn(
                  'rounded-2xl glass-strong border-2 p-4 md:p-6 flex flex-col items-center text-center',
-                 pos === 0 ? 'text-warning border-warning shadow-[0_0_30px_oklch(0.82_0.17_80/0.5)] h-44 md:h-52' : 
-                 pos === 1 ? 'text-muted-foreground border-muted-foreground/60 h-36 md:h-44' : 
+                 pos === 0 ? 'text-warning border-warning shadow-[0_0_30px_oklch(0.82_0.17_80/0.5)] h-44 md:h-52' :
+                 pos === 1 ? 'text-muted-foreground border-muted-foreground/60 h-36 md:h-44' :
                  'text-purple-neon border-purple-neon shadow-purple h-28 md:h-36'
                )">
             <Crown v-if="pos === 0" class="h-6 w-6 mb-2 animate-float" />
             <Medal v-else class="h-5 w-5 mb-2" />
-            
+
             <div class="h-12 w-12 md:h-16 md:w-16 rounded-full bg-gradient-electric grid place-items-center font-display font-black text-electric-foreground text-xl">
               {{ players[pos].name.charAt(0) }}
             </div>
-            <div class="font-display text-xs md:text-sm mt-2 truncate w-full text-white">{{ players[pos].name }}</div>
+            <div class="font-display text-xs md:text-sm mt-2 truncate w-full text-foreground">{{ players[pos].name }}</div>
             <div class="text-[10px] text-muted-foreground">{{ players[pos].country }}</div>
             <div class="font-display text-sm md:text-base text-electric mt-1">{{ players[pos].xp.toLocaleString() }}</div>
           </div>
@@ -84,7 +84,7 @@ const players = computed(() => {
             {{ p.name.charAt(0) }}
           </div>
           <div class="flex-1 min-w-0">
-            <div class="font-bold text-sm text-white">{{ p.name }} <span class="text-xs">{{ p.country }}</span></div>
+            <div class="font-bold text-sm text-foreground">{{ p.name }} <span class="text-xs">{{ p.country }}</span></div>
             <div class="text-xs text-muted-foreground flex items-center gap-1">
               <Flame class="h-3 w-3 text-warning" />{{ p.streak }} jours de série
             </div>
