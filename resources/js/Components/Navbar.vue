@@ -92,13 +92,20 @@ const isActive = (routeName) => route().current(routeName);
           <template v-if="user">
             <div class="flex items-center gap-4 mr-4 bg-muted px-4 py-1.5 rounded-full border border-border">
               <div class="flex items-center text-accent neon-text-purple">
-                  <span class="text-lg mr-1">🪙</span>
-                  <span class="font-bold">{{ user.coins || 0 }}</span>
+                  <span class="text-lg mr-1">⚡</span>
+                  <span class="font-bold">{{ user.xp || 0 }}</span>
               </div>
-              <div class="flex items-center text-destructive">
+              <button 
+                @click="router.post(route('player.buy.heart'))"
+                class="flex items-center text-destructive hover:scale-110 transition-transform group relative"
+                title="Acheter un cœur (500 XP)"
+              >
                   <span class="text-lg mr-1">❤️</span>
                   <span class="font-bold">{{ user.hearts || 0 }}</span>
-              </div>
+                  <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-gaming-dark text-[10px] text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-white/10 pointer-events-none">
+                    +1 ❤️ (500 XP)
+                  </span>
+              </button>
             </div>
             <button @click="showLogoutModal = true" class="text-muted-foreground hover:text-electric text-sm font-medium">
               Déconnexion

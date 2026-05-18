@@ -15,6 +15,42 @@ class PlayerController extends Controller
         ]);
     }
 
+    /**
+     * Achat d'un cœur avec des XP (1 cœur = 500 XP)
+     */
+    public function buyHeart()
+    {
+        $user = auth()->user();
+        
+        if ($user->xp >= 500) {
+            $user->decrement('xp', 500);
+            $user->increment('hearts', 1);
+            
+            return back()->with('success', 'Cœur acheté avec succès ! ❤️');
+        }
+        
+        return back()->with('error', 'Pas assez d\'XP pour acheter un cœur.');
+    }
+
+    /**
+     * Recommencer un quiz en payant 1 cœur
+     */
+    public function retryQuiz(\App\Models\Quiz $quiz)
+    {
+        $user = auth()->user();
+        
+        if ($user->hearts >= 1) {
+            $user->decrement('hearts', 1);
+            return redirect()
+                ->route('player.quiz', $quiz)
+                ->with('success', 'Quiz réinitialisé ! -1 ❤️');
+        }
+
+        return redirect()
+            ->route('player.quiz', $quiz)
+            ->with('error', 'Vous n\'avez plus de cœurs pour recommencer.');
+    }
+
     public function selectMode(Request $request)
     {
         $request->validate([
@@ -95,28 +131,36 @@ class PlayerController extends Controller
     public function submitQuiz(\Illuminate\Http\Request $request, \App\Models\Quiz $quiz)
     {
         $answers = $request->input('answers');
-        $hintsUsed = $request->input('hints_used', 0);
-        $heartsLeft = $request->input('hearts_left', 3);
         
         $score = 0;
         $total = $quiz->questions->count();
 
         foreach ($quiz->questions as $index => $question) {
-            if (isset($answers[$index]) && $answers[$index] === $question->correct_option) {
+            $userAnswer = $answers[$index] ?? null;
+            if ($userAnswer && (string)$userAnswer === (string)$question->correct_option) {
                 $score++;
             }
         }
 
-        // Calcul des étoiles
-        $stars = 1;
-        if ($score === $total) {
-            $stars = ($hintsUsed === 0) ? 3 : 2;
+        // 1. Règle des étoiles corrigée :
+        // 5/5 -> 3 étoiles
+        // 4/5 -> 2 étoiles
+        // 1, 2 ou 3 -> 1 étoile
+        // 0 -> 0 étoile
+        $stars = 0;
+        if ($score === 5) {
+            $stars = 3;
+        } elseif ($score === 4) {
+            $stars = 2;
+        } elseif ($score >= 1) {
+            $stars = 1;
         }
 
-        $xpEarned = floor(($score / $total) * $quiz->xp_reward);
+        // 2. Calcul des XP : 100 XP par bonne réponse
+        $xpEarned = $score * 100;
 
-        // Si c'est un quiz lié à un lieu, on le débloque
-        if ($quiz->location_id && $score >= floor($total * 0.6)) {
+        // Si c'est un quiz lié à un lieu, on le débloque si le score est suffisant (min 3/5)
+        if ($quiz->location_id && $score >= 3) {
             \App\Models\UserLocationProgress::updateOrCreate(
                 ['user_id' => auth()->id(), 'location_id' => $quiz->location_id],
                 ['is_discovered' => true, 'stars' => max($stars, 1), 'discovered_at' => now()]
@@ -131,12 +175,42 @@ class PlayerController extends Controller
             'xp_earned' => $xpEarned,
         ]);
 
+        // 3. Mise à jour de l'utilisateur : on AJOUTE les XP au total existant
         $user = auth()->user();
-        $user->xp += $xpEarned;
-        $user->hearts = $heartsLeft; // Update user hearts with remaining ones
-        $user->save();
+        $user->increment('xp', $xpEarned);
+        
+        // Note : On ne touche PAS aux cœurs ici. 
+        // Les vies du quiz sont temporaires, les cœurs du compte sont permanents et s'achètent.
 
-        return back()->with('success', "Quiz terminé ! Vous avez gagné $xpEarned XP.");
+        return redirect()
+            ->route('player.quiz.result', $quiz)
+            ->with('success', "Quiz terminé ! Vous avez gagné $xpEarned XP.")
+            ->with('quiz_result', [
+                'score' => $score,
+                'total' => $total,
+                'xp_earned' => $xpEarned,
+                'stars' => $stars,
+                'hints_used' => (int) $request->input('hints_used', 0),
+                'time_left' => (int) $request->input('time_left', 0),
+                'failed' => $request->boolean('failed'),
+            ]);
+    }
+
+    public function quizResult(\App\Models\Quiz $quiz)
+    {
+        $result = session('quiz_result');
+
+        if (!$result) {
+            return redirect()->route('player.quiz', $quiz);
+        }
+
+        $quiz->load('city');
+
+        return Inertia::render('Player/QuizResult', [
+            'quiz' => $quiz->only(['id', 'title', 'category']),
+            'city' => $quiz->city,
+            'result' => $result,
+        ]);
     }
 
     public function game(City $city)
@@ -145,11 +219,42 @@ class PlayerController extends Controller
         $mode = session('game_mode', 'aventure');
 
         if ($mode === 'quiz') {
+            // On récupère tous les quiz de la ville
+            $quizzes = \App\Models\Quiz::where('city_id', $city->id)
+                ->withCount('questions')
+                ->get();
+
+            // On récupère les IDs des quiz déjà réussis par le joueur (score >= 60%)
+            $completedQuizIds = \App\Models\QuizResult::where('user_id', $user->id)
+                ->whereIn('quiz_id', $quizzes->pluck('id'))
+                ->whereRaw('score >= (total_questions * 0.6)')
+                ->pluck('quiz_id')
+                ->toArray();
+
+            // On catégorise les quiz par difficulté
+            $categorizedQuizzes = [
+                'easy' => $quizzes->where('difficulty', 'easy')->values(),
+                'medium' => $quizzes->where('difficulty', 'medium')->values(),
+                'hard' => $quizzes->where('difficulty', 'hard')->values(),
+            ];
+
+            // Logique de déblocage :
+            // Facile est toujours ouvert
+            // Moyen s'ouvre si TOUS les quiz Faciles sont réussis
+            // Difficile s'ouvre si TOUS les quiz Moyens sont réussis
+            
+            $allEasyDone = $categorizedQuizzes['easy']->every(fn($q) => in_array($q->id, $completedQuizIds));
+            $allMediumDone = $categorizedQuizzes['medium']->every(fn($q) => in_array($q->id, $completedQuizIds));
+
             return Inertia::render('Player/QuizLobby', [
                 'city' => $city,
-                'quizzes' => \App\Models\Quiz::where('city_id', $city->id)
-                    ->withCount('questions')
-                    ->get()
+                'quizzes' => $categorizedQuizzes,
+                'completedQuizIds' => $completedQuizIds,
+                'levels' => [
+                    'easy' => ['unlocked' => true, 'label' => 'Facile'],
+                    'medium' => ['unlocked' => $allEasyDone, 'label' => 'Moyen'],
+                    'hard' => ['unlocked' => $allEasyDone && $allMediumDone, 'label' => 'Difficile'],
+                ]
             ]);
         }
 

@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage, router } from '@inertiajs/vue3';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
@@ -29,13 +29,19 @@ const user = page.props.auth.user;
                         <!-- Stats for Players -->
                         <div v-if="user.role === 'joueur'" class="flex items-center space-x-4 bg-gaming-dark/50 px-4 py-1.5 rounded-full border border-gaming-blue/20">
                             <div class="flex items-center text-yellow-400">
-                                <span class="text-lg mr-1">🪙</span>
-                                <span class="font-bold">{{ user.coins }}</span>
+                                <span class="text-lg mr-1">⚡</span>
+                                <span class="font-bold">{{ user.xp || 0 }}</span>
                             </div>
-                            <div class="flex items-center text-red-500">
+                            <button 
+                                @click="router.post(route('player.buy.heart'))"
+                                class="flex items-center text-red-500 hover:scale-110 transition-transform group relative"
+                            >
                                 <span class="text-lg mr-1">❤️</span>
-                                <span class="font-bold">{{ user.hearts }}</span>
-                            </div>
+                                <span class="font-bold">{{ user.hearts || 0 }}</span>
+                                <span class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gaming-dark text-[10px] text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-white/10 pointer-events-none shadow-xl">
+                                    Acheter 1 ❤️ (500 XP)
+                                </span>
+                            </button>
                         </div>
 
                         <!-- Settings Dropdown -->
