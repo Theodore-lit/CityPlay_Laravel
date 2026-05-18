@@ -23,6 +23,7 @@ return new class extends Migration
             $table->integer('radius_meters')->default(50);
             $table->integer('average_time_minutes')->nullable();
             $table->json('images')->nullable();
+            $table->boolean('is_secret')->default(false);
             $table->string('status')->default('active');
             $table->timestamps();
         });

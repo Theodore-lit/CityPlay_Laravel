@@ -71,5 +71,18 @@ class LocationSeeder extends Seeder
             'radius_meters' => 80,
             'status' => 'active',
         ]);
+
+        // Secret Location in Ouidah
+        Location::create([
+            'city_id' => $ouidah->id,
+            'name' => 'Forêt Sacrée de Kpassè',
+            'description' => 'Une forêt mystique où l\'histoire se mêle à la légende du roi Kpassè.',
+            'category' => 'mystere',
+            'latitude' => 6.3662,
+            'longitude' => 2.0833,
+            'radius_meters' => 150,
+            'status' => 'active',
+            'is_secret' => true,
+        ]);
     }
 }

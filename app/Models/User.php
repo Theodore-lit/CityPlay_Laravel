@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'coins', 'hearts', 'avatar'])]
+#[Fillable(['name', 'email', 'password', 'role', 'coins', 'hearts', 'xp', 'level', 'avatar', 'is_active', 'last_activity_at', 'deactivate_on_logout'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -43,5 +43,17 @@ class User extends Authenticatable
     public function gameSessions()
     {
         return $this->hasMany(GameSession::class);
+    }
+
+    public function locationProgress()
+    {
+        return $this->hasMany(UserLocationProgress::class);
+    }
+
+    public function discoveredLocations()
+    {
+        return $this->belongsToMany(Location::class, 'user_location_progress')
+            ->withPivot('stars', 'is_discovered', 'discovered_at')
+            ->withTimestamps();
     }
 }

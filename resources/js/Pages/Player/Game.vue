@@ -1,29 +1,121 @@
 <script setup>
-import GamingLayout from '@/Layouts/GamingLayout.vue';
+import SiteLayout from '@/Layouts/SiteLayout.vue';
+import MobileTabBar from '@/Components/MobileTabBar.vue';
 import MapComponent from '@/Components/MapComponent.vue';
-import { Head } from '@inertiajs/vue3';
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import NeonButton from '@/Components/NeonButton.vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import Modal from '@/Components/Modal.vue';
+import { 
+  MapPin, QrCode, Navigation, Sparkles, Lock, Target, Zap, 
+  ChevronLeft, Star, Heart, Clock, Play, Info, CheckCircle2, Trophy, Brain
+} from 'lucide-vue-next';
+import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
+import { cn } from '@/lib/utils';
 
-/**
- * Page Game : L'interface principale de jeu pour le joueur.
- * Gère la géolocalisation, le calcul de distance et l'affichage des énigmes.
- */
 const props = defineProps({
-    city: Object, // La ville actuelle avec ses lieux et énigmes
+    city: Object,
+    locations: Array,
+    gameMode: String,
 });
 
 // --- États Réactifs ---
-const activeTab = ref('map');           // Onglet actif : 'map' ou 'enigmas'
-const userPosition = ref(null);         // Position GPS de l'utilisateur {lat, lng}
-const distanceToClosest = ref(null);    // Distance formatée (ex: "250m")
-const closestLocation = ref(null);      // Lieu le plus proche de l'utilisateur
-const watchId = ref(null);              // ID du watcher de géolocalisation
-const isNearLocation = ref(false);      // Vrai si le joueur est dans le rayon d'un lieu
+const cityData = computed(() => props.city);
+const activeTab = ref('map');
+const mapRef = ref(null);
+const userPosition = ref(null);
+const distanceToClosest = ref(null);
+const closestLocation = ref(null);
+const watchId = ref(null);
+const isNearLocation = ref(false);
+
+// Nouveaux états pour le gameplay
+const selectedLocation = ref(null);
+const showRiddleModal = ref(false);
+const riddleType = ref(null); // 'unlock' or 'site'
+const selectedDifficulty = ref(null);
+const riddleAnswer = ref('');
+const showSuccessModal = ref(false);
+const earnedStars = ref(0);
+const earnedXp = ref(0);
+const currentRiddle = ref(null);
+const usedHints = ref(0);
+
+const selectLocation = (loc) => {
+    selectedLocation.value = loc;
+    if (!loc.is_discovered) {
+        // Logique de déblocage par énigme
+        riddleType.value = 'unlock';
+        showRiddleModal.value = true;
+    } else {
+        activeTab.value = 'map';
+    }
+};
+
+const startRiddle = (difficulty) => {
+    selectedDifficulty.value = difficulty;
+    // On prend une énigme de la bonne difficulté et non spécifique au site pour débloquer
+    currentRiddle.value = selectedLocation.value.enigmas.find(e => 
+        e.difficulty === difficulty && !e.is_site_specific
+    ) || selectedLocation.value.enigmas[0];
+    
+    riddleAnswer.value = '';
+    usedHints.value = 0;
+};
+
+const submitRiddle = () => {
+    if (riddleAnswer.value.toLowerCase() === currentRiddle.value.answer.toLowerCase()) {
+        if (riddleType.value === 'unlock') {
+            handleUnlockSuccess();
+        } else {
+            handleSiteSuccess();
+        }
+    } else {
+        alert("Réponse incorrecte. Réessayez !");
+    }
+};
+
+const handleUnlockSuccess = () => {
+    // Dans un vrai projet, on ferait un appel API ici
+    router.post(route('player.unlock-location', selectedLocation.value.id), {
+        difficulty: selectedDifficulty.value
+    }, {
+        onSuccess: () => {
+            showRiddleModal.value = false;
+            alert("Lieu débloqué sur la carte ! Direction l'objectif.");
+        }
+    });
+};
+
+const handleSiteSuccess = () => {
+    const stars = 3 - usedHints.value;
+    earnedStars.value = Math.max(1, stars);
+    earnedXp.value = currentRiddle.value.reward_coins * 10; // Exemple
+
+    router.post(route('player.complete-location', selectedLocation.value.id), {
+        stars: earnedStars.value,
+        xp: earnedXp.value
+    }, {
+        onSuccess: () => {
+            showRiddleModal.value = false;
+            showSuccessModal.value = true;
+        }
+    });
+};
 
 /**
- * Calcule la distance entre deux points GPS (Formule de Haversine).
- * @returns {number} Distance en mètres.
+ * Surveille le changement d'onglet pour rafraîchir la carte si elle passe au premier plan
  */
+watch(activeTab, (newTab) => {
+    if (newTab === 'map') {
+        nextTick(() => {
+            // Appel de la méthode exposée du MapComponent pour forcer l'affichage des tuiles
+            if (mapRef.value && typeof mapRef.value.refreshSize === 'function') {
+                mapRef.value.refreshSize();
+            }
+        });
+    }
+});
+
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371e3; // Rayon de la Terre en mètres
     const φ1 = lat1 * Math.PI / 180;
@@ -36,13 +128,12 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
               Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return R * c; 
+    return R * c;
 };
 
-/**
- * Met à jour les distances par rapport à tous les lieux de la ville.
- */
 const updateDistances = (lat, lng) => {
+    if (!props.city || !props.city.locations) return;
+
     let minDistance = Infinity;
     let closest = null;
 
@@ -55,18 +146,13 @@ const updateDistances = (lat, lng) => {
     });
 
     closestLocation.value = closest;
-    // Vérifie si le joueur est entré dans le périmètre autorisé du lieu
-    isNearLocation.value = closest && minDistance <= closest.radius_meters;
+    isNearLocation.value = closest && minDistance <= (closest.radius_meters || 50);
     
-    // Formate la distance pour l'affichage (m ou km)
     distanceToClosest.value = minDistance > 1000 
         ? (minDistance / 1000).toFixed(1) + 'km' 
         : Math.round(minDistance) + 'm';
 };
 
-/**
- * Démarre le suivi GPS de l'utilisateur via l'API Browser.
- */
 const startTracking = () => {
     if ("geolocation" in navigator) {
         watchId.value = navigator.geolocation.watchPosition(
@@ -78,198 +164,304 @@ const startTracking = () => {
             (error) => {
                 console.error("Erreur GPS :", error);
             },
-            { enableHighAccuracy: true } // Utilise le GPS plutôt que le Wi-Fi si possible
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
     }
 };
 
-/**
- * Valide la position du joueur pour débloquer les énigmes du lieu.
- */
 const validatePosition = () => {
-    if (isNearLocation.value) {
-        alert(`Félicitations ! Vous êtes à ${closestLocation.value.name}. Énigme débloquée !`);
-        activeTab.value = 'enigmas';
+    if (isNearLocation.value && closestLocation.value) {
+        selectedLocation.value = closestLocation.value;
+        riddleType.value = 'site';
+        // On sélectionne l'énigme spécifique au site si elle existe
+        currentRiddle.value = selectedLocation.value.enigmas.find(e => e.is_site_specific) || selectedLocation.value.enigmas[0];
+        riddleAnswer.value = '';
+        usedHints.value = 0;
+        showRiddleModal.value = true;
     } else {
         alert("Vous êtes encore trop loin du lieu. Rapprochez-vous !");
     }
 };
 
-// --- Cycle de vie ---
 onMounted(() => {
     startTracking();
+    // Forcer un rafraîchissement initial une fois le layout posé et les animations terminées
+    setTimeout(() => {
+        if (mapRef.value && typeof mapRef.value.refreshSize === 'function') {
+            mapRef.value.refreshSize();
+        }
+    }, 500);
 });
 
 onUnmounted(() => {
     if (watchId.value) navigator.geolocation.clearWatch(watchId.value);
 });
-
-/**
- * Helper pour les classes CSS des onglets mobiles.
- */
-const mobileTabClass = (tab) => [
-    'flex-1 flex flex-col items-center justify-center py-2 text-[10px] font-bold uppercase tracking-tighter transition-all',
-    activeTab.value === tab ? 'text-gaming-blue bg-gaming-blue/10' : 'text-gray-500'
-];
 </script>
 
 <template>
-    <Head :title="city.name" />
+  <Head :title="`${city?.name || 'Aventure'} — Mode Aventure`" />
 
-    <GamingLayout>
-        <div class="h-[calc(100vh-4rem)] flex overflow-hidden">
-            <!-- Sidebar Desktop -->
-            <div class="hidden md:flex w-96 bg-gaming-surface border-r border-gaming-blue/20 flex-col z-10">
-                <div class="p-6 border-b border-gaming-blue/10">
-                    <h2 class="text-2xl font-black text-gaming-blue-light uppercase tracking-tighter">{{ city.name }}</h2>
-                    <p class="text-xs text-gray-500 uppercase tracking-widest mt-1">Exploration en cours</p>
-                </div>
-
-                <!-- Navigation Onglets Desktop -->
-                <div class="flex border-b border-gaming-blue/10">
-                    <button @click="activeTab = 'map'" 
-                            :class="['flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-all', activeTab === 'map' ? 'text-gaming-blue border-b-2 border-gaming-blue bg-gaming-blue/5' : 'text-gray-500 hover:text-gray-300']">
-                        Carte
-                    </button>
-                    <button @click="activeTab = 'enigmas'" 
-                            :class="['flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-all', activeTab === 'enigmas' ? 'text-gaming-green border-b-2 border-gaming-green bg-gaming-green/5' : 'text-gray-500 hover:text-gray-300']">
-                        Énigmes
-                    </button>
-                </div>
-
-                <!-- Liste des Lieux/Énigmes Desktop -->
-                <div class="flex-1 overflow-y-auto p-4 space-y-4">
-                    <div v-if="activeTab === 'map'">
-                        <div class="space-y-4">
-                            <div v-for="location in city.locations" :key="location.id" 
-                                 class="bg-gaming-dark/50 border border-gaming-blue/10 rounded-xl p-4 hover:border-gaming-blue/40 transition-all cursor-pointer group">
-                                <div class="flex justify-between items-start">
-                                    <h4 class="font-bold text-white group-hover:text-gaming-blue-light transition-colors">{{ location.name }}</h4>
-                                    <span class="text-[10px] bg-gaming-blue/20 text-gaming-blue px-1.5 py-0.5 rounded uppercase font-bold">{{ location.category }}</span>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1 line-clamp-1">{{ location.description }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div v-if="activeTab === 'enigmas'">
-                        <div class="space-y-4">
-                            <div v-for="location in city.locations" :key="'loc-'+location.id">
-                                <div v-for="enigma in location.enigmas" :key="enigma.id"
-                                     class="bg-gaming-dark/50 border border-gaming-green/10 rounded-xl p-4 hover:border-gaming-green/40 transition-all cursor-pointer group">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <h4 class="font-bold text-white group-hover:text-gaming-green-light transition-colors">{{ enigma.title }}</h4>
-                                        <span :class="['text-[10px] px-1.5 py-0.5 rounded uppercase font-bold', 
-                                            enigma.difficulty === 'easy' ? 'bg-green-500/20 text-green-500' : 
-                                            enigma.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-red-500/20 text-red-500']">
-                                            {{ enigma.difficulty }}
-                                        </span>
-                                    </div>
-                                    <p class="text-xs text-gray-400 line-clamp-2">{{ enigma.content }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bouton de Validation Desktop -->
-                <div class="p-6 border-t border-gaming-blue/10">
-                    <button @click="validatePosition"
-                            :class="['w-full font-black py-3 rounded-xl uppercase tracking-tighter transition-all transform hover:-translate-y-0.5', 
-                                     isNearLocation ? 'bg-gaming-green shadow-gaming-green text-white' : 'bg-gray-700 text-gray-400 cursor-not-allowed']">
-                        {{ isNearLocation ? 'Valider Position GPS' : 'Approchez-vous d\'un lieu' }}
-                    </button>
-                </div>
+  <SiteLayout hideFooter>
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-6 pb-28 md:pb-12">
+      <div class="grid gap-6 lg:grid-cols-[1fr_360px]">
+        <!-- ZONE CARTE -->
+        <div class="relative h-[60vh] lg:h-[78vh] rounded-3xl glass-strong overflow-hidden border border-electric/20 shadow-neon">
+          <div class="absolute inset-0 z-0">
+            <MapComponent 
+              ref="mapRef" 
+              :locations="locations" 
+              :userPosition="userPosition" 
+            />
+          </div>
+          
+          <!-- Overlay de la carte -->
+          <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-10 pointer-events-none">
+            <div class="glass-strong px-4 py-2 rounded-xl flex items-center gap-2 pointer-events-auto">
+              <Navigation class="h-4 w-4 text-electric animate-pulse" />
+              <span class="text-xs font-display tracking-widest">{{ cityData?.name?.toUpperCase() || 'VILLE' }} • GPS ACTIF</span>
             </div>
+            <button class="h-10 px-4 rounded-xl glass-strong text-xs font-display flex items-center gap-2 hover:text-electric transition-colors pointer-events-auto">
+              <QrCode class="h-4 w-4 text-electric" /> SCANNER QR
+            </button>
+          </div>
 
-            <!-- Vue Principale (Mobile-First) -->
-            <div class="flex-1 relative flex flex-col h-full">
-                <!-- Header Mobile -->
-                <div class="md:hidden bg-gaming-surface border-b border-gaming-blue/20 p-4 flex justify-between items-center shrink-0">
-                    <h2 class="text-lg font-black text-gaming-blue-light uppercase tracking-tighter">{{ city.name }}</h2>
-                    <div class="flex items-center space-x-2 text-xs font-bold uppercase">
-                        <span class="text-gray-500">Distance :</span>
-                        <span class="text-gaming-blue-light">{{ distanceToClosest || '--' }}</span>
+          <!-- Popup de découverte à proximité -->
+          <div v-if="closestLocation" class="absolute bottom-4 left-4 right-4 glass-strong rounded-2xl p-4 animate-fade-up z-10">
+            <div class="flex items-center gap-4">
+              <div :class="cn(
+                'h-14 w-14 rounded-xl grid place-items-center shadow-neon shrink-0 transition-colors',
+                isNearLocation ? 'bg-gradient-electric' : 'bg-gaming-panel border border-electric/20'
+              )">
+                <Sparkles v-if="isNearLocation" class="h-6 w-6 text-electric-foreground" />
+                <Lock v-else class="h-6 w-6 text-electric/40" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[10px] text-electric font-display tracking-widest uppercase">
+                  {{ isNearLocation ? 'LIEU DÉCOUVERT' : 'Lieu le plus proche' }}
+                </div>
+                <div class="font-display text-base truncate">{{ closestLocation.name }}</div>
+                <div class="text-xs text-muted-foreground">{{ distanceToClosest }} • {{ isNearLocation ? 'Énigme disponible' : 'Rapprochez-vous' }}</div>
+              </div>
+              <NeonButton 
+                size="sm" 
+                :variant="isNearLocation ? 'primary' : 'outline'"
+                @click="validatePosition"
+              >
+                {{ isNearLocation ? 'Débloquer' : 'Vérifier' }}
+              </NeonButton>
+            </div>
+          </div>
+        </div>
+
+        <!-- BARRE LATÉRALE -->
+        <aside class="space-y-4">
+          <div class="rounded-2xl glass-strong p-5">
+            <div class="text-xs text-electric font-display tracking-widest uppercase">Quête Actuelle</div>
+            <h2 class="font-display text-xl mt-1">Exploration de {{ cityData?.name }}</h2>
+            <div class="mt-4 h-2 rounded-full bg-gaming-darker overflow-hidden">
+              <div 
+                class="h-full bg-gradient-electric transition-all duration-1000" 
+                :style="{ width: `${(locations.filter(l => l.is_discovered).length / locations.length) * 100}%` }" 
+              />
+            </div>
+            <div class="mt-2 flex justify-between text-xs">
+              <span class="text-muted-foreground">{{ locations.filter(l => l.is_discovered).length }} sur {{ locations.length }} lieux</span>
+              <span class="text-electric">+{{ locations.filter(l => l.is_discovered).length * 250 }} XP</span>
+            </div>
+          </div>
+
+          <!-- LISTE DES LIEUX -->
+          <div class="rounded-2xl glass p-5 max-h-[40vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3 sticky top-0 bg-inherit z-10">
+              <h3 class="font-display text-sm flex items-center gap-2">
+                <Target class="h-4 w-4 text-electric" />VOTRE PROGRESSION
+              </h3>
+            </div>
+            <div class="space-y-3">
+              <div
+                v-for="loc in locations"
+                :key="loc.id"
+                class="flex items-center gap-3 p-2 rounded-xl hover:bg-electric/5 transition cursor-pointer group/loc"
+                @click="selectLocation(loc)"
+              >
+                <div :class="cn(
+                    'h-12 w-12 rounded-lg border flex items-center justify-center shrink-0 transition-colors',
+                    loc.is_discovered ? 'bg-electric/10 border-electric/20' : 'bg-gaming-darker border-white/5'
+                )">
+                  <MapPin v-if="loc.is_discovered" class="h-6 w-6 text-electric" />
+                  <Lock v-else class="h-5 w-5 text-muted-foreground/30" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-bold truncate flex items-center gap-2">
+                    {{ loc.display_name }}
+                    <div v-if="loc.is_discovered" class="flex gap-0.5">
+                        <Star v-for="s in 3" :key="s" :class="cn('h-2.5 w-2.5', s <= (loc.stars || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-white/10')" />
+                    </div>
+                  </div>
+                  <div class="text-[10px] text-muted-foreground uppercase tracking-widest">
+                    {{ loc.is_discovered ? loc.category : 'Zone inconnue' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ÉNIGME ACTIVE -->
+          <div v-if="isNearLocation" class="rounded-2xl glass-strong p-5 animate-fade-up border border-purple-neon/30 shadow-purple">
+            <div class="text-xs text-purple-neon font-display tracking-widest uppercase">Énigme Active</div>
+            <p class="mt-2 text-sm italic text-foreground/90">
+              "Je fais face à la mer, le dos tourné à la douleur ancienne. Compte les marches devant mon arche — quel nombre trouves-tu ?"
+            </p>
+            <input 
+              placeholder="Votre réponse..." 
+              class="mt-4 w-full h-11 rounded-xl bg-gaming-darker/80 border border-purple-neon/40 px-4 text-sm focus:border-purple-neon focus:shadow-purple outline-none transition-all" 
+            />
+            <NeonButton variant="purple" class="w-full mt-3" size="sm">
+              Soumettre la Réponse
+            </NeonButton>
+          </div>
+          <div v-else class="rounded-2xl glass p-5 text-center">
+            <Lock class="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+            <p class="text-xs text-muted-foreground">Atteignez un lieu pour débloquer une énigme</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+    <MobileTabBar />
+
+    <!-- MODAL ÉNIGME -->
+    <Modal :show="showRiddleModal" @close="showRiddleModal = false">
+        <div class="p-8 bg-gaming-darker border border-electric/20 rounded-[2.5rem] overflow-hidden relative max-w-lg mx-auto">
+            <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+            
+            <div class="relative z-10">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <div class="text-[10px] text-electric font-display tracking-widest uppercase mb-1">
+                            {{ riddleType === 'unlock' ? 'DÉBLOCAGE DE ZONE' : 'MISSION SUR SITE' }}
+                        </div>
+                        <h2 class="font-display text-2xl text-white">{{ selectedLocation?.display_name }}</h2>
+                    </div>
+                    <div class="h-12 w-12 rounded-2xl bg-electric/10 border border-electric/20 grid place-items-center text-electric">
+                        <Brain v-if="riddleType === 'unlock'" class="h-6 w-6" />
+                        <MapPin v-else class="h-6 w-6" />
                     </div>
                 </div>
 
-                <!-- Zone d'affichage Contenu Mobile -->
-                <div class="flex-1 relative">
-                    <!-- Vue Carte -->
-                    <div v-show="activeTab === 'map'" class="absolute inset-0">
-                        <MapComponent :locations="city.locations" :userPosition="userPosition" />
-                        
-                        <!-- Bouton Flottant de Validation Mobile -->
-                        <div class="md:hidden absolute bottom-24 right-4 flex flex-col space-y-3 z-10">
-                            <button @click="validatePosition" 
-                                    :class="['w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all', 
-                                             isNearLocation ? 'bg-gaming-green animate-bounce text-white' : 'bg-gaming-surface border border-gaming-blue/30 text-gray-400']">
-                                <span class="text-2xl">✅</span>
-                            </button>
+                <!-- SELECTION DIFFICULTÉ (SEULEMENT POUR DÉBLOCAGE) -->
+                <div v-if="riddleType === 'unlock' && !selectedDifficulty" class="space-y-4">
+                    <p class="text-sm text-muted-foreground mb-6">Choisissez la complexité de l'énigme pour localiser ce lieu sur la carte :</p>
+                    <button 
+                        @click="startRiddle('easy')"
+                        class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-success/40 hover:bg-success/5 transition-all text-left group"
+                    >
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-white group-hover:text-success transition-colors">Niveau Facile</span>
+                            <span class="text-[10px] px-2 py-1 rounded bg-success/20 text-success font-black">LÉGER</span>
                         </div>
-                    </div>
-
-                    <!-- Vue Énigmes Mobile -->
-                    <div v-if="activeTab === 'enigmas'" class="md:hidden absolute inset-0 bg-gaming-dark overflow-y-auto p-4 space-y-4">
-                        <div v-for="location in city.locations" :key="'mloc-'+location.id" class="space-y-3">
-                            <h3 class="text-gaming-blue-light font-black uppercase tracking-widest text-sm border-b border-gaming-blue/10 pb-1">{{ location.name }}</h3>
-                            <div v-for="enigma in location.enigmas" :key="'menig-'+enigma.id"
-                                 class="bg-gaming-surface border border-gaming-green/20 rounded-2xl p-4">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h4 class="font-bold text-white">{{ enigma.title }}</h4>
-                                    <span class="text-[10px] bg-gaming-green/20 text-gaming-green px-1.5 py-0.5 rounded uppercase font-bold">{{ enigma.difficulty }}</span>
-                                </div>
-                                <p class="text-sm text-gray-400 leading-relaxed">{{ enigma.content }}</p>
-                                <div class="mt-4 flex items-center justify-between">
-                                    <div class="flex space-x-3">
-                                        <span class="text-xs text-yellow-400 font-bold">🪙 {{ enigma.reward_coins }}</span>
-                                        <span class="text-xs text-red-500 font-bold">❤️ {{ enigma.reward_hearts }}</span>
-                                    </div>
-                                    <button class="bg-gaming-blue text-white px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest">Répondre</button>
-                                </div>
-                            </div>
+                        <p class="text-[10px] text-muted-foreground mt-1">+100 XP • Localisation immédiate</p>
+                    </button>
+                    <button 
+                        @click="startRiddle('medium')"
+                        class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-warning/40 hover:bg-warning/5 transition-all text-left group"
+                    >
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-white group-hover:text-warning transition-colors">Niveau Moyen</span>
+                            <span class="text-[10px] px-2 py-1 rounded bg-warning/20 text-warning font-black">TACTIQUE</span>
                         </div>
-                    </div>
+                        <p class="text-[10px] text-muted-foreground mt-1">+250 XP • Localisation précise</p>
+                    </button>
+                    <button 
+                        @click="startRiddle('hard')"
+                        class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-destructive/40 hover:bg-destructive/5 transition-all text-left group"
+                    >
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-white group-hover:text-destructive transition-colors">Niveau Difficile</span>
+                            <span class="text-[10px] px-2 py-1 rounded bg-destructive/20 text-destructive font-black">LÉGENDAIRE</span>
+                        </div>
+                        <p class="text-[10px] text-muted-foreground mt-1">+500 XP • Bonus d'exploration</p>
+                    </button>
                 </div>
 
-                <!-- Barre de Navigation Basse Mobile -->
-                <div class="md:hidden bg-gaming-surface border-t border-gaming-blue/20 flex shrink-0">
-                    <button @click="activeTab = 'map'" :class="mobileTabClass('map')">
-                        <span class="text-xl mb-0.5">🗺️</span>
-                        <span>Carte</span>
-                    </button>
-                    <button @click="activeTab = 'enigmas'" :class="mobileTabClass('enigmas')">
-                        <span class="text-xl mb-0.5">🧩</span>
-                        <span>Énigmes</span>
-                    </button>
-                    <button @click="activeTab = 'inventory'" :class="mobileTabClass('inventory')">
-                        <span class="text-xl mb-0.5">🎒</span>
-                        <span>Sac</span>
-                    </button>
+                <!-- L'ÉNIGME -->
+                <div v-else-if="currentRiddle" class="space-y-6 animate-fade-up">
+                    <div v-if="currentRiddle.image_path" class="rounded-2xl overflow-hidden border border-white/10 mb-4 aspect-video bg-gaming-darker">
+                        <img :src="currentRiddle.image_path" class="w-full h-full object-cover" alt="Indice visuel" />
+                    </div>
+
+                    <div class="p-6 rounded-3xl bg-white/5 border border-white/10 italic text-white/90 leading-relaxed relative">
+                        <Info class="absolute -top-3 -right-3 h-8 w-8 text-electric/20" />
+                        "{{ currentRiddle.content }}"
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black mb-2 block">VOTRE RÉPONSE</label>
+                        <input 
+                            v-model="riddleAnswer"
+                            @keyup.enter="submitRiddle"
+                            placeholder="Saisissez la solution..."
+                            class="w-full h-14 rounded-2xl bg-gaming-darker border border-electric/30 px-6 text-white placeholder:text-muted-foreground/40 focus:border-electric focus:ring-4 focus:ring-electric/10 outline-none transition-all font-display"
+                        />
+                    </div>
+
+                    <div class="flex gap-3">
+                        <NeonButton variant="outline" class="flex-1" @click="usedHints++" :disabled="usedHints >= 2">
+                            Indice ({{ 2 - usedHints }})
+                        </NeonButton>
+                        <NeonButton class="flex-1" @click="submitRiddle">
+                            Soumettre
+                        </NeonButton>
+                    </div>
+                    
+                    <p v-if="usedHints > 0" class="text-xs text-warning animate-pulse bg-warning/5 p-3 rounded-xl border border-warning/20">
+                        💡 {{ currentRiddle.indices?.[usedHints - 1] || 'Observez bien les détails historiques.' }}
+                    </p>
                 </div>
             </div>
         </div>
-    </GamingLayout>
+    </Modal>
+
+    <!-- MODAL SUCCÈS -->
+    <Modal :show="showSuccessModal" @close="showSuccessModal = false">
+        <div class="p-10 bg-gaming-darker border border-electric/20 rounded-[3rem] overflow-hidden relative text-center max-w-sm mx-auto">
+            <div class="absolute inset-0 bg-gradient-to-b from-electric/10 to-transparent pointer-events-none" />
+            
+            <div class="relative z-10">
+                <div class="h-24 w-24 rounded-3xl bg-gradient-electric mx-auto grid place-items-center shadow-neon mb-6 animate-bounce">
+                    <Trophy class="h-12 w-12 text-white" />
+                </div>
+                
+                <h2 class="font-display text-3xl text-white mb-2">MISSION RÉUSSIE !</h2>
+                <p class="text-muted-foreground text-sm mb-8">Vous avez percé les mystères de ce lieu.</p>
+
+                <div class="flex justify-center gap-2 mb-8">
+                    <Star 
+                        v-for="s in 3" 
+                        :key="s" 
+                        :class="cn(
+                            'h-10 w-10 transition-all duration-700', 
+                            s <= earnedStars ? 'text-yellow-400 fill-yellow-400 scale-110' : 'text-white/5'
+                        )"
+                        :style="{ transitionDelay: `${s * 200}ms` }"
+                    />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                        <div class="text-[10px] text-muted-foreground uppercase mb-1">XP GAGNÉS</div>
+                        <div class="text-xl font-display text-electric">+{{ earnedXp }}</div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                        <div class="text-[10px] text-muted-foreground uppercase mb-1">STATUT</div>
+                        <div class="text-xl font-display text-success">EXPERT</div>
+                    </div>
+                </div>
+
+                <NeonButton class="w-full" @click="showSuccessModal = false">
+                    Continuer l'Exploration
+                </NeonButton>
+            </div>
+        </div>
+    </Modal>
+  </SiteLayout>
 </template>
-
-<style scoped>
-:deep(main) {
-    height: calc(100vh - 4rem);
-    overflow: hidden;
-}
-
-/* Scrollbar Personnalisée Style Gaming */
-::-webkit-scrollbar {
-    width: 4px;
-}
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-::-webkit-scrollbar-thumb {
-    background: rgba(37, 99, 235, 0.2);
-    border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(37, 99, 235, 0.4);
-}
-</style>

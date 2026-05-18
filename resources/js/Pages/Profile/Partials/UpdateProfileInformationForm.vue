@@ -19,18 +19,19 @@ const user = usePage().props.auth.user;
 const form = useForm({
     name: user.name,
     email: user.email,
+    deactivate_on_logout: user.deactivate_on_logout,
 });
 </script>
 
 <template>
     <section>
         <header>
-            <h2 class="text-lg font-medium text-gray-900">
-                Profile Information
+            <h2 class="text-lg font-medium text-white">
+                Informations du Profil
             </h2>
 
-            <p class="mt-1 text-sm text-gray-600">
-                Update your account's profile information and email address.
+            <p class="mt-1 text-sm text-muted-foreground">
+                Mettez à jour les informations de votre compte et votre adresse email.
             </p>
         </header>
 
@@ -39,12 +40,12 @@ const form = useForm({
             class="mt-6 space-y-6"
         >
             <div>
-                <InputLabel for="name" value="Name" />
+                <InputLabel for="name" value="Nom" class="text-white" />
 
                 <TextInput
                     id="name"
                     type="text"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full bg-gaming-darker border-white/10 text-white focus:border-electric"
                     v-model="form.name"
                     required
                     autofocus
@@ -55,12 +56,12 @@ const form = useForm({
             </div>
 
             <div>
-                <InputLabel for="email" value="Email" />
+                <InputLabel for="email" value="Email" class="text-white" />
 
                 <TextInput
                     id="email"
                     type="email"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full bg-gaming-darker border-white/10 text-white focus:border-electric"
                     v-model="form.email"
                     required
                     autocomplete="username"
@@ -69,29 +70,47 @@ const form = useForm({
                 <InputError class="mt-2" :message="form.errors.email" />
             </div>
 
+            <div class="space-y-4 border-t border-white/5 pt-6">
+                <h3 class="text-sm font-bold text-electric uppercase tracking-widest">Paramètres de Sécurité Tactique</h3>
+                <div class="flex items-start gap-3">
+                    <div class="flex items-center h-5">
+                        <input
+                            id="deactivate_on_logout"
+                            type="checkbox"
+                            v-model="form.deactivate_on_logout"
+                            class="rounded bg-gaming-darker border-electric/30 text-electric shadow-sm focus:ring-electric"
+                        />
+                    </div>
+                    <div class="text-sm">
+                        <label for="deactivate_on_logout" class="font-medium text-white">Désactiver mon compte lors de la déconnexion</label>
+                        <p class="text-muted-foreground text-xs">Si activé, votre compte sera invisible jusqu'à votre prochaine connexion. Sinon, la règle de désactivation après 12 mois d'inactivité s'appliquera.</p>
+                    </div>
+                </div>
+            </div>
+
             <div v-if="mustVerifyEmail && user.email_verified_at === null">
-                <p class="mt-2 text-sm text-gray-800">
-                    Your email address is unverified.
+                <p class="mt-2 text-sm text-gray-200">
+                    Votre adresse email n'est pas vérifiée.
                     <Link
                         :href="route('verification.send')"
                         method="post"
                         as="button"
-                        class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        class="rounded-md text-sm text-electric underline hover:text-electric/80 focus:outline-none focus:ring-2 focus:ring-electric"
                     >
-                        Click here to re-send the verification email.
+                        Cliquez ici pour renvoyer l'email de vérification.
                     </Link>
                 </p>
 
                 <div
                     v-show="status === 'verification-link-sent'"
-                    class="mt-2 text-sm font-medium text-green-600"
+                    class="mt-2 text-sm font-medium text-success"
                 >
-                    A new verification link has been sent to your email address.
+                    Un nouveau lien de vérification a été envoyé à votre adresse email.
                 </div>
             </div>
 
             <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
+                <PrimaryButton :disabled="form.processing" class="bg-electric hover:bg-electric/80 text-black font-bold">Enregistrer</PrimaryButton>
 
                 <Transition
                     enter-active-class="transition ease-in-out"
@@ -101,9 +120,9 @@ const form = useForm({
                 >
                     <p
                         v-if="form.recentlySuccessful"
-                        class="text-sm text-gray-600"
+                        class="text-sm text-muted-foreground"
                     >
-                        Saved.
+                        Enregistré.
                     </p>
                 </Transition>
             </div>
