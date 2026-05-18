@@ -7,6 +7,7 @@ import {
   Trophy, Zap, MapPin, Target, Award, Flame, ArrowRight, Crown, Sparkles, Heart,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { cn } from '@/lib/utils';
 
 // Import images if needed, or use city.image_path
 import ouidahImg from '../../../images/city-ouidah.jpg';
@@ -24,9 +25,9 @@ const xpMax = 4000;
 const pct = (xp / xpMax) * 100;
 
 const stats = [
-  { icon: Trophy, label: 'Missions', value: '47', color: 'text-electric' },
-  { icon: Zap, label: 'Total XP', value: '12,840', color: 'text-cyan-neon' },
-  { icon: MapPin, label: 'Villes', value: '4 / 5', color: 'text-purple-neon' },
+  { icon: Trophy, label: 'Missions', value: '47', color: 'text-primary' },
+  { icon: Zap, label: 'Total XP', value: '12,840', color: 'text-secondary' },
+  { icon: MapPin, label: 'Villes', value: '4 / 5', color: 'text-accent' },
   { icon: Flame, label: 'Série', value: '32j', color: 'text-warning' },
 ];
 
@@ -41,42 +42,41 @@ const achievements = [
   <Head title="Tableau de bord — CityPlay" />
 
   <SiteLayout>
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-8 pb-28 md:pb-12">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-6 pb-28 md:pb-12">
       <!-- PROFILE HERO -->
-      <div class="relative overflow-hidden rounded-3xl glass-strong p-6 md:p-10">
-        <div class="absolute inset-0 grid-bg opacity-20" />
-        <div class="absolute -top-20 -right-10 h-72 w-72 rounded-full bg-electric/30 blur-3xl" />
-        <div class="relative flex flex-col md:flex-row md:items-center gap-6">
-          <div class="relative">
-            <div class="h-24 w-24 md:h-28 md:w-28 rounded-2xl bg-gradient-electric grid place-items-center font-display text-4xl font-black text-electric-foreground shadow-neon animate-pulse-glow">
+      <div class="relative overflow-hidden rounded-[2rem] glass-strong p-5 md:p-8 hover-game border-white/20">
+        <div class="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
+        <div class="absolute -top-20 -right-10 h-64 w-64 rounded-full bg-primary/15 blur-3xl animate-pulse-soft" />
+        <div class="relative flex flex-col md:flex-row md:items-center gap-5">
+          <div class="relative group shrink-0">
+            <div class="h-20 w-20 md:h-24 md:w-24 rounded-2xl bg-gradient-premium grid place-items-center font-display text-3xl font-black text-white shadow-lg animate-float-game">
               {{ user.name.substring(0, 2).toUpperCase() }}
             </div>
-            <div class="absolute -bottom-2 -right-2 px-2 py-1 rounded-lg bg-purple-neon text-xs font-display font-black shadow-purple">
+            <div class="absolute -bottom-2 -right-1 px-2 py-1 rounded-lg bg-accent text-white text-[8px] font-display font-black shadow-purple uppercase tracking-widest border border-white/20">
               LVL 24
             </div>
           </div>
-          <div class="flex-1">
-            <div class="text-xs text-electric uppercase tracking-widest font-bold">Explorateur Mythique</div>
-            <h1 class="font-display text-3xl md:text-4xl mt-1">{{ user.name }}</h1>
-            <p class="text-muted-foreground text-sm mt-1">Bénin • Membre depuis 2024 • 32 jours de série 🔥</p>
-            <div class="mt-5">
-              <div class="flex justify-between text-xs mb-2">
-                <span class="text-muted-foreground">Progression XP</span>
-                <span class="text-electric font-bold">{{ xp }} / {{ xpMax }} XP</span>
+          <div class="flex-1 min-w-0">
+            <div class="text-[9px] text-primary uppercase tracking-[0.3em] font-black animate-pulse">Explorateur Mythique</div>
+            <h1 class="font-display text-2xl md:text-4xl mt-0.5 neon-text truncate">{{ user.name }}</h1>
+            <div class="mt-4">
+              <div class="flex justify-between text-[9px] uppercase tracking-widest font-black mb-1.5">
+                <span class="text-muted-foreground">Progression</span>
+                <span class="text-primary">{{ xp }} / {{ xpMax }} XP</span>
               </div>
-              <div class="h-3 rounded-full bg-gaming-darker overflow-hidden border border-electric/30">
+              <div class="h-2.5 rounded-full bg-muted/40 overflow-hidden border border-white/10">
                 <div
-                  class="h-full bg-gradient-electric relative overflow-hidden"
+                  class="h-full bg-gradient-premium rounded-full transition-all duration-1000 relative"
                   :style="{ width: `${pct}%` }"
                 >
-                  <div class="absolute inset-0 animate-shimmer" />
+                    <div class="absolute inset-0 bg-white/20 animate-shimmer" />
                 </div>
               </div>
             </div>
           </div>
           <div class="hidden md:block">
-            <NeonButton :href="route('player.modes')">
-              Continuer <ArrowRight class="h-4 w-4" />
+            <NeonButton :href="route('player.modes')" size="md" class="rounded-xl px-6">
+              JOUER <ArrowRight class="h-4 w-4" />
             </NeonButton>
           </div>
         </div>
@@ -84,10 +84,16 @@ const achievements = [
 
       <!-- STATS -->
       <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div v-for="s in stats" :key="s.label" class="rounded-2xl p-5 glass hover-lift">
-          <component :is="s.icon" :class="`h-6 w-6 ${s.color}`" />
-          <div class="mt-3 font-display text-2xl md:text-3xl">{{ s.value }}</div>
-          <div class="text-xs uppercase tracking-widest text-muted-foreground mt-1">{{ s.label }}</div>
+        <div v-for="s in stats" :key="s.label" class="rounded-2xl p-4 glass hover-game group border-white/10">
+          <div class="flex items-center gap-3">
+              <div :class="cn('h-10 w-10 rounded-xl bg-white/40 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform shrink-0', s.color)">
+                <component :is="s.icon" class="h-5 w-5" />
+              </div>
+              <div>
+                  <div class="font-display text-xl font-black">{{ s.value }}</div>
+                  <div class="text-[8px] uppercase tracking-widest text-muted-foreground font-black">{{ s.label }}</div>
+              </div>
+          </div>
         </div>
       </div>
 
@@ -95,34 +101,34 @@ const achievements = [
         <!-- VILLES DISPONIBLES -->
         <div class="lg:col-span-2 space-y-4">
           <div class="flex items-center justify-between">
-            <h2 class="font-display text-lg flex items-center gap-2">
-              <MapPin class="h-5 w-5 text-electric" />Villes à Explorer
+            <h2 class="font-display text-base flex items-center gap-2 uppercase tracking-tight">
+              <MapPin class="h-4 w-4 text-primary" />Objectifs de mission
             </h2>
           </div>
-          
-          <div class="grid gap-6 sm:grid-cols-2">
+
+          <div class="grid gap-4 sm:grid-cols-2">
             <Link
               v-for="city in cities"
               :key="city.id"
               :href="route('player.game', city.id)"
-              class="block rounded-2xl glass hover-lift overflow-hidden group"
+              class="block rounded-[1.5rem] glass hover-game overflow-hidden group border-white/10"
             >
-              <div class="relative h-48">
-                <img v-if="city.image_path" :src="city.image_path" class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                <div v-else class="absolute inset-0 bg-gradient-to-br from-electric/20 to-purple-neon/20 flex items-center justify-center">
-                  <MapPin class="h-12 w-12 text-electric/40" />
+              <div class="relative h-44">
+                <img v-if="city.image_path" :src="city.image_path" class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                <div v-else class="absolute inset-0 bg-gradient-premium opacity-10 flex items-center justify-center">
+                  <MapPin class="h-10 w-10 text-primary/30" />
                 </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-gaming-darker via-transparent to-transparent" />
-                <div class="absolute bottom-4 left-4">
-                  <h3 class="font-display text-xl text-white">{{ city.name }}</h3>
-                  <div class="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                    <span class="text-electric font-bold">{{ city.locations_count || 0 }} Lieux</span>
+                <div class="absolute inset-0 bg-gradient-to-t from-background via-background/10 to-transparent" />
+                <div class="absolute bottom-4 left-5 right-4">
+                  <h3 class="font-display text-lg text-foreground neon-text uppercase tracking-tight">{{ city.name }}</h3>
+                  <div class="flex items-center gap-2 text-[9px] text-muted-foreground font-bold mt-1 uppercase tracking-widest">
+                    <span class="text-primary">{{ city.locations_count || 0 }} Objectifs</span>
                     <span>•</span>
-                    <span>Active</span>
+                    <span>Disponible</span>
                   </div>
                 </div>
-                <div class="absolute top-4 right-4 h-10 w-10 rounded-full bg-electric/20 backdrop-blur-sm border border-electric/30 grid place-items-center text-electric group-hover:bg-electric group-hover:text-electric-foreground transition-colors">
-                  <ArrowRight class="h-5 w-5" />
+                <div class="absolute top-4 right-4 h-9 w-9 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 grid place-items-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+                  <ArrowRight class="h-4 w-4" />
                 </div>
               </div>
             </Link>
@@ -132,21 +138,23 @@ const achievements = [
         <!-- ACHIEVEMENTS -->
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <h2 class="font-display text-lg flex items-center gap-2">
-              <Award class="h-5 w-5 text-electric" />Succès
+            <h2 class="font-display text-base flex items-center gap-2 uppercase tracking-tight">
+              <Award class="h-4 w-4 text-primary" />Succès
             </h2>
-            <Link :href="route('player.rewards')" class="text-xs text-electric hover:underline flex items-center gap-1">Voir tout <ArrowRight class="h-3 w-3" /></Link>
+            <Link :href="route('player.rewards')" class="text-[10px] text-primary font-black uppercase tracking-widest hover:underline flex items-center gap-1">Détails <ArrowRight class="h-2.5 w-2.5" /></Link>
           </div>
-          <div class="rounded-2xl glass p-5 space-y-4">
-            <div v-for="a in achievements" :key="a.name" class="flex items-center gap-4">
-              <div :class="`h-12 w-12 rounded-xl grid place-items-center ${a.rare ? 'bg-purple-neon/20 border border-purple-neon shadow-purple' : 'bg-electric/10 border border-electric/30'}`">
-                <component :is="a.icon" :class="`h-5 w-5 ${a.rare ? 'text-purple-neon' : 'text-electric'}`" />
+          <div class="rounded-[1.5rem] glass-strong p-5 space-y-4 border-white/10">
+            <div v-for="a in achievements" :key="a.name" class="flex items-center gap-3 group">
+              <div :class="cn(
+                'h-11 w-11 rounded-xl grid place-items-center border transition-all duration-300 group-hover:scale-110 shrink-0',
+                a.rare ? 'bg-accent/10 border-accent shadow-purple' : 'bg-primary/10 border-primary/20 shadow-sm'
+              )">
+                <component :is="a.icon" :class="cn('h-5 w-5', a.rare ? 'text-accent' : 'text-primary')" />
               </div>
               <div class="flex-1 min-w-0">
-                <div class="font-bold text-sm truncate">{{ a.name }}</div>
-                <div class="text-xs text-muted-foreground truncate">{{ a.desc }}</div>
+                <div class="font-display font-black text-xs truncate uppercase tracking-tight">{{ a.name }}</div>
+                <div class="text-[8px] text-muted-foreground truncate uppercase tracking-[0.1em] font-bold">{{ a.desc }}</div>
               </div>
-              <div v-if="a.rare" class="text-[10px] text-purple-neon font-display font-black tracking-widest">RARE</div>
             </div>
           </div>
         </div>

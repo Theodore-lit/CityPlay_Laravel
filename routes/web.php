@@ -37,6 +37,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/quiz/{quiz?}', [PlayerController::class, 'quiz'])->name('player.quiz');
     Route::post('/quiz/{quiz}/submit', [PlayerController::class, 'submitQuiz'])->name('player.quiz.submit');
     Route::get('/player/game/{city}', [PlayerController::class, 'game'])->name('player.game');
+    Route::get('/player/adventure/setup/{city}', [PlayerController::class, 'adventureSetup'])->name('player.adventure.setup');
+    Route::post('/player/adventure/solo/{city}', [PlayerController::class, 'startSoloQuest'])->name('player.adventure.solo');
     Route::post('/player/location/{location}/unlock', [PlayerController::class, 'unlockLocation'])->name('player.unlock-location');
     Route::post('/player/location/{location}/complete', [PlayerController::class, 'completeLocation'])->name('player.complete-location');
 
@@ -52,19 +54,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/admin/mairie-city', [AdminController::class, 'storeMairieWithCity'])->name('admin.mairie-city.store');
     Route::patch('/admin/users/{user}/toggle', [AdminController::class, 'toggleUserStatus'])->name('admin.users.toggle');
     Route::get('/admin/cities', [MairieController::class, 'dashboard'])->name('admin.cities');
-    
+
     Route::get('/admin/cities/{city}/quizzes', [AdminController::class, 'cityQuizzes'])->name('admin.cities.quizzes');
     Route::post('/admin/cities/{city}/quizzes', [AdminController::class, 'storeQuiz'])->name('admin.quizzes.store');
     Route::delete('/admin/quizzes/{quiz}', [AdminController::class, 'deleteQuiz'])->name('admin.quizzes.delete');
-    
+
     Route::post('/admin/quizzes/{quiz}/questions', [AdminController::class, 'storeQuestion'])->name('admin.questions.store');
     Route::delete('/admin/questions/{question}', [AdminController::class, 'deleteQuestion'])->name('admin.questions.delete');
-    
+
     // Mairie Routes
     Route::get('/mairie', [MairieController::class, 'dashboard'])->name('mairie.dashboard');
     Route::post('/mairie/cities', [MairieController::class, 'storeCity'])->name('mairie.cities.store');
     Route::get('/mairie/city/{city}', [MairieController::class, 'showCity'])->name('mairie.cities.show');
     Route::post('/mairie/city/{city}/location', [MairieController::class, 'storeLocation'])->name('mairie.locations.store');
+    Route::post('/mairie/location/{location}/update', [MairieController::class, 'updateLocation'])->name('mairie.locations.update');
     Route::post('/mairie/location/{location}/enigma', [MairieController::class, 'storeEnigma'])->name('mairie.enigmas.store');
     Route::post('/mairie/location/{location}/image', [MairieController::class, 'storeLocationImage'])->name('mairie.locations.image');
     Route::patch('/mairie/city/{city}/toggle', [MairieController::class, 'toggleStatus'])->name('mairie.city.toggle');
