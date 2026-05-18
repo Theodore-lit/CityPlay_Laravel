@@ -11,6 +11,7 @@ class Question extends Model
         'question_text',
         'options',
         'correct_option',
+        'hint',
         'explanation',
     ];
 

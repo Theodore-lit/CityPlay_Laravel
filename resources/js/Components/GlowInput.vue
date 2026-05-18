@@ -43,7 +43,7 @@ defineExpose({ focus: () => input.value.focus() });
                 v-bind="$attrs"
                 :placeholder="placeholder"
                 :required="required"
-                class="w-full h-12 rounded-xl bg-gaming-darker/80 border border-electric/30 px-4 text-sm text-white placeholder:text-muted-foreground/40 outline-none focus:border-electric focus:shadow-neon transition-all duration-300"
+                class="w-full h-12 rounded-xl bg-gaming-darker border border-electric/30 px-4 text-sm text-white placeholder:text-muted-foreground/40 outline-none focus:border-electric focus:shadow-neon transition-all duration-300"
                 :class="{ 'border-destructive focus:border-destructive focus:shadow-[0_0_15px_oklch(0.62_0.24_25/0.5)]': error }"
             />
         </div>

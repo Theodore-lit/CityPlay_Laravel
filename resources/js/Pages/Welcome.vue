@@ -15,21 +15,22 @@ import abomey from '../../images/city-abomey.jpg';
 defineProps({
     canLogin: Boolean,
     canRegister: Boolean,
+    auth: Object,
 });
 
 const stats = [
-  { v: '12K+', l: 'Explorateurs Actifs' },
+  { v: '12K+', l: 'Explorateurs' },
   { v: '48', l: 'Missions' },
-  { v: '5', l: 'Villes Légendaires' },
+  { v: '5', l: 'Villes' },
 ];
 
 const features = [
-  { icon: MapPin, title: 'Mode Aventure GPS', desc: 'Missions réelles basées sur le GPS. Marchez, explorez, découvrez. La ville est votre terrain de jeu.' },
-  { icon: Zap, title: 'Système XP & Niveaux', desc: 'Gagnez de l\'expérience pour chaque quiz, énigme et découverte. Grimpez les échelons.' },
-  { icon: QrCode, title: 'Chasse aux QR Codes', desc: 'Scannez des codes cachés sur les monuments, débloquez des secrets et des récompenses rares.' },
-  { icon: Trophy, title: 'Classements Mondiaux', desc: 'Affrontez des explorateurs du monde entier chaque semaine. Gloire et trophées vous attendent.' },
-  { icon: Shield, title: 'Patrimoine Authentique', desc: 'Chaque mission est co-conçue avec des historiens locaux pour découvrir le vrai Bénin.' },
-  { icon: Sparkles, title: 'Visuels Cinématiques', desc: 'Animations immersives, bandes-son dynamiques et interface futuriste pour l\'aventure.' },
+  { icon: MapPin, title: 'Mode Aventure GPS', desc: 'Missions réelles basées sur le GPS. Marchez, explorez et découvrez votre terrain de jeu.' },
+  { icon: Zap, title: 'Système XP & Niveaux', desc: 'Gagnez de l\'expérience pour chaque quiz et énigme. Grimpez les échelons.' },
+  { icon: QrCode, title: 'Chasse aux QR Codes', desc: 'Scannez des codes cachés sur les monuments pour débloquer des secrets rares.' },
+  { icon: Trophy, title: 'Classements Mondiaux', desc: 'Affrontez des explorateurs du monde entier. Gloire et trophées vous attendent.' },
+  { icon: Shield, title: 'Patrimoine Authentique', desc: 'Des missions co-conçues avec des historiens pour découvrir le vrai Bénin.' },
+  { icon: Sparkles, title: 'Visuels Cinématiques', desc: 'Animations immersives et interface futuriste pour une aventure totale.' },
 ];
 
 const cities = [
@@ -39,9 +40,9 @@ const cities = [
 ];
 
 const testimonials = [
-  { name: 'Aïcha K.', role: 'Exploratrice Niveau 32', text: 'Parcourir Ouidah en résolvant des énigmes était comme vivre un film. J\'ai appris plus en un week-end qu\'avec n\'importe quel guide.' },
-  { name: 'Marc T.', role: 'Passionné de Patrimoine', text: 'Le Mode Aventure est génial. La chasse aux QR au palais royal m\'a littéralement donné des frissons.' },
-  { name: 'Fatou D.', role: 'Voyageuse Solo', text: 'Design premium, contenu profond. Je suis venue pour le jeu, je suis restée pour le Bénin.' },
+  { name: 'Aïcha K.', role: 'Niveau 32', text: 'Parcourir Ouidah en résolvant des énigmes était comme vivre un film.' },
+  { name: 'Marc T.', role: 'Passionné', text: 'Le Mode Aventure est génial. La chasse aux QR codes est addictive.' },
+  { name: 'Fatou D.', role: 'Voyageuse', text: 'Design premium, contenu profond. Une vraie découverte du pays.' },
 ];
 </script>
 
@@ -49,84 +50,82 @@ const testimonials = [
   <Head title="CityPlay — Découvrez le Bénin par l'Aventure" />
 
   <SiteLayout>
-    <!-- HERO -->
-    <section class="relative min-h-[92vh] overflow-hidden">
+    <section class="relative min-h-[85vh] overflow-hidden flex items-center">
       <div class="absolute inset-0">
-        <img :src="heroImg" alt="Cinematic Benin skyline" class="h-full w-full object-cover opacity-50" />
-        <div class="absolute inset-0 bg-gradient-to-b from-gaming-darker/40 via-gaming-darker/70 to-gaming-darker" />
-        <div class="absolute inset-0 grid-bg opacity-30" />
+        <img :src="heroImg" alt="Cinematic Benin skyline" class="h-full w-full object-cover opacity-40" />
+        <div class="absolute inset-0 bg-gradient-to-b from-gaming-darker/60 via-gaming-darker/80 to-gaming-darker" />
+        <div class="absolute inset-0 grid-bg opacity-20" />
       </div>
-      <div class="relative mx-auto max-w-7xl px-6 pt-20 pb-24 md:pt-32 md:pb-40">
+      
+      <div class="relative mx-auto max-w-7xl px-6 w-full">
         <div class="max-w-3xl animate-fade-up">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs font-medium text-electric">
-            <Sparkles class="h-3.5 w-3.5" /> Saison 01 — L'Éveil
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-[10px] uppercase tracking-wider font-bold text-electric/80">
+            <Sparkles class="h-3 w-3" /> Saison 01 — L'Éveil
           </div>
-          <h1 class="mt-6 font-display text-5xl md:text-7xl lg:text-8xl font-black leading-[0.95]">
+          <h1 class="mt-4 font-display text-4xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight">
             Explorez le Bénin
-            <span class="block text-electric neon-text">Comme une Légende.</span>
+            <span class="block text-electric/90">Comme une Légende.</span>
           </h1>
-          <p class="mt-6 max-w-xl text-base md:text-lg text-muted-foreground">
-            Un jeu d'aventure touristique cinématique. Résolvez des énigmes dans les anciens palais royaux,
-            chassez des reliques dans les marchés vibrants et devenez l'ultime explorateur.
+          <p class="mt-4 max-w-lg text-sm md:text-base text-muted-foreground/80 leading-relaxed">
+            Un jeu d'aventure touristique cinématique. Résolvez des énigmes dans les palais royaux et devenez l'ultime explorateur.
           </p>
-          <div class="mt-10 flex flex-wrap gap-4">
-            <NeonButton :href="route('register')" size="lg">
-              Commencer l'Aventure <ArrowRight class="h-4 w-4" />
+          
+          <div class="mt-8 flex flex-wrap gap-4">
+            <NeonButton :href="auth.user ? route('player.modes') : route('register')" size="lg" class="shadow-lg shadow-electric/20">
+              Explorer le Bénin <ArrowRight class="ml-2 h-4 w-4" />
             </NeonButton>
-            <NeonButton :href="route('player.modes')" variant="outline" size="lg">
-              <Gamepad2 class="h-4 w-4" /> Voir la Démo
+            <NeonButton :href="route('player.cities')" variant="outline" size="lg" class="border-electric/30 text-electric/90">
+              <Compass class="mr-2 h-4 w-4" /> Destinations
             </NeonButton>
           </div>
-          <div class="mt-14 grid grid-cols-3 gap-6 max-w-lg">
+
+          <div class="mt-12 grid grid-cols-3 gap-4 max-w-md border-l border-electric/20 pl-6">
             <div v-for="s in stats" :key="s.l">
-              <div class="font-display text-2xl md:text-3xl text-electric neon-text">{{ s.v }}</div>
-              <div class="text-xs uppercase tracking-widest text-muted-foreground mt-1">{{ s.l }}</div>
+              <div class="font-display text-xl md:text-2xl text-electric/90 font-bold">{{ s.v }}</div>
+              <div class="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{{ s.l }}</div>
             </div>
           </div>
         </div>
       </div>
-      <div class="absolute bottom-6 left-1/2 -translate-x-1/2 animate-float">
-        <div class="h-10 w-6 rounded-full border-2 border-electric/60 grid place-items-start p-1">
-          <div class="h-2 w-1 rounded-full bg-electric" />
-        </div>
-      </div>
     </section>
 
-    <!-- FEATURES -->
-    <section class="relative py-24 px-6">
+    <section class="relative py-20 px-6 bg-gaming-darker/50">
       <div class="mx-auto max-w-7xl">
-        <div class="text-center max-w-2xl mx-auto mb-14">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs font-medium text-electric">
-            <Sparkles class="h-3 w-3" /> Mécaniques de Jeu
+        <div class="text-center max-w-2xl mx-auto mb-16">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-[10px] font-bold text-electric/70 uppercase">
+            <Zap class="h-3 w-3" /> Mécaniques
           </div>
-          <h2 class="mt-4 font-display text-3xl md:text-5xl">Un Nouveau Type de Tourisme</h2>
+          <h2 class="mt-4 font-display text-2xl md:text-4xl font-bold">Un Nouveau Type de Tourisme</h2>
         </div>
         
         <div class="grid gap-6 md:grid-cols-3">
           <div
             v-for="(f, i) in features"
             :key="i"
-            class="group relative rounded-2xl p-6 glass hover-lift animate-fade-up"
-            :style="{ animationDelay: `${i * 80}ms` }"
+            class="group relative rounded-2xl p-6 glass-dark border border-white/5 hover:border-electric/20 transition-all duration-300"
           >
-            <div class="h-12 w-12 rounded-xl bg-gradient-electric grid place-items-center shadow-neon">
-              <component :is="f.icon" class="h-6 w-6 text-electric-foreground" />
+            <div class="h-10 w-10 rounded-lg bg-electric/10 border border-electric/20 grid place-items-center mb-4">
+              <component :is="f.icon" class="h-5 w-5 text-electric" />
             </div>
-            <h3 class="mt-5 font-display text-xl">{{ f.title }}</h3>
-            <p class="mt-2 text-sm text-muted-foreground">{{ f.desc }}</p>
+            <h3 class="font-display text-lg font-semibold">{{ f.title }}</h3>
+            <p class="mt-2 text-xs leading-relaxed text-muted-foreground/70">{{ f.desc }}</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- CITY SHOWCASE -->
-    <section class="relative py-24 px-6">
+    <section class="relative py-20 px-6">
       <div class="mx-auto max-w-7xl">
-        <div class="text-center max-w-2xl mx-auto mb-14">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs font-medium text-electric">
-            <Sparkles class="h-3 w-3" /> Mondes à Explorer
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div class="max-w-xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-[10px] font-bold text-electric/70 uppercase">
+              <MapPin class="h-3 w-3" /> Destinations
+            </div>
+            <h2 class="mt-4 font-display text-2xl md:text-4xl font-bold">Villes Légendaires</h2>
           </div>
-          <h2 class="mt-4 font-display text-3xl md:text-5xl">Villes Légendaires du Bénin</h2>
+          <Link :href="route('player.cities')" class="text-xs text-electric/80 hover:text-electric transition-colors flex items-center gap-2 font-bold uppercase tracking-wider">
+            Voir toutes les villes <ArrowRight class="h-3 w-3" />
+          </Link>
         </div>
 
         <div class="grid gap-6 md:grid-cols-3">
@@ -134,21 +133,17 @@ const testimonials = [
             v-for="c in cities"
             :key="c.name"
             :href="route('player.cities')"
-            class="group relative overflow-hidden rounded-2xl glass hover-lift block aspect-[3/4]"
+            class="group relative overflow-hidden rounded-xl glass hover:shadow-2xl hover:shadow-electric/10 transition-all duration-500 block aspect-[4/5]"
           >
             <img :src="c.img" :alt="c.name" loading="lazy"
-              class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
-            <div class="absolute inset-0 bg-gradient-to-t from-gaming-darker via-gaming-darker/30 to-transparent" />
-            <div class="absolute top-4 left-4 px-3 py-1 rounded-full glass text-xs text-electric font-bold uppercase tracking-widest">
-              {{ c.tag }}
-            </div>
-            <div class="absolute bottom-6 left-6 right-6">
-              <h3 class="font-display text-3xl">{{ c.name }}</h3>
-              <div class="mt-2 flex items-center justify-between text-sm text-muted-foreground">
-                <span>{{ c.missions }} missions</span>
-                <span class="text-electric flex items-center gap-1">
-                  Explorer <ArrowRight class="h-4 w-4" />
-                </span>
+              class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <div class="absolute inset-0 bg-gradient-to-t from-gaming-darker via-gaming-darker/20 to-transparent" />
+            <div class="absolute bottom-5 left-5 right-5">
+              <span class="text-[10px] text-electric font-black uppercase tracking-[0.2em]">{{ c.tag }}</span>
+              <h3 class="font-display text-2xl mt-1">{{ c.name }}</h3>
+              <div class="mt-3 flex items-center justify-between text-[11px] text-white/50 border-t border-white/10 pt-3">
+                <span>{{ c.missions }} MISSIONS DISPONIBLES</span>
+                <ArrowRight class="h-4 w-4 text-electric group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </Link>
@@ -156,56 +151,37 @@ const testimonials = [
       </div>
     </section>
 
-    <!-- TESTIMONIALS -->
-    <section class="relative py-24 px-6">
-      <div class="mx-auto max-w-7xl">
-        <div class="text-center max-w-2xl mx-auto mb-14">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs font-medium text-electric">
-            <Sparkles class="h-3 w-3" /> Nos Explorateurs
-          </div>
-          <h2 class="mt-4 font-display text-3xl md:text-5xl">Paroles d'Aventure</h2>
-        </div>
-
-        <div class="grid gap-6 md:grid-cols-3">
-          <div v-for="t in testimonials" :key="t.name" class="rounded-2xl p-6 glass hover-lift">
-            <div class="flex gap-1 text-electric">
-              <Star v-for="i in 5" :key="i" class="h-4 w-4 fill-current" />
-            </div>
-            <p class="mt-4 text-foreground/90">"{{ t.text }}"</p>
-            <div class="mt-5 flex items-center gap-3">
-              <div class="h-10 w-10 rounded-full bg-gradient-electric grid place-items-center font-display font-black text-electric-foreground">
-                {{ t.name.charAt(0) }}
-              </div>
-              <div>
-                <div class="font-bold text-sm">{{ t.name }}</div>
-                <div class="text-xs text-muted-foreground">{{ t.role }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CTA -->
-    <section class="relative py-24 px-6">
-      <div class="mx-auto max-w-5xl relative overflow-hidden rounded-3xl glass-strong p-10 md:p-16 text-center">
-        <div class="absolute inset-0 grid-bg opacity-30" />
-        <div class="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-electric/30 blur-3xl" />
-        <div class="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-purple-neon/30 blur-3xl" />
+    <section class="relative py-20 px-6">
+      <div class="mx-auto max-w-5xl relative overflow-hidden rounded-2xl bg-electric/5 border border-electric/10 p-10 md:p-16 text-center">
+        <div class="absolute inset-0 grid-bg opacity-10" />
         <div class="relative">
-          <Compass class="h-12 w-12 mx-auto text-electric animate-pulse-glow rounded-xl p-2" />
-          <h2 class="mt-6 font-display text-3xl md:text-5xl">
-            Votre Aventure <span class="text-electric neon-text">Commence Ici.</span>
+          <Compass class="h-10 w-10 mx-auto text-electric/80 mb-6" />
+          <h2 class="font-display text-2xl md:text-4xl font-bold">
+            Votre Aventure <span class="text-electric">Commence Ici.</span>
           </h2>
-          <p class="mt-4 text-muted-foreground max-w-2xl mx-auto">
-            Créez votre compte explorateur gratuit. Débloquez votre première mission en 30 secondes.
+          <p class="mt-4 text-sm text-muted-foreground/70 max-w-lg mx-auto">
+            Créez votre compte explorateur gratuit et débloquez votre première mission en quelques secondes.
           </p>
-          <div class="mt-8 flex justify-center gap-4 flex-wrap">
-            <NeonButton :href="route('register')" size="lg">Commencer <ArrowRight class="h-4 w-4" /></NeonButton>
-            <NeonButton :href="route('player.cities')" variant="outline" size="lg">Parcourir les Villes</NeonButton>
+          <div class="mt-10 flex justify-center gap-4 flex-wrap">
+            <NeonButton :href="route('register')" size="lg">
+              Commencer <ArrowRight class="ml-2 h-4 w-4" />
+            </NeonButton>
+            <NeonButton :href="route('player.cities')" variant="outline" size="lg" class="border-electric/20 text-white/80">
+              Parcourir les Villes
+            </NeonButton>
           </div>
         </div>
       </div>
     </section>
   </SiteLayout>
 </template>
+
+<style scoped>
+.font-display {
+  letter-spacing: -0.02em;
+}
+.glass-dark {
+  background: rgba(15, 15, 25, 0.6);
+  backdrop-filter: blur(12px);
+}
+</style>

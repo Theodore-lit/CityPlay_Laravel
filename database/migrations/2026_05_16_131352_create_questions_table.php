@@ -14,6 +14,7 @@ return new class extends Migration
             $column->text('question_text');
             $column->json('options'); // Store as ['A' => '...', 'B' => '...']
             $column->string('correct_option'); // 'A', 'B', 'C', or 'D'
+            $column->text('hint')->nullable();
             $column->text('explanation')->nullable();
             $column->timestamps();
         });

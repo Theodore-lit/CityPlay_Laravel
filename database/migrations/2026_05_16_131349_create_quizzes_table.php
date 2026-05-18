@@ -10,6 +10,8 @@ return new class extends Migration
     {
         Schema::create('quizzes', function (Blueprint $column) {
             $column->id();
+            $column->foreignId('city_id')->nullable()->constrained()->onDelete('cascade');
+            $column->foreignId('location_id')->nullable()->constrained()->onDelete('cascade');
             $column->string('title');
             $column->text('description')->nullable();
             $column->string('category');

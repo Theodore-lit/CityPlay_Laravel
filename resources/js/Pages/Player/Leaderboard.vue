@@ -3,21 +3,30 @@ import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
 import { Head } from '@inertiajs/vue3';
 import { Trophy, Crown, Medal, Flame } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { cn } from '@/lib/utils';
 
 const tab = ref('hebdomadaire');
 
-const players = [
-  { name: "Kossi M.", xp: 48230, country: "🇧🇯", streak: 64 },
-  { name: "Aïcha K.", xp: 42180, country: "🇧🇯", streak: 32 },
-  { name: "Léa T.", xp: 39750, country: "🇫🇷", streak: 18 },
-  { name: "David O.", xp: 36540, country: "🇳🇬", streak: 21 },
-  { name: "Marie A.", xp: 34290, country: "🇧🇯", streak: 11 },
-  { name: "Tom R.", xp: 31870, country: "🇺🇸", streak: 9 },
-  { name: "Sofia M.", xp: 28430, country: "🇪🇸", streak: 14 },
-  { name: "Yann B.", xp: 26120, country: "🇧🇯", streak: 7 },
-];
+const props = defineProps({
+    topPlayers: Array
+});
+
+const players = computed(() => {
+    if (!props.topPlayers || props.topPlayers.length === 0) {
+        return [
+            { name: "En attente...", xp: 0, country: "🇧🇯", streak: 0 },
+            { name: "En attente...", xp: 0, country: "🇧🇯", streak: 0 },
+            { name: "En attente...", xp: 0, country: "🇧🇯", streak: 0 },
+        ];
+    }
+    return props.topPlayers.map(p => ({
+        name: p.name,
+        xp: p.xp || 0,
+        country: "🇧🇯", // Default or from user field if exists
+        streak: p.streak || 0
+    }));
+});
 </script>
 
 <template>
@@ -47,23 +56,25 @@ const players = [
 
       <!-- PODIUM -->
       <div class="grid grid-cols-3 gap-3 md:gap-6 mb-8 items-end">
-        <div v-for="pos in [1, 0, 2]" :key="players[pos].name" 
-             :class="cn(
-               'rounded-2xl glass-strong border-2 p-4 md:p-6 flex flex-col items-center text-center',
-               pos === 0 ? 'text-warning border-warning shadow-[0_0_30px_oklch(0.82_0.17_80/0.5)] h-44 md:h-52' : 
-               pos === 1 ? 'text-muted-foreground border-muted-foreground/60 h-36 md:h-44' : 
-               'text-purple-neon border-purple-neon shadow-purple h-28 md:h-36'
-             )">
-          <Crown v-if="pos === 0" class="h-6 w-6 mb-2 animate-float" />
-          <Medal v-else class="h-5 w-5 mb-2" />
-          
-          <div class="h-12 w-12 md:h-16 md:w-16 rounded-full bg-gradient-electric grid place-items-center font-display font-black text-electric-foreground text-xl">
-            {{ players[pos].name.charAt(0) }}
+        <template v-for="pos in [1, 0, 2]" :key="pos">
+          <div v-if="players[pos]" 
+               :class="cn(
+                 'rounded-2xl glass-strong border-2 p-4 md:p-6 flex flex-col items-center text-center',
+                 pos === 0 ? 'text-warning border-warning shadow-[0_0_30px_oklch(0.82_0.17_80/0.5)] h-44 md:h-52' : 
+                 pos === 1 ? 'text-muted-foreground border-muted-foreground/60 h-36 md:h-44' : 
+                 'text-purple-neon border-purple-neon shadow-purple h-28 md:h-36'
+               )">
+            <Crown v-if="pos === 0" class="h-6 w-6 mb-2 animate-float" />
+            <Medal v-else class="h-5 w-5 mb-2" />
+            
+            <div class="h-12 w-12 md:h-16 md:w-16 rounded-full bg-gradient-electric grid place-items-center font-display font-black text-electric-foreground text-xl">
+              {{ players[pos].name.charAt(0) }}
+            </div>
+            <div class="font-display text-xs md:text-sm mt-2 truncate w-full text-white">{{ players[pos].name }}</div>
+            <div class="text-[10px] text-muted-foreground">{{ players[pos].country }}</div>
+            <div class="font-display text-sm md:text-base text-electric mt-1">{{ players[pos].xp.toLocaleString() }}</div>
           </div>
-          <div class="font-display text-xs md:text-sm mt-2 truncate w-full text-white">{{ players[pos].name }}</div>
-          <div class="text-[10px] text-muted-foreground">{{ players[pos].country }}</div>
-          <div class="font-display text-sm md:text-base text-electric mt-1">{{ players[pos].xp.toLocaleString() }}</div>
-        </div>
+        </template>
       </div>
 
       <div class="rounded-2xl glass-strong divide-y divide-electric/10 overflow-hidden">

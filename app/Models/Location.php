@@ -20,11 +20,13 @@ class Location extends Model
         'radius_meters',
         'average_time_minutes',
         'images',
+        'is_secret',
         'status',
     ];
 
     protected $casts = [
         'images' => 'array',
+        'is_secret' => 'boolean',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
     ];
@@ -37,5 +39,10 @@ class Location extends Model
     public function enigmas()
     {
         return $this->hasMany(Enigma::class);
+    }
+
+    public function userProgress()
+    {
+        return $this->hasMany(UserLocationProgress::class);
     }
 }

@@ -17,6 +17,15 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('role')->default('joueur'); // super_admin, mairie, joueur
+            $table->integer('coins')->default(0);
+            $table->integer('hearts')->default(3);
+            $table->integer('xp')->default(0);
+            $table->integer('level')->default(1);
+            $table->string('avatar')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamp('last_activity_at')->nullable();
+            $table->boolean('deactivate_on_logout')->default(false);
             $table->rememberToken();
             $table->timestamps();
         });

@@ -31,7 +31,23 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        // Check if user is active
+        if (!auth()->user()->is_active) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            
+            return back()->withErrors([
+                'email' => 'Votre compte est archivé ou désactivé. Veuillez contacter un administrateur pour le réactiver.',
+            ]);
+        }
+
         $request->session()->regenerate();
+
+        // Update last activity
+        $user = auth()->user();
+        $user->last_activity_at = now();
+        $user->save();
 
         return redirect()->intended(route('dashboard', absolute: false));
     }
@@ -41,6 +57,13 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = auth()->user();
+        
+        if ($user) {
+            $user->is_active = $request->input('deactivate_on_logout') ? false : true;
+            $user->save();
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

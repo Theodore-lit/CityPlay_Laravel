@@ -27,10 +27,10 @@ const props = defineProps({
 });
 
 const variants = {
-    primary: 'bg-gradient-electric text-electric-foreground shadow-neon hover:shadow-[0_0_40px_oklch(0.82_0.15_232/0.7)] border border-white/20',
+    primary: 'bg-gradient-electric text-white shadow-neon hover:shadow-[0_0_40px_oklch(0.82_0.15_232/0.7)] border border-white/20',
     outline: 'border-2 border-electric/60 text-electric hover:bg-electric/10 hover:shadow-neon backdrop-blur-sm',
     ghost: 'text-foreground/80 hover:text-electric hover:bg-electric/10',
-    purple: 'bg-purple-neon text-white shadow-purple hover:shadow-[0_0_36px_oklch(0.72_0.18_300/0.7)] border border-white/20',
+    purple: 'bg-gradient-purple text-white shadow-purple hover:shadow-[0_0_36px_oklch(0.72_0.18_300/0.7)] border border-white/20',
 };
 
 const sizes = {

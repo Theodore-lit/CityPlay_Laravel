@@ -21,12 +21,14 @@ class Enigma extends Model
         'penalty_seconds',
         'time_limit_seconds',
         'type',
+        'is_site_specific',
         'sequence_order',
         'image_path',
     ];
 
     protected $casts = [
         'indices' => 'array',
+        'is_site_specific' => 'boolean',
     ];
 
     public function location()

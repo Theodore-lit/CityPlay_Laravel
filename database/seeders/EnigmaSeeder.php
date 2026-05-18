@@ -10,57 +10,56 @@ class EnigmaSeeder extends Seeder
 {
     public function run(): void
     {
-        $amazone = Location::where('name', 'Place de l\'Amazone')->first();
-        $dantokpa = Location::where('name', 'Marché Dantokpa')->first();
-        $porteNonRetour = Location::where('name', 'Porte du Non-Retour')->first();
-        $templePythons = Location::where('name', 'Temple des Pythons')->first();
+        $locations = Location::all();
 
-        // Place de l'Amazone
-        Enigma::create([
-            'location_id' => $amazone->id,
-            'title' => 'La statue géante',
-            'content' => 'Quelle est la hauteur approximative (en mètres) de la statue de l\'Amazone ?',
-            'difficulty' => 'medium',
-            'answer' => '30',
-            'reward_coins' => 15,
-            'reward_hearts' => 0,
-            'type' => 'devinette',
-        ]);
+        foreach ($locations as $location) {
+            // 1. Énigme de déblocage (Facile)
+            Enigma::create([
+                'location_id' => $location->id,
+                'content' => "Je suis le premier indice pour localiser {$location->name}. Je suis facile à trouver si vous connaissez l'histoire du quartier.",
+                'answer' => "Histoire",
+                'difficulty' => 'easy',
+                'reward_coins' => 10,
+                'type' => 'aventure',
+                'is_site_specific' => false,
+                'indices' => ["C'est lié au passé.", "H_ _ _ _ _RE"],
+            ]);
 
-        // Marché Dantokpa
-        Enigma::create([
-            'location_id' => $dantokpa->id,
-            'title' => 'Le carrefour commercial',
-            'content' => 'Quel fleuve borde le marché Dantokpa ?',
-            'difficulty' => 'easy',
-            'answer' => 'Ouémé',
-            'reward_coins' => 10,
-            'reward_hearts' => 0,
-            'type' => 'devinette',
-        ]);
+            // 2. Énigme de déblocage (Moyen)
+            Enigma::create([
+                'location_id' => $location->id,
+                'content' => "Pour me trouver, cherchez l'ombre du grand baobab qui ne meurt jamais.",
+                'answer' => "Tradition",
+                'difficulty' => 'medium',
+                'reward_coins' => 25,
+                'type' => 'aventure',
+                'is_site_specific' => false,
+                'indices' => ["C'est une valeur transmise.", "T_ _ _ _ _ _ _N"],
+            ]);
 
-        // Porte du Non-Retour
-        Enigma::create([
-            'location_id' => $porteNonRetour->id,
-            'title' => 'Le symbole de l\'oubli',
-            'content' => 'Combien de piliers principaux soutiennent la structure de la Porte du Non-Retour ?',
-            'difficulty' => 'hard',
-            'answer' => '4',
-            'reward_coins' => 25,
-            'reward_hearts' => 1,
-            'type' => 'aventure',
-        ]);
+            // 3. Énigme de déblocage (Difficile)
+            Enigma::create([
+                'location_id' => $location->id,
+                'content' => "Le vent souffle du Nord, mais ma boussole indique l'âme des ancêtres.",
+                'answer' => "Esprit",
+                'difficulty' => 'hard',
+                'reward_coins' => 50,
+                'type' => 'aventure',
+                'is_site_specific' => false,
+                'indices' => ["Ce n'est pas matériel.", "E_ _ _ _T"],
+            ]);
 
-        // Temple des Pythons
-        Enigma::create([
-            'location_id' => $templePythons->id,
-            'title' => 'Les gardiens sacrés',
-            'content' => 'Quelle espèce de python est vénérée dans ce temple ?',
-            'difficulty' => 'medium',
-            'answer' => 'Python royal',
-            'reward_coins' => 15,
-            'reward_hearts' => 0,
-            'type' => 'devinette',
-        ]);
+            // 4. Énigme SUR SITE (Analyse du lieu)
+            Enigma::create([
+                'location_id' => $location->id,
+                'content' => "Maintenant que vous êtes ici, regardez la plaque commémorative. Quelle année y est inscrite ?",
+                'answer' => "1960",
+                'difficulty' => 'medium',
+                'reward_coins' => 100,
+                'type' => 'aventure',
+                'is_site_specific' => true,
+                'indices' => ["Regardez le métal.", "L'année de l'indépendance."],
+            ]);
+        }
     }
 }

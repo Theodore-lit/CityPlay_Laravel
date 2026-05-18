@@ -10,11 +10,11 @@ const icons = [Twitter, Instagram, Github];
     <div class="mx-auto max-w-7xl px-6 py-12 grid gap-10 md:grid-cols-4">
       <div class="md:col-span-2">
         <div class="flex items-center gap-2">
-          <div class="h-9 w-9 rounded-lg bg-gradient-electric grid place-items-center shadow-neon">
-            <Compass class="h-5 w-5 text-electric-foreground" />
+          <div class="h-9 w-9 rounded-lg bg-white/5 border border-electric/20 grid place-items-center shadow-neon">
+            <Compass class="h-5 w-5 text-electric neon-text" />
           </div>
-          <span class="font-display font-black tracking-widest">
-            CITY<span class="text-electric">PLAY</span>
+          <span class="font-display font-black tracking-widest text-white">
+            CITY<span class="text-electric neon-text">PLAY</span>
           </span>
         </div>
         <p class="mt-4 text-sm text-muted-foreground max-w-md">

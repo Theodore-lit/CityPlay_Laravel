@@ -20,6 +20,9 @@ class City extends Model
         'name',             // Nom de la ville (ex: Cotonou Vibrante)
         'description',      // Description textuelle pour les joueurs
         'image_path',       // Chemin vers l'image de couverture
+        'latitude',
+        'longitude',
+        'radius_meters',
         'is_active',        // Statut d'activation de la ville
         'start_date',       // Date de début de l'événement
         'end_date',         // Date de fin de l'événement

@@ -1,0 +1,135 @@
+<script setup>
+import SiteLayout from '@/Layouts/SiteLayout.vue';
+import MobileTabBar from '@/Components/MobileTabBar.vue';
+import NeonButton from '@/Components/NeonButton.vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Users, MapPin, Play, Trophy, Shield, Calendar, ArrowLeft } from 'lucide-vue-next';
+
+const props = defineProps({
+    team: Object,
+    availableCities: Array,
+});
+
+const startQuestForm = useForm({});
+
+const startQuest = (cityId) => {
+    startQuestForm.post(route('teams.start-quest', { team: props.team.id, city: cityId }));
+};
+</script>
+
+<template>
+    <Head :title="`Équipe ${team.name} — CityPlay`" />
+
+    <SiteLayout>
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 py-12 pb-28 md:pb-12">
+            <div class="mb-8">
+                <Link :href="route('teams.index')" class="text-muted-foreground hover:text-white flex items-center gap-2 transition-colors">
+                    <ArrowLeft class="h-4 w-4" /> Retour aux équipes
+                </Link>
+            </div>
+
+            <div class="grid gap-8 lg:grid-cols-3">
+                <!-- TEAM INFO -->
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="glass-strong rounded-3xl p-8 border border-white/10 relative overflow-hidden">
+                        <div class="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-electric/10 blur-3xl" />
+                        
+                        <div class="relative">
+                            <div class="h-20 w-20 rounded-2xl bg-gradient-electric grid place-items-center shadow-neon mb-6">
+                                <Users class="h-10 w-10 text-electric-foreground" />
+                            </div>
+                            <h1 class="font-display text-3xl text-white">{{ team.name }}</h1>
+                            <p class="text-electric font-mono tracking-widest text-sm mt-2">CODE: {{ team.invite_code }}</p>
+                            
+                            <div class="mt-8 space-y-4">
+                                <div class="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <Shield class="h-4 w-4 text-electric" />
+                                    <span>Leader: <span class="text-white">{{ team.members.find(m => m.pivot.role === 'leader')?.name }}</span></span>
+                                </div>
+                                <div class="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <Users class="h-4 w-4 text-electric" />
+                                    <span>{{ team.members.length }} / {{ team.member_limit }} Membres</span>
+                                </div>
+                                <div class="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <Calendar class="h-4 w-4 text-electric" />
+                                    <span>Créée le {{ new Date(team.created_at).toLocaleDateString() }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MEMBRES -->
+                    <div class="glass-strong rounded-3xl p-6 border border-white/10">
+                        <h2 class="font-display text-xl text-white mb-4">Membres</h2>
+                        <div class="space-y-3">
+                            <div v-for="member in team.members" :key="member.id" class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                                <div class="flex items-center gap-3">
+                                    <div class="h-8 w-8 rounded-full bg-electric/20 flex items-center justify-center text-[10px] font-bold text-electric border border-electric/30">
+                                        {{ member.name.substring(0, 2).toUpperCase() }}
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-bold text-white">{{ member.name }}</div>
+                                        <div class="text-[10px] text-muted-foreground uppercase">{{ member.pivot.role }}</div>
+                                    </div>
+                                </div>
+                                <div class="text-[10px] font-mono text-electric">{{ member.xp }} XP</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACTIONS & HISTORY -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- LANCER UNE QUÊTE -->
+                    <section>
+                        <h2 class="font-display text-2xl text-white mb-6 flex items-center gap-2">
+                            <Play class="h-6 w-6 text-electric" /> Lancer une Quête en Équipe
+                        </h2>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div v-for="city in availableCities" :key="city.id" class="glass-strong rounded-2xl overflow-hidden border border-white/10 group">
+                                <div class="p-6">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <h3 class="font-display text-xl text-white">{{ city.name }}</h3>
+                                        <MapPin class="h-5 w-5 text-electric" />
+                                    </div>
+                                    <p class="text-sm text-muted-foreground line-clamp-2 mb-6">{{ city.description }}</p>
+                                    <NeonButton @click="startQuest(city.id)" class="w-full" :disabled="startQuestForm.processing">
+                                        Démarrer l'Aventure
+                                    </NeonButton>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- HISTORIQUE -->
+                    <section>
+                        <h2 class="font-display text-2xl text-white mb-6 flex items-center gap-2">
+                            <Trophy class="h-6 w-6 text-purple-neon" /> Historique de l'Équipe
+                        </h2>
+                        <div v-if="team.game_sessions?.length > 0" class="space-y-4">
+                            <div v-for="session in team.game_sessions" :key="session.id" class="glass-strong rounded-2xl p-5 border border-white/10 flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="h-12 w-12 rounded-xl bg-purple-neon/10 border border-purple-neon/20 grid place-items-center text-purple-neon">
+                                        <MapPin class="h-6 w-6" />
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-white">{{ session.city?.name }}</div>
+                                        <div class="text-xs text-muted-foreground">{{ new Date(session.created_at).toLocaleDateString() }} • {{ session.status }}</div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-electric font-bold">+{{ session.total_score || 0 }} XP</div>
+                                    <div class="text-[10px] text-muted-foreground uppercase">Score Total</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="p-12 text-center glass-strong rounded-3xl border border-white/10 text-muted-foreground italic">
+                            Aucune quête terminée par cette équipe pour le moment.
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+        <MobileTabBar />
+    </SiteLayout>
+</template>

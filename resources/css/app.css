@@ -1,30 +1,30 @@
+@import 'leaflet/dist/leaflet.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import 'leaflet/dist/leaflet.css';
-
 :root {
   --radius: 0.75rem;
 
-  --gaming-darker: oklch(0.10 0.03 260);
-  --gaming-dark: oklch(0.14 0.04 260);
-  --gaming-panel: oklch(0.18 0.05 262);
+  --gaming-darker: oklch(0.14 0.06 255);
+  --gaming-dark: oklch(0.18 0.07 255);
+  --gaming-panel: oklch(0.22 0.08 257);
 
-  --background: oklch(0.10 0.03 260);
+  --background: oklch(0.14 0.06 255);
   --foreground: oklch(0.97 0.01 240);
-  --card: oklch(0.20 0.05 262);
+  --card: oklch(0.24 0.08 257);
   --card-foreground: oklch(0.97 0.01 240);
-  --popover: oklch(0.20 0.05 262);
+  --popover: oklch(0.22 0.06 257);
   --popover-foreground: oklch(0.97 0.01 240);
 
-  --electric: oklch(0.82 0.15 232);
-  --electric-foreground: oklch(0.10 0.03 260);
-  --cyan-neon: oklch(0.88 0.12 200);
-  --purple-neon: oklch(0.72 0.18 300);
+  --electric: oklch(0.78 0.12 232);
+  --electric-foreground: oklch(1.0 0.0 0);
+  --cyan-neon: oklch(0.85 0.10 200);
+  --purple-neon: oklch(0.68 0.15 300);
 
-  --primary: oklch(0.82 0.10 232);
-  --primary-foreground: oklch(0.10 0.03 260);
+  --primary: oklch(0.78 0.12 232);
+  --primary-foreground: oklch(1.0 0.0 0);
   --secondary: oklch(0.22 0.06 264);
   --secondary-foreground: oklch(0.97 0.01 240);
   --muted: oklch(0.20 0.04 262);
@@ -40,13 +40,52 @@
   --input: oklch(0.20 0.05 262);
   --ring: oklch(0.82 0.10 232);
 
-  --gradient-hero: linear-gradient(135deg, oklch(0.10 0.03 260) 0%, oklch(0.18 0.08 270) 50%, oklch(0.14 0.04 260) 100%);
-  --gradient-electric: linear-gradient(135deg, oklch(0.82 0.10 232), oklch(0.72 0.14 300));
-  --gradient-card: linear-gradient(160deg, oklch(0.20 0.05 262 / 0.8), oklch(0.14 0.04 260 / 0.9));
+  --gradient-hero: linear-gradient(135deg, oklch(0.12 0.04 255) 0%, oklch(0.20 0.10 260) 50%, oklch(0.16 0.05 255) 100%);
+  --gradient-electric: linear-gradient(135deg, oklch(0.78 0.12 232), oklch(0.65 0.20 300));
+  --gradient-card: linear-gradient(160deg, oklch(0.22 0.06 257 / 0.8), oklch(0.16 0.05 255 / 0.9));
 
-  --shadow-neon: 0 0 18px oklch(0.82 0.10 232 / 0.28), 0 0 48px oklch(0.82 0.10 232 / 0.10);
-  --shadow-purple: 0 0 18px oklch(0.72 0.14 300 / 0.28);
+  --shadow-neon: 0 0 18px oklch(0.78 0.12 232 / 0.28), 0 0 48px oklch(0.78 0.12 232 / 0.10);
+  --shadow-purple: 0 0 18px oklch(0.68 0.15 300 / 0.28);
   --shadow-elevated: 0 24px 80px -20px oklch(0 0 0 / 0.6);
+}
+
+.light {
+  --gaming-darker: #f8fafc;
+  --gaming-dark: #f1f5f9;
+  --gaming-panel: #ffffff;
+
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --electric: #2563eb;
+  --electric-foreground: #ffffff;
+  --cyan-neon: #0891b2;
+  --purple-neon: #7c3aed;
+
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #7c3aed;
+  --accent-foreground: #ffffff;
+
+  --border: #e2e8f0;
+  --input: #ffffff;
+  --ring: #2563eb;
+
+  --gradient-hero: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  --gradient-electric: linear-gradient(135deg, #2563eb, #7c3aed);
+  --gradient-card: linear-gradient(160deg, #ffffff 0%, #f8fafc 100%);
+
+  --shadow-neon: 0 4px 6px -1px rgb(37 99 235 / 0.1), 0 2px 4px -2px rgb(37 99 235 / 0.1);
+  --shadow-purple: 0 4px 6px -1px rgb(124 58 237 / 0.1), 0 2px 4px -2px rgb(124 58 237 / 0.1);
+  --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 @layer base {
@@ -64,17 +103,18 @@
 
 @layer utilities {
   .glass {
-    background: oklch(0.18 0.05 262 / 0.55);
+    background: oklch(0.25 0.06 262 / 0.65);
     backdrop-filter: blur(16px) saturate(160%);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
-    border: 1px solid oklch(0.78 0.18 232 / 0.18);
-  }
-  .glass-strong {
-    background: oklch(0.16 0.045 262 / 0.85);
-    backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid oklch(0.78 0.18 232 / 0.25);
   }
+  .glass-strong {
+    background: oklch(0.22 0.05 262 / 0.85);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid oklch(0.78 0.18 232 / 0.35);
+  }
   .neon-text { text-shadow: 0 0 12px oklch(0.78 0.18 232 / 0.7), 0 0 28px oklch(0.78 0.18 232 / 0.35); }
+  .neon-text-purple { text-shadow: 0 0 12px oklch(0.68 0.15 300 / 0.7), 0 0 28px oklch(0.68 0.15 300 / 0.35); }
   .grid-bg {
     background-image:
       linear-gradient(oklch(0.78 0.18 232 / 0.08) 1px, transparent 1px),
@@ -104,6 +144,14 @@
     background: linear-gradient(90deg, transparent, oklch(0.78 0.18 232 / 0.4), transparent);
     background-size: 200% 100%;
     animation: shimmer 2s linear infinite;
+  }
+
+  .bg-gradient-electric {
+    background: var(--gradient-electric);
+  }
+
+  .bg-gradient-purple {
+    background: linear-gradient(135deg, var(--purple-neon), oklch(0.50 0.15 320));
   }
 }
 
