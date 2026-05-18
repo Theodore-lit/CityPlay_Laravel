@@ -29,6 +29,37 @@ const closestLocation = ref(null);
 const watchId = ref(null);
 const isNearLocation = ref(false);
 
+const nextTarget = computed(() => {
+    if (!props.currentSession || !props.currentSession.discovery_sequence) return null;
+    const sequence = props.currentSession.discovery_sequence;
+    const currentIndex = sequence.indexOf(props.currentSession.current_location_id);
+
+    if (currentIndex !== -1 && sequence[currentIndex + 1]) {
+        return props.locations.find(l => l.id === sequence[currentIndex + 1]);
+    }
+    return null;
+});
+
+const activeEnigma = computed(() => {
+    if (!props.currentSession || !props.locations) return null;
+
+    // Si on est sur place (navigation résolue), on pourrait vouloir montrer l'énigme suivante
+    // Mais pour l'instant, on affiche l'énigme active de la session
+    const loc = props.locations.find(l => l.id === props.currentSession.current_location_id);
+    if (!loc) return null;
+
+    const enigma = loc.enigmas?.find(e => e.id === props.currentSession.current_enigma_id);
+    return enigma;
+});
+
+const displayEnigma = computed(() => {
+    // Si on a déjà débloqué le lieu actuel (is_site_specific actif ou déjà découvert)
+    // On montre l'énigme du LIEU SUIVANT dans le HUD pour guider le joueur
+    if (activeEnigma.value?.is_site_specific && nextTarget.value) {
+        return nextTarget.value.enigmas?.find(e => !e.is_site_specific)?.content || "Suivez le radar vers la prochaine zone.";
+    }
+    return activeEnigma.value?.content || "Analysez le radar pour localiser le prochain secret.";
+});
 const currentTarget = computed(() => {
     return props.locations.find(l => l.is_current_target);
 });
@@ -56,6 +87,11 @@ const earnedXp = ref(0);
 const currentRiddle = ref(null);
 const usedHints = ref(0);
 
+// Questionnaire state
+const currentQuestionIndex = ref(0);
+const questionnaireAnswers = ref([]);
+const isQuestionnaireActive = ref(false);
+
 const selectLocation = (loc) => {
     selectedLocation.value = loc;
 
@@ -70,13 +106,14 @@ const selectLocation = (loc) => {
 
         if (currentEnigma && !currentEnigma.is_site_specific) {
             riddleType.value = 'unlock';
+            isQuestionnaireActive.value = false;
             showRiddleModal.value = true;
         } else {
             // Déjà résolu l'énigme de navigation, on doit se rendre sur place
             activeTab.value = 'map';
         }
     } else {
-        alert("Ce lieu est encore verrouillé. Suivez l'ordre de l'aventure !");
+        showGameToast("Ce lieu est encore verrouillé. Suivez l'ordre de l'aventure !", "error");
     }
 };
 
@@ -100,7 +137,7 @@ const submitRiddle = () => {
             handleSiteSuccess();
         }
     } else {
-        alert("Réponse incorrecte. Réessayez !");
+        showGameToast("Réponse incorrecte. Réessayez !", "error");
     }
 };
 
@@ -111,8 +148,41 @@ const handleUnlockSuccess = () => {
     }, {
         onSuccess: () => {
             showRiddleModal.value = false;
+            showGameToast("Lieu débloqué ! Direction la cible.", "success");
         }
     });
+};
+
+const startQuestionnaire = () => {
+    currentQuestionIndex.value = 0;
+    questionnaireAnswers.value = [];
+    isQuestionnaireActive.value = true;
+    showRiddleModal.value = true;
+};
+
+const selectQuestionOption = (option) => {
+    questionnaireAnswers.value[currentQuestionIndex.value] = option;
+
+    setTimeout(() => {
+        if (currentQuestionIndex.value < currentRiddle.value.questions.length - 1) {
+            currentQuestionIndex.value++;
+        } else {
+            submitQuestionnaire();
+        }
+    }, 500);
+};
+
+const submitQuestionnaire = () => {
+    const correctCount = questionnaireAnswers.value.filter(a => a.is_correct).length;
+    const totalCount = currentRiddle.value.questions.length;
+
+    if (correctCount === totalCount) {
+        handleSiteSuccess();
+    } else {
+        showGameToast(`Vous avez ${correctCount}/${totalCount} bonnes réponses. Réessayez !`, "warning");
+        currentQuestionIndex.value = 0;
+        questionnaireAnswers.value = [];
+    }
 };
 
 const handleSiteSuccess = () => {
@@ -128,6 +198,7 @@ const handleSiteSuccess = () => {
         onSuccess: () => {
             showRiddleModal.value = false;
             showSuccessModal.value = true;
+            isQuestionnaireActive.value = false;
         }
     });
 };
@@ -198,15 +269,26 @@ const startTracking = () => {
     if ("geolocation" in navigator) {
         watchId.value = navigator.geolocation.watchPosition(
             (position) => {
-                const { latitude, longitude } = position.coords;
+                const { latitude, longitude, accuracy } = position.coords;
                 userPosition.value = { lat: latitude, lng: longitude };
                 updateDistances(latitude, longitude);
+
+                if (accuracy > 30) {
+                    console.warn(`Précision GPS faible : ${accuracy}m`);
+                }
             },
             (error) => {
                 console.error("Erreur GPS :", error);
+                showGameToast("Erreur de localisation. Vérifiez vos paramètres GPS.", "error");
             },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0,
+            }
         );
+    } else {
+        showGameToast("La géolocalisation n'est pas supportée par votre navigateur.", "error");
     }
 };
 
@@ -229,7 +311,12 @@ const validatePosition = () => {
 
             riddleAnswer.value = '';
             usedHints.value = 0;
-            showRiddleModal.value = true;
+
+            if (currentRiddle.value?.questions?.length > 0) {
+                startQuestionnaire();
+            } else {
+                showRiddleModal.value = true;
+            }
         }, 1000);
     } else {
         showGameToast("Signal trop faible. Rapprochez-vous du point cible.", "warning");
@@ -352,7 +439,7 @@ onUnmounted(() => {
                 </div>
 
                 <p class="text-[10px] md:text-xs text-muted-foreground italic mb-3 md:mb-4 line-clamp-1 md:line-clamp-2 leading-relaxed">
-                  "{{ locations.find(l => l.id === currentSession?.current_location_id)?.enigmas?.find(e => e.id === currentSession?.current_enigma_id)?.content || 'Analysez le radar pour localiser le prochain secret.' }}"
+                  "{{ displayEnigma }}"
                 </p>
 
                 <div class="flex gap-2 md:gap-3">
@@ -431,10 +518,11 @@ onUnmounted(() => {
                 @click="selectLocation(loc)"
               >
                 <div :class="cn(
-                    'h-10 w-10 md:h-12 md:w-12 rounded-lg border flex items-center justify-center shrink-0 transition-colors',
+                    'h-10 w-10 md:h-12 md:w-12 rounded-lg border flex items-center justify-center shrink-0 transition-colors overflow-hidden',
                     loc.is_discovered ? 'bg-electric/10 border-electric/20' : (loc.is_current_target ? 'bg-warning/10 border-warning/20' : 'bg-gaming-darker border-white/5')
                 )">
-                  <MapPin v-if="loc.is_discovered" class="h-5 md:h-6 w-5 md:w-6 text-electric" />
+                  <img v-if="loc.is_discovered && loc.images && loc.images[0]" :src="loc.images[0]" class="h-full w-full object-cover" />
+                  <MapPin v-else-if="loc.is_discovered" class="h-5 md:h-6 w-5 md:w-6 text-electric" />
                   <Brain v-else-if="loc.is_current_target" class="h-5 md:h-6 w-5 md:w-6 text-warning animate-pulse" />
                   <Lock v-else class="h-4 md:h-5 w-4 md:w-5 text-muted-foreground/30" />
                 </div>
@@ -532,7 +620,41 @@ onUnmounted(() => {
                     </button>
                 </div>
 
-                <!-- L'ÉNIGME -->
+                <!-- QUESTIONNAIRE ACTIF (SITE) -->
+                <div v-else-if="isQuestionnaireActive && currentRiddle?.questions?.[currentQuestionIndex]" class="space-y-6 animate-fade-up">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-[10px] text-electric font-black uppercase tracking-widest">Question {{ currentQuestionIndex + 1 }} / {{ currentRiddle.questions.length }}</div>
+                        <div class="flex gap-1">
+                            <div v-for="i in currentRiddle.questions.length" :key="i" :class="cn('h-1 w-4 rounded-full transition-all', i-1 <= currentQuestionIndex ? 'bg-electric shadow-neon' : 'bg-white/10')"></div>
+                        </div>
+                    </div>
+
+                    <div class="p-6 rounded-3xl bg-white/5 border border-white/10 text-lg text-white font-display leading-relaxed">
+                        {{ currentRiddle.questions[currentQuestionIndex].question_text }}
+                    </div>
+
+                    <div class="grid gap-3">
+                        <button
+                            v-for="(option, idx) in currentRiddle.questions[currentQuestionIndex].options"
+                            :key="idx"
+                            @click="selectQuestionOption(option)"
+                            :class="cn(
+                                'w-full p-4 rounded-2xl border text-left transition-all duration-300 group flex items-center justify-between',
+                                questionnaireAnswers[currentQuestionIndex] === option
+                                    ? (option.is_correct ? 'bg-success/20 border-success shadow-neon-success' : 'bg-destructive/20 border-destructive shadow-neon-error')
+                                    : 'bg-white/5 border-white/10 hover:border-electric hover:bg-electric/5'
+                            )"
+                        >
+                            <span class="text-sm font-medium text-foreground group-hover:text-white">{{ option.option_text }}</span>
+                            <div v-if="questionnaireAnswers[currentQuestionIndex] === option" class="h-5 w-5 rounded-full grid place-items-center">
+                                <CheckCircle2 v-if="option.is_correct" class="h-4 w-4 text-success" />
+                                <XCircle v-else class="h-4 w-4 text-destructive" />
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- L'ÉNIGME CLASSIQUE (UNLOCK) -->
                 <div v-else-if="currentRiddle" class="space-y-6 animate-fade-up">
                     <div v-if="currentRiddle.image_path" class="rounded-2xl overflow-hidden border border-white/10 mb-4 aspect-video bg-gaming-darker">
                         <img :src="currentRiddle.image_path" class="w-full h-full object-cover" alt="Indice visuel" />
@@ -606,9 +728,18 @@ onUnmounted(() => {
                     </div>
                 </div>
 
-                <NeonButton class="w-full" @click="showSuccessModal = false">
-                    Continuer l'Exploration
-                </NeonButton>
+                <div class="flex flex-col gap-3">
+                    <NeonButton size="xl" class="w-full rounded-2xl group" @click="showSuccessModal = false">
+                        {{ currentSession?.current_enigma_id ? 'CONTINUER L\'AVENTURE' : 'TERMINER LA QUÊTE' }}
+                        <ArrowRight class="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </NeonButton>
+
+                    <Link v-if="!currentSession?.current_enigma_id || currentSession?.status === 'completed'" :href="route('player.cities')">
+                        <NeonButton variant="outline" size="lg" class="w-full rounded-2xl">
+                            REVENIR AUX VILLES
+                        </NeonButton>
+                    </Link>
+                </div>
             </div>
         </div>
     </Modal>

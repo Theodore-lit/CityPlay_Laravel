@@ -14,29 +14,6 @@ class LocationSeeder extends Seeder
         $ouidah = City::where('name', 'Ouidah Historique')->first();
         $portoNovo = City::where('name', 'Porto-Novo Impériale')->first();
 
-        // Cotonou
-        Location::create([
-            'city_id' => $cotonou->id,
-            'name' => 'Place de l\'Amazone',
-            'description' => 'Symbole de la bravoure et de la force des femmes béninoises.',
-            'category' => 'monument',
-            'latitude' => 6.3494,
-            'longitude' => 2.4419,
-            'radius_meters' => 100,
-            'status' => 'active',
-        ]);
-
-        Location::create([
-            'city_id' => $cotonou->id,
-            'name' => 'Marché Dantokpa',
-            'description' => 'Le plus grand marché à ciel ouvert de l\'Afrique de l\'Ouest.',
-            'category' => 'culture',
-            'latitude' => 6.3708,
-            'longitude' => 2.4358,
-            'radius_meters' => 200,
-            'status' => 'active',
-        ]);
-
         // Ouidah
         Location::create([
             'city_id' => $ouidah->id,

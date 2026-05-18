@@ -159,7 +159,7 @@ class PlayerController extends Controller
             ->where('status', 'in_progress')
             ->first();
 
-        $city->load(['locations.enigmas']);
+        $city->load(['locations.enigmas.questions.options']);
 
         $locations = $city->locations->map(function ($location) use ($user, $session) {
             $progress = $location->userProgress->where('user_id', $user->id)->first();
@@ -209,16 +209,31 @@ class PlayerController extends Controller
         $lat = $request->input('lat');
         $lng = $request->input('lng');
 
-        $locations = $city->locations()->get();
+        $availableLocations = $city->locations()->get()->collect();
+        $sequence = [];
 
-        if ($lat && $lng) {
-            // Sort by distance from current player position
-            $locations = $locations->sortBy(function ($location) use ($lat, $lng) {
-                return $this->calculateDistance($lat, $lng, $location->latitude, $location->longitude);
-            });
+        if ($lat && $lng && $availableLocations->isNotEmpty()) {
+            $currentLat = $lat;
+            $currentLng = $lng;
+
+            while ($availableLocations->isNotEmpty()) {
+                // Trouver le lieu le plus proche de la position actuelle
+                $closest = $availableLocations->sortBy(function ($location) use ($currentLat, $currentLng) {
+                    return $this->calculateDistance($currentLat, $currentLng, $location->latitude, $location->longitude);
+                })->first();
+
+                $sequence[] = $closest->id;
+
+                // Mettre à jour la position actuelle pour le prochain calcul
+                $currentLat = $closest->latitude;
+                $currentLng = $closest->longitude;
+
+                // Retirer le lieu trouvé de la liste des lieux disponibles
+                $availableLocations = $availableLocations->reject(fn($l) => $l->id === $closest->id);
+            }
+        } else {
+            $sequence = $availableLocations->pluck('id')->toArray();
         }
-
-        $sequence = $locations->pluck('id')->toArray();
 
         // Create or update game session for solo
         $session = \App\Models\GameSession::updateOrCreate(
