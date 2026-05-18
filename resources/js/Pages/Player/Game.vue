@@ -16,6 +16,7 @@ const props = defineProps({
     city: Object,
     locations: Array,
     gameMode: String,
+    currentSession: Object,
 });
 
 // --- États Réactifs ---
@@ -27,6 +28,21 @@ const distanceToClosest = ref(null);
 const closestLocation = ref(null);
 const watchId = ref(null);
 const isNearLocation = ref(false);
+
+const currentTarget = computed(() => {
+    return props.locations.find(l => l.is_current_target);
+});
+
+const proximityScore = computed(() => {
+    if (!distanceToClosest.value) return 0;
+    const dist = parseFloat(distanceToClosest.value.replace(/[^0-9.]/g, ''));
+    const isKm = distanceToClosest.value.includes('km');
+    const meters = isKm ? dist * 1000 : dist;
+
+    // On considère que 500m est le début de la zone "chaude"
+    if (meters > 500) return 0;
+    return Math.round(((500 - meters) / 500) * 100);
+});
 
 // Nouveaux états pour le gameplay
 const selectedLocation = ref(null);
@@ -42,21 +58,35 @@ const usedHints = ref(0);
 
 const selectLocation = (loc) => {
     selectedLocation.value = loc;
-    if (!loc.is_discovered) {
-        // Logique de déblocage par énigme
-        riddleType.value = 'unlock';
-        showRiddleModal.value = true;
-    } else {
+
+    if (loc.is_discovered) {
         activeTab.value = 'map';
+        return;
+    }
+
+    if (loc.is_current_target) {
+        // On vérifie si on a déjà résolu l'énigme de navigation
+        const currentEnigma = props.city.locations.find(l => l.id === loc.id).enigmas.find(e => e.id === props.currentSession?.current_enigma_id);
+
+        if (currentEnigma && !currentEnigma.is_site_specific) {
+            riddleType.value = 'unlock';
+            showRiddleModal.value = true;
+        } else {
+            // Déjà résolu l'énigme de navigation, on doit se rendre sur place
+            activeTab.value = 'map';
+        }
+    } else {
+        alert("Ce lieu est encore verrouillé. Suivez l'ordre de l'aventure !");
     }
 };
 
 const startRiddle = (difficulty) => {
     selectedDifficulty.value = difficulty;
     // On prend une énigme de la bonne difficulté et non spécifique au site pour débloquer
-    currentRiddle.value = selectedLocation.value.enigmas.find(e =>
+    const enigmas = selectedLocation.value.enigmas || [];
+    currentRiddle.value = enigmas.find(e =>
         e.difficulty === difficulty && !e.is_site_specific
-    ) || selectedLocation.value.enigmas[0];
+    ) || enigmas[0];
 
     riddleAnswer.value = '';
     usedHints.value = 0;
@@ -75,13 +105,12 @@ const submitRiddle = () => {
 };
 
 const handleUnlockSuccess = () => {
-    // Dans un vrai projet, on ferait un appel API ici
     router.post(route('player.unlock-location', selectedLocation.value.id), {
-        difficulty: selectedDifficulty.value
+        difficulty: selectedDifficulty.value,
+        team_id: props.currentSession?.team_id
     }, {
         onSuccess: () => {
             showRiddleModal.value = false;
-            alert("Lieu débloqué sur la carte ! Direction l'objectif.");
         }
     });
 };
@@ -89,11 +118,12 @@ const handleUnlockSuccess = () => {
 const handleSiteSuccess = () => {
     const stars = 3 - usedHints.value;
     earnedStars.value = Math.max(1, stars);
-    earnedXp.value = currentRiddle.value.reward_coins * 10; // Exemple
+    earnedXp.value = currentRiddle.value.reward_coins * 10 || 250;
 
     router.post(route('player.complete-location', selectedLocation.value.id), {
         stars: earnedStars.value,
-        xp: earnedXp.value
+        xp: earnedXp.value,
+        team_id: props.currentSession?.team_id
     }, {
         onSuccess: () => {
             showRiddleModal.value = false;
@@ -132,12 +162,23 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 };
 
 const updateDistances = (lat, lng) => {
-    if (!props.city || !props.city.locations) return;
+    if (!props.city || !props.locations) return;
+
+    // Priorité à la cible actuelle en mode aventure
+    if (currentTarget.value) {
+        const d = calculateDistance(lat, lng, currentTarget.value.latitude, currentTarget.value.longitude);
+        closestLocation.value = currentTarget.value;
+        isNearLocation.value = d <= (currentTarget.value.radius_meters || 50);
+        distanceToClosest.value = d > 1000
+            ? (d / 1000).toFixed(1) + 'km'
+            : Math.round(d) + 'm';
+        return;
+    }
 
     let minDistance = Infinity;
     let closest = null;
 
-    props.city.locations.forEach(loc => {
+    props.locations.forEach(loc => {
         const d = calculateDistance(lat, lng, loc.latitude, loc.longitude);
         if (d < minDistance) {
             minDistance = d;
@@ -171,16 +212,37 @@ const startTracking = () => {
 
 const validatePosition = () => {
     if (isNearLocation.value && closestLocation.value) {
-        selectedLocation.value = closestLocation.value;
-        riddleType.value = 'site';
-        // On sélectionne l'énigme spécifique au site si elle existe
-        currentRiddle.value = selectedLocation.value.enigmas.find(e => e.is_site_specific) || selectedLocation.value.enigmas[0];
-        riddleAnswer.value = '';
-        usedHints.value = 0;
-        showRiddleModal.value = true;
+        if (!closestLocation.value.is_current_target && !closestLocation.value.is_discovered) {
+            showGameToast("Ce n'est pas votre destination actuelle !", "error");
+            return;
+        }
+
+        showGameToast("Position confirmée ! Accès à l'énigme locale...", "success");
+
+        setTimeout(() => {
+            selectedLocation.value = closestLocation.value;
+            riddleType.value = 'site';
+
+            // On cherche l'énigme de site
+            const enigmas = selectedLocation.value.enigmas || [];
+            currentRiddle.value = enigmas.find(e => e.is_site_specific) || enigmas[0];
+
+            riddleAnswer.value = '';
+            usedHints.value = 0;
+            showRiddleModal.value = true;
+        }, 1000);
     } else {
-        alert("Vous êtes encore trop loin du lieu. Rapprochez-vous !");
+        showGameToast("Signal trop faible. Rapprochez-vous du point cible.", "warning");
     }
+};
+
+// Toast simple pour le feedback
+const toast = ref({ show: false, message: '', type: 'info' });
+const showGameToast = (msg, type = 'info') => {
+    toast.value = { show: true, message: msg, type };
+    setTimeout(() => {
+        toast.value.show = false;
+    }, 4000);
 };
 
 onMounted(() => {
@@ -198,107 +260,192 @@ onUnmounted(() => {
 });
 </script>
 
+<style scoped>
+.vertical-text {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translate(-50%, -20px) scale(0.95);
+}
+
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -20px) scale(0.95);
+}
+</style>
+
 <template>
   <Head :title="`${city?.name || 'Aventure'} — Mode Aventure`" />
 
   <SiteLayout hideFooter>
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-6 pb-28 md:pb-12">
-      <div class="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <!-- ZONE CARTE -->
-        <div class="relative h-[60vh] lg:h-[78vh] rounded-3xl glass-strong overflow-hidden border border-electric/20 shadow-neon">
+    <div class="mx-auto max-w-7xl px-2 sm:px-6 py-4 md:py-6 pb-28 md:pb-12 h-full flex flex-col">
+      <div class="grid gap-4 md:gap-6 lg:grid-cols-12 flex-1 min-h-0">
+        <!-- MAIN MAP / GAME AREA -->
+        <div class="lg:col-span-8 relative rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-white/20 glass-strong shadow-lg group bg-gaming-dark h-[50vh] md:h-auto min-h-[350px]">
           <div class="absolute inset-0 z-0">
             <MapComponent
               ref="mapRef"
               :locations="locations"
               :userPosition="userPosition"
+              :targetLocation="currentTarget"
             />
           </div>
 
-          <!-- Overlay de la carte -->
-          <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-10 pointer-events-none">
-            <div class="glass-strong px-4 py-2 rounded-xl flex items-center gap-2 pointer-events-auto">
-              <Navigation class="h-4 w-4 text-electric animate-pulse" />
-              <span class="text-xs font-display tracking-widest">{{ cityData?.name?.toUpperCase() || 'VILLE' }} • GPS ACTIF</span>
+          <!-- HUD OVERLAY -->
+          <div class="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-3 md:p-6">
+            <!-- HUD TOP: Radar Status -->
+            <div class="flex justify-between items-start gap-2">
+              <div class="px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl glass-strong border-electric/30 flex items-center gap-2 md:gap-3 backdrop-blur-md">
+                <div class="relative">
+                  <div class="h-1.5 md:h-2 w-1.5 md:w-2 rounded-full bg-electric animate-ping"></div>
+                  <div class="absolute inset-0 h-1.5 md:h-2 w-1.5 md:w-2 rounded-full bg-electric shadow-neon"></div>
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-[6px] md:text-[8px] font-black uppercase tracking-[0.2em] text-electric">Signal GPS</span>
+                  <span class="text-[8px] md:text-[10px] font-bold text-foreground">SYNC: STABLE</span>
+                </div>
+              </div>
+
+              <div class="px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl glass-strong border-electric/30 flex items-center gap-2 md:gap-3 backdrop-blur-md">
+                <div class="flex flex-col text-right">
+                  <span class="text-[6px] md:text-[8px] font-black uppercase tracking-[0.2em] text-electric">Distance Cible</span>
+                  <span class="text-[8px] md:text-[10px] font-bold text-foreground">{{ distanceToClosest || 'RECHERCHE...' }}</span>
+                </div>
+                <Navigation class="h-3 md:h-4 w-3 md:w-4 text-electric animate-pulse" />
+              </div>
             </div>
-            <button class="h-10 px-4 rounded-xl glass-strong text-xs font-display flex items-center gap-2 hover:text-electric transition-colors pointer-events-auto">
-              <QrCode class="h-4 w-4 text-electric" /> SCANNER QR
-            </button>
+
+            <!-- HUD MIDDLE: Proximity Gauge (Hidden on very small mobile) -->
+            <div class="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 hidden sm:flex flex-col items-center gap-4">
+              <div class="h-32 md:h-48 w-1 md:w-1.5 bg-white/5 rounded-full overflow-hidden border border-white/10 relative">
+                <div
+                  class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-electric via-cyan-400 to-white transition-all duration-500 shadow-neon"
+                  :style="{ height: `${proximityScore}%` }"
+                ></div>
+              </div>
+              <span class="text-[6px] md:text-[8px] font-black vertical-text tracking-widest text-electric/60 uppercase">Proximité</span>
+            </div>
+
+            <!-- HUD BOTTOM: Mission Brief -->
+            <div class="relative pointer-events-auto w-full max-w-2xl mx-auto">
+              <div class="glass-strong rounded-[1.2rem] md:rounded-[2rem] border border-electric/30 p-3 md:p-5 backdrop-blur-xl shadow-2xl animate-fade-up">
+                <div class="flex items-center gap-3 md:gap-4 mb-2 md:mb-3">
+                  <div class="h-8 md:h-10 w-8 md:w-10 rounded-lg md:rounded-xl bg-electric/10 border border-electric/20 grid place-items-center text-electric shrink-0">
+                    <Brain class="h-4 md:h-5 w-4 md:w-5 animate-pulse-soft" />
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[6px] md:text-[8px] text-electric font-black uppercase tracking-[0.3em]">Mission en cours</div>
+                    <h3 class="font-display text-sm md:text-lg text-foreground uppercase tracking-tight truncate">{{ currentTarget?.display_name }}</h3>
+                  </div>
+                  <div class="flex items-center gap-1 md:gap-2 shrink-0">
+                    <div v-for="i in 5" :key="i" :class="cn('h-1 w-2 md:w-4 rounded-full transition-colors', i/5 <= proximityScore/100 ? 'bg-electric shadow-neon' : 'bg-white/10')"></div>
+                  </div>
+                </div>
+
+                <p class="text-[10px] md:text-xs text-muted-foreground italic mb-3 md:mb-4 line-clamp-1 md:line-clamp-2 leading-relaxed">
+                  "{{ locations.find(l => l.id === currentSession?.current_location_id)?.enigmas?.find(e => e.id === currentSession?.current_enigma_id)?.content || 'Analysez le radar pour localiser le prochain secret.' }}"
+                </p>
+
+                <div class="flex gap-2 md:gap-3">
+                  <NeonButton
+                    variant="outline"
+                    size="sm"
+                    class="flex-1 rounded-lg md:rounded-xl text-[9px] md:text-[10px] h-9 md:h-11"
+                    @click="selectLocation(currentTarget)"
+                  >
+                    VOIR L'ÉNIGME
+                  </NeonButton>
+                  <NeonButton
+                    size="sm"
+                    class="flex-1 rounded-lg md:rounded-xl text-[9px] md:text-[10px] h-9 md:h-11 group relative overflow-hidden"
+                    @click="validatePosition"
+                  >
+                    <div v-if="isNearLocation" class="absolute inset-0 bg-white/20 animate-shimmer"></div>
+                    <div v-if="isNearLocation" class="flex items-center justify-center gap-1">
+                        <CheckCircle2 class="h-3 w-3" /> PRÊT
+                    </div>
+                    <div v-else class="flex items-center justify-center gap-1">
+                        <Navigation class="h-3 w-3 opacity-50" /> VÉRIFIER
+                    </div>
+                  </NeonButton>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Popup de découverte à proximité -->
-          <div v-if="closestLocation" class="absolute bottom-4 left-4 right-4 glass-strong rounded-2xl p-4 animate-fade-up z-10">
-            <div class="flex items-center gap-4">
-              <div :class="cn(
-                'h-14 w-14 rounded-xl grid place-items-center shadow-neon shrink-0 transition-colors',
-                isNearLocation ? 'bg-gradient-electric' : 'bg-gaming-panel border border-electric/20'
-              )">
-                <Sparkles v-if="isNearLocation" class="h-6 w-6 text-electric-foreground" />
-                <Lock v-else class="h-6 w-6 text-electric/40" />
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="text-[10px] text-electric font-display tracking-widest uppercase">
-                  {{ isNearLocation ? 'LIEU DÉCOUVERT' : 'Lieu le plus proche' }}
-                </div>
-                <div class="font-display text-base truncate">{{ closestLocation.name }}</div>
-                <div class="text-xs text-muted-foreground">{{ distanceToClosest }} • {{ isNearLocation ? 'Énigme disponible' : 'Rapprochez-vous' }}</div>
-              </div>
-              <NeonButton
-                size="sm"
-                :variant="isNearLocation ? 'primary' : 'outline'"
-                @click="validatePosition"
-              >
-                {{ isNearLocation ? 'Débloquer' : 'Vérifier' }}
-              </NeonButton>
+          <!-- TOAST NOTIFICATION -->
+          <Transition name="toast">
+            <div v-if="toast.show"
+                 :class="cn(
+                    'absolute top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl border backdrop-blur-xl shadow-2xl flex items-center gap-3 min-w-[280px]',
+                    toast.type === 'success' ? 'bg-success/10 border-success/30 text-success' :
+                    toast.type === 'error' ? 'bg-destructive/10 border-destructive/30 text-destructive' :
+                    'bg-warning/10 border-warning/30 text-warning'
+                 )">
+                <component :is="toast.type === 'success' ? CheckCircle2 : Info" class="h-5 w-5" />
+                <span class="text-xs font-bold uppercase tracking-widest">{{ toast.message }}</span>
             </div>
-          </div>
+          </Transition>
+
+          <div class="absolute inset-0 pointer-events-none border-[8px] md:border-[12px] border-white/5 rounded-[1.5rem] md:rounded-[2.5rem] z-20" />
         </div>
 
         <!-- BARRE LATÉRALE -->
-        <aside class="space-y-4">
-          <div class="rounded-2xl glass-strong p-5">
-            <div class="text-xs text-electric font-display tracking-widest uppercase">Quête Actuelle</div>
-            <h2 class="font-display text-xl mt-1">Exploration de {{ cityData?.name }}</h2>
-            <div class="mt-4 h-2 rounded-full bg-gaming-darker overflow-hidden">
+        <aside class="lg:col-span-4 space-y-4 overflow-y-auto max-h-[50vh] md:max-h-full custom-scrollbar pb-10 md:pb-0">
+          <div class="rounded-2xl glass-strong p-4 md:p-5">
+            <div class="text-[10px] text-electric font-display tracking-widest uppercase">Quête Actuelle</div>
+            <h2 class="font-display text-lg md:text-xl mt-1">Exploration de {{ cityData?.name }}</h2>
+            <div class="mt-4 h-1.5 md:h-2 rounded-full bg-gaming-darker overflow-hidden">
               <div
                 class="h-full bg-gradient-electric transition-all duration-1000"
                 :style="{ width: `${(locations.filter(l => l.is_discovered).length / locations.length) * 100}%` }"
               />
             </div>
-            <div class="mt-2 flex justify-between text-xs">
+            <div class="mt-2 flex justify-between text-[10px] md:text-xs">
               <span class="text-muted-foreground">{{ locations.filter(l => l.is_discovered).length }} sur {{ locations.length }} lieux</span>
-              <span class="text-electric">+{{ locations.filter(l => l.is_discovered).length * 250 }} XP</span>
+              <span class="text-electric font-bold">+{{ locations.filter(l => l.is_discovered).length * 250 }} XP</span>
             </div>
           </div>
 
           <!-- LISTE DES LIEUX -->
-          <div class="rounded-2xl glass p-5 max-h-[40vh] overflow-y-auto">
+          <div class="rounded-2xl glass p-4 md:p-5 max-h-[30vh] md:max-h-[50vh] overflow-y-auto custom-scrollbar">
             <div class="flex items-center justify-between mb-3 sticky top-0 bg-inherit z-10">
-              <h3 class="font-display text-sm flex items-center gap-2">
-                <Target class="h-4 w-4 text-electric" />VOTRE PROGRESSION
+              <h3 class="font-display text-xs md:text-sm flex items-center gap-2">
+                <Target class="h-3 md:h-4 w-3 md:w-4 text-electric" />VOTRE PROGRESSION
               </h3>
             </div>
-            <div class="space-y-3">
+            <div class="space-y-2 md:space-y-3">
               <div
                 v-for="loc in locations"
                 :key="loc.id"
-                class="flex items-center gap-3 p-2 rounded-xl hover:bg-electric/5 transition cursor-pointer group/loc"
+                class="flex items-center gap-2 md:gap-3 p-2 rounded-xl hover:bg-electric/5 transition cursor-pointer group/loc"
                 @click="selectLocation(loc)"
               >
                 <div :class="cn(
-                    'h-12 w-12 rounded-lg border flex items-center justify-center shrink-0 transition-colors',
-                    loc.is_discovered ? 'bg-electric/10 border-electric/20' : 'bg-gaming-darker border-white/5'
+                    'h-10 w-10 md:h-12 md:w-12 rounded-lg border flex items-center justify-center shrink-0 transition-colors',
+                    loc.is_discovered ? 'bg-electric/10 border-electric/20' : (loc.is_current_target ? 'bg-warning/10 border-warning/20' : 'bg-gaming-darker border-white/5')
                 )">
-                  <MapPin v-if="loc.is_discovered" class="h-6 w-6 text-electric" />
-                  <Lock v-else class="h-5 w-5 text-muted-foreground/30" />
+                  <MapPin v-if="loc.is_discovered" class="h-5 md:h-6 w-5 md:w-6 text-electric" />
+                  <Brain v-else-if="loc.is_current_target" class="h-5 md:h-6 w-5 md:w-6 text-warning animate-pulse" />
+                  <Lock v-else class="h-4 md:h-5 w-4 md:w-5 text-muted-foreground/30" />
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="text-sm font-bold truncate flex items-center gap-2 text-foreground">
+                  <div class="text-[12px] md:text-sm font-bold truncate flex items-center gap-2 text-foreground">
                     {{ loc.display_name }}
                     <div v-if="loc.is_discovered" class="flex gap-0.5">
-                        <Star v-for="s in 3" :key="s" :class="cn('h-2.5 w-2.5', s <= (loc.stars || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-white/10')" />
+                        <Star v-for="s in 3" :key="s" :class="cn('h-2 md:h-2.5 w-2 md:w-2.5', s <= (loc.stars || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-white/10')" />
                     </div>
                   </div>
-                  <div class="text-[10px] text-muted-foreground uppercase tracking-widest">
+                  <div class="text-[8px] md:text-[10px] text-muted-foreground uppercase tracking-widest">
                     {{ loc.is_discovered ? loc.category : 'Zone inconnue' }}
                   </div>
                 </div>
@@ -307,22 +454,24 @@ onUnmounted(() => {
           </div>
 
           <!-- ÉNIGME ACTIVE -->
-          <div v-if="isNearLocation" class="rounded-2xl glass-strong p-5 animate-fade-up border border-purple-neon/30 shadow-purple">
-            <div class="text-xs text-purple-neon font-display tracking-widest uppercase">Énigme Active</div>
-            <p class="mt-2 text-sm italic text-foreground/90">
-              "Je fais face à la mer, le dos tourné à la douleur ancienne. Compte les marches devant mon arche — quel nombre trouves-tu ?"
+          <div v-if="currentSession?.current_enigma_id" class="rounded-2xl glass-strong p-5 animate-fade-up border border-electric/30 shadow-neon">
+            <div class="text-xs text-electric font-display tracking-widest uppercase">Objectif Actuel</div>
+            <div class="mt-2 text-[10px] text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+                <Target class="h-3 w-3" />
+                {{ locations.find(l => l.id === currentSession.current_location_id)?.display_name }}
+            </div>
+            <p class="mt-3 text-xs italic text-foreground/90 line-clamp-3">
+              "{{ locations.find(l => l.id === currentSession.current_location_id)?.enigmas?.find(e => e.id === currentSession.current_enigma_id)?.content || 'Résolvez l\'énigme pour avancer.' }}"
             </p>
-            <input
-              placeholder="Votre réponse..."
-              class="mt-4 w-full h-11 rounded-xl bg-gaming-darker/80 border border-purple-neon/40 px-4 text-sm focus:border-purple-neon focus:shadow-purple outline-none transition-all"
-            />
-            <NeonButton variant="purple" class="w-full mt-3" size="sm">
-              Soumettre la Réponse
-            </NeonButton>
+            <div class="mt-4">
+                <NeonButton size="sm" class="w-full rounded-xl" @click="selectLocation(locations.find(l => l.id === currentSession.current_location_id))">
+                    VOIR LA MISSION
+                </NeonButton>
+            </div>
           </div>
           <div v-else class="rounded-2xl glass p-5 text-center">
-            <Lock class="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-            <p class="text-xs text-muted-foreground">Atteignez un lieu pour débloquer une énigme</p>
+            <Trophy class="h-8 w-8 text-electric mx-auto mb-2 animate-bounce" />
+            <p class="text-xs text-muted-foreground uppercase font-black tracking-widest">Aventure terminée !</p>
           </div>
         </aside>
       </div>
