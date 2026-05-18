@@ -63,30 +63,33 @@ const rareColors = {
           <h2 :class="cn('font-display text-xl flex items-center gap-2', cat.color)">
             <Sparkles class="h-4 w-4" />{{ cat.title }}
           </h2>
-          <div class="mt-5 grid gap-4 grid-cols-2 md:grid-cols-4">
-            <div
-              v-for="(b, i) in cat.badges"
-              :key="b.name"
-              :class="cn(
-                'group relative rounded-2xl glass-strong p-5 border-2 hover-lift text-center animate-fade-up',
-                b.unlocked ? rareColors[b.rare] : 'border-electric/10 opacity-60'
-              )"
-              :style="{ animationDelay: `${i * 60}ms` }"
-            >
-              <div v-if="!b.unlocked" class="absolute inset-0 rounded-2xl bg-gaming-darker/60 backdrop-blur-sm grid place-items-center z-10">
-                <Lock class="h-6 w-6 text-muted-foreground" />
-              </div>
+          <div class="mt-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div v-for="b in cat.badges" :key="b.name" 
+                 :class="cn(
+                    'relative glass-strong rounded-[1.5rem] p-4 text-center border-white/20 transition-all duration-500 hover-game overflow-hidden group',
+                    b.unlocked ? 'opacity-100' : 'opacity-40 grayscale'
+                 )">
+                <div v-if="b.unlocked" class="absolute -top-10 -right-10 h-24 w-24 rounded-full bg-primary/10 blur-2xl group-hover:bg-primary/20 transition-colors" />
+                
+                <div class="relative z-10">
+                  <div :class="cn(
+                    'h-12 w-12 mx-auto rounded-xl grid place-items-center border transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm',
+                    b.unlocked ? rareColors[b.rare] : 'border-white/10 bg-white/5',
+                    b.unlocked && b.rare === 'légendaire' ? 'animate-pulse-soft' : ''
+                  )">
+                    <component :is="b.icon" class="h-6 w-6" />
+                  </div>
+                  <div class="mt-3 font-display text-[10px] font-black text-foreground uppercase tracking-tight truncate">{{ b.name }}</div>
+                  <div class="mt-1 text-[8px] uppercase tracking-[0.2em] text-muted-foreground font-black">{{ b.rare }}</div>
+                  
+                  <div class="mt-3 pt-3 border-t border-white/5">
+                      <p class="text-[9px] text-muted-foreground leading-tight line-clamp-2 italic font-medium">{{ b.desc }}</p>
+                  </div>
+                </div>
 
-              <div :class="cn(
-                'h-16 w-16 mx-auto rounded-2xl grid place-items-center border-2 transition-all',
-                b.unlocked ? rareColors[b.rare] : 'border-electric/20',
-                b.unlocked && b.rare === 'légendaire' ? 'animate-pulse-glow' : ''
-              )">
-                <component :is="b.icon" class="h-7 w-7" />
-              </div>
-              <div class="mt-3 font-display text-sm text-foreground">{{ b.name }}</div>
-              <div class="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">{{ b.rare }}</div>
-              <div class="mt-2 text-xs text-muted-foreground leading-tight">{{ b.desc }}</div>
+                <div v-if="!b.unlocked" class="absolute inset-0 bg-background/60 backdrop-blur-[2px] grid place-items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Lock class="h-6 w-6 text-muted-foreground/40" />
+                </div>
             </div>
           </div>
         </div>

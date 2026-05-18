@@ -22,6 +22,7 @@ const selectedLocation = ref(null);
 const showEnigmaModal = ref(false);
 
 const locationForm = useForm({
+    id: null,
     name: '',
     description: '',
     category: 'historique',
@@ -37,17 +38,16 @@ const onLocationSelect = (data) => {
 };
 
 const imageForm = useForm({
-    image_url: '',
+    image: null,
 });
 
 const openImageModal = (location) => {
     selectedLocation.value = location;
-    imageForm.image_url = ''; // Or existing image if field exists
+    imageForm.image = null;
     showImageModal.value = true;
 };
 
 const submitImage = () => {
-    // Assuming we just store one URL in 'images' json field for now
     imageForm.post(route('mairie.locations.image', selectedLocation.value.id), {
         onSuccess: () => {
             showImageModal.value = false;
@@ -68,15 +68,64 @@ const enigmaForm = useForm({
     type: 'text',
     image: null,
     is_site_specific: false,
+    questions: [], // New: multiple questions
 });
 
+const addQuestion = () => {
+    enigmaForm.questions.push({
+        question_text: '',
+        options: [
+            { option_text: '', is_correct: true },
+            { option_text: '', is_correct: false },
+        ]
+    });
+};
+
+const removeQuestion = (index) => {
+    enigmaForm.questions.splice(index, 1);
+};
+
+const addOption = (qIndex) => {
+    enigmaForm.questions[qIndex].options.push({ option_text: '', is_correct: false });
+};
+
+const removeOption = (qIndex, oIndex) => {
+    enigmaForm.questions[qIndex].options.splice(oIndex, 1);
+};
+
+const setCorrectOption = (qIndex, oIndex) => {
+    enigmaForm.questions[qIndex].options.forEach((opt, idx) => {
+        opt.is_correct = idx === oIndex;
+    });
+};
+
 const submitLocation = () => {
-    locationForm.post(route('mairie.locations.store', props.city.id), {
+    const url = locationForm.id
+        ? route('mairie.locations.update', locationForm.id)
+        : route('mairie.locations.store', props.city.id);
+
+    locationForm.post(url, {
         onSuccess: () => {
             showLocationModal.value = false;
             locationForm.reset();
         }
     });
+};
+
+const openLocationModal = (location = null) => {
+    if (location) {
+        locationForm.id = location.id;
+        locationForm.name = location.name;
+        locationForm.description = location.description;
+        locationForm.category = location.category;
+        locationForm.latitude = location.latitude;
+        locationForm.longitude = location.longitude;
+        locationForm.radius_meters = location.radius_meters;
+    } else {
+        locationForm.reset();
+        locationForm.id = null;
+    }
+    showLocationModal.value = true;
 };
 
 const openEnigmaModal = (location, enigma = null) => {
@@ -92,11 +141,25 @@ const openEnigmaModal = (location, enigma = null) => {
         enigmaForm.reward_hearts = enigma.reward_hearts;
         enigmaForm.type = enigma.type;
         enigmaForm.is_site_specific = enigma.is_site_specific;
-        enigmaForm.image = null; // Don't preload image file
+        enigmaForm.image = null;
+
+        // Load questions
+        if (enigma.questions && enigma.questions.length > 0) {
+            enigmaForm.questions = enigma.questions.map(q => ({
+                question_text: q.question_text,
+                options: q.options.map(o => ({
+                    option_text: o.option_text,
+                    is_correct: !!o.is_correct
+                }))
+            }));
+        } else {
+            enigmaForm.questions = [];
+        }
     } else {
         enigmaForm.reset();
         enigmaForm.id = null;
         enigmaForm.indices = ['', ''];
+        enigmaForm.questions = [];
     }
     showEnigmaModal.value = true;
 };
@@ -148,16 +211,16 @@ const submitEnigma = () => {
       <div class="grid gap-8 lg:grid-cols-12">
         <!-- Sidebar: City Overview -->
         <div class="lg:col-span-4 space-y-6">
-          <div class="glass-strong rounded-[2rem] p-6 border border-white/5 relative overflow-hidden">
-            <div class="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
-
-            <div class="relative z-10">
-                <div class="aspect-[16/10] rounded-2xl overflow-hidden mb-6 bg-gaming-darker border border-white/10 shadow-elevated">
-                    <img v-if="city.image_path" :src="city.image_path" class="w-full h-full object-cover" />
-                    <div v-else class="w-full h-full grid place-items-center text-electric/10">
-                        <Map class="h-16 w-16" />
-                    </div>
+          <div class="rounded-[2.5rem] glass overflow-hidden border border-white/10 group">
+            <div class="h-48 w-full bg-gaming-darker relative overflow-hidden">
+                <img v-if="city.image_path" :src="city.image_path" class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <div v-else class="h-full w-full grid place-items-center opacity-20">
+                    <Map class="h-12 w-12" />
                 </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-gaming-dark via-transparent to-transparent" />
+            </div>
+
+            <div class="relative z-10 p-6">
 
                 <h2 class="font-display text-xl mb-3 flex items-center gap-2 text-foreground">
                     <Info class="h-5 w-5 text-electric" />Briefing de Mission
@@ -212,8 +275,11 @@ const submitEnigma = () => {
               <div v-for="loc in city.locations" :key="loc.id" class="p-8 hover:bg-electric/5 transition-all duration-500 group">
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-6">
                   <div class="flex items-start gap-5">
-                    <div class="h-14 w-14 rounded-2xl bg-gaming-darker border border-white/10 grid place-items-center text-electric shrink-0 shadow-inner group-hover:border-electric/40 transition-colors">
-                      <MapPin class="h-7 w-7" />
+                    <div class="h-14 w-14 rounded-2xl overflow-hidden bg-gaming-darker border border-white/10 shrink-0 shadow-inner group-hover:border-electric/40 transition-colors">
+                      <img v-if="loc.images && loc.images[0]" :src="loc.images[0]" class="h-full w-full object-cover" />
+                      <div v-else class="h-full w-full grid place-items-center text-electric">
+                        <MapPin class="h-7 w-7" />
+                      </div>
                     </div>
                     <div>
                       <div class="flex items-center gap-3">
@@ -234,6 +300,12 @@ const submitEnigma = () => {
                       class="h-11 px-5 rounded-xl bg-electric/10 text-electric border border-electric/30 hover:bg-electric/20 text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2"
                     >
                       <Plus class="h-4 w-4" /> Enigma
+                    </button>
+                    <button
+                      @click="openLocationModal(loc)"
+                      class="h-11 w-11 rounded-xl glass border-white/10 text-muted-foreground hover:text-white transition-all grid place-items-center"
+                    >
+                      <Settings class="h-4 w-4" />
                     </button>
                     <button
                       @click="openImageModal(loc)"
@@ -361,7 +433,7 @@ const submitEnigma = () => {
                     <HelpCircle class="h-6 w-6" />
                 </div>
                 <div>
-                    <h2 class="font-display text-3xl text-white">{{ enigmaForm.id ? 'Éditer l\'Énigme' : 'Nouvelle Énigme' }}</h2>
+                    <h2 class="font-display text-3xl text-foreground">{{ enigmaForm.id ? 'Éditer l\'Énigme' : 'Nouvelle Énigme' }}</h2>
                     <p class="text-xs text-muted-foreground uppercase tracking-widest mt-1">Cible: {{ selectedLocation?.name }}</p>
                 </div>
             </div>
@@ -405,7 +477,7 @@ const submitEnigma = () => {
                 </div>
 
                 <div class="grid grid-cols-2 gap-6">
-                    <GlowInput label="Réponse" v-model="enigmaForm.answer" placeholder="La réponse exacte..." required />
+                    <GlowInput label="Réponse attendue (Navigation)" v-model="enigmaForm.answer" placeholder="La réponse pour débloquer..." required />
                     <div class="grid grid-cols-2 gap-2">
                         <GlowInput label="XP" type="number" v-model="enigmaForm.reward_coins" required />
                         <GlowInput label="Vies ❤️" type="number" v-model="enigmaForm.reward_hearts" required />
@@ -429,6 +501,76 @@ const submitEnigma = () => {
                     </div>
                 </div>
 
+                <!-- QUESTIONNAIRE SECTION -->
+                <div class="space-y-6 pt-6 border-t border-white/10">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-display text-lg text-foreground">Questionnaire de Site</h3>
+                            <p class="text-[10px] text-muted-foreground uppercase tracking-widest">Questions posées après validation GPS</p>
+                        </div>
+                        <button type="button" @click="addQuestion" class="h-10 px-4 rounded-xl bg-purple-neon/10 text-purple-neon border border-purple-neon/20 hover:bg-purple-neon/20 transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                            <Plus class="h-4 w-4" /> Ajouter Question
+                        </button>
+                    </div>
+
+                    <div v-for="(question, qIndex) in enigmaForm.questions" :key="qIndex" class="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4 relative group/q">
+                        <button type="button" @click="removeQuestion(qIndex)" class="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-destructive text-white grid place-items-center opacity-0 group-hover/q:opacity-100 transition-opacity shadow-lg">
+                            <Trash2 class="h-4 w-4" />
+                        </button>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-black">Question #{{ qIndex + 1 }}</label>
+                            <input v-model="question.question_text" class="w-full h-11 rounded-xl bg-gaming-darker border border-white/10 px-4 text-sm focus:border-purple-neon outline-none" placeholder="Ex: Quel animal est sculpté sur la porte ?" required />
+                        </div>
+
+                        <div class="space-y-3 pl-4 border-l-2 border-purple-neon/20">
+                            <div class="flex items-center justify-between">
+                                <label class="text-[9px] uppercase tracking-widest text-muted-foreground font-black">Propositions</label>
+                                <button type="button" @click="addOption(qIndex)" class="text-[9px] text-purple-neon hover:underline font-bold">
+                                    + Ajouter Option
+                                </button>
+                            </div>
+
+                            <div v-for="(option, oIndex) in question.options" :key="oIndex" class="flex items-center gap-3 group/o">
+                                <label class="relative flex items-center cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        :name="`correct_${qIndex}`"
+                                        :checked="option.is_correct"
+                                        @change="setCorrectOption(qIndex, oIndex)"
+                                        class="sr-only"
+                                    />
+                                    <div :class="cn(
+                                        'h-6 w-6 rounded-full border-2 transition-all flex items-center justify-center',
+                                        option.is_correct ? 'border-purple-neon bg-purple-neon/20 shadow-purple' : 'border-white/10 hover:border-purple-neon/50'
+                                    )">
+                                        <div v-if="option.is_correct" class="h-2.5 w-2.5 rounded-full bg-purple-neon animate-pulse-soft"></div>
+                                    </div>
+                                </label>
+                                <input
+                                    v-model="option.option_text"
+                                    class="flex-1 h-10 rounded-xl bg-gaming-darker/50 border border-white/10 px-4 text-xs focus:border-purple-neon outline-none"
+                                    placeholder="Proposition de réponse..."
+                                    required
+                                />
+                                <button
+                                    v-if="question.options.length > 2"
+                                    type="button"
+                                    @click="removeOption(qIndex, oIndex)"
+                                    class="h-10 w-10 rounded-xl glass border-destructive/10 text-destructive/40 hover:text-destructive grid place-items-center opacity-0 group-hover/o:opacity-100 transition-all"
+                                >
+                                    <Trash2 class="h-4 w-4" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="enigmaForm.questions.length === 0" class="p-8 text-center border-2 border-dashed border-white/5 rounded-3xl">
+                        <HelpCircle class="h-10 w-10 text-white/5 mx-auto mb-3" />
+                        <p class="text-xs text-muted-foreground">Aucun questionnaire configuré pour cette énigme.</p>
+                    </div>
+                </div>
+
                 <div class="pt-6 flex gap-4 sticky bottom-0 bg-inherit pb-2">
                     <NeonButton type="button" variant="outline" class="flex-1" @click="showEnigmaModal = false">Annuler</NeonButton>
                     <NeonButton type="submit" variant="purple" class="flex-1" :disabled="enigmaForm.processing">Sauvegarder l'Énigme</NeonButton>
@@ -448,7 +590,10 @@ const submitEnigma = () => {
             </div>
 
             <form @submit.prevent="submitImage" class="space-y-6">
-                <GlowInput label="URL de l'image de reconnaissance" v-model="imageForm.image_url" placeholder="https://..." required />
+                <div class="space-y-2">
+                    <label class="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-black ml-1">Fichier Image</label>
+                    <input type="file" @input="imageForm.image = $event.target.files[0]" class="w-full text-xs text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-electric/10 file:text-electric hover:file:bg-electric/20 transition-all" required />
+                </div>
                 <p class="text-[10px] text-muted-foreground uppercase tracking-widest leading-relaxed">
                     Cette image sera utilisée pour aider les joueurs à identifier le lieu lors de leur exploration.
                 </p>

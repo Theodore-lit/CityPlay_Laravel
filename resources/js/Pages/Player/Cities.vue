@@ -75,7 +75,7 @@ const mapPoints = [
         <Link
           v-for="(c, i) in filteredCities"
           :key="c.id"
-          :href="route('player.game', c.id)"
+          :href="gameMode === 'aventure' ? route('player.adventure.setup', c.id) : route('player.game', c.id)"
           class="group relative overflow-hidden rounded-2xl glass hover-lift block aspect-[4/5] animate-fade-up"
           :style="{ animationDelay: `${i * 60}ms` }"
         >

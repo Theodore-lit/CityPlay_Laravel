@@ -13,7 +13,7 @@ class MairieController extends Controller
     {
         // Mairie only sees their own cities
         $cities = City::where('creator_id', auth()->id())->withCount('locations')->get();
-        
+
         return Inertia::render('Mairie/Dashboard', [
             'cities' => $cities,
             'stats' => [
@@ -32,10 +32,21 @@ class MairieController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'radius_meters' => 'required|integer|min:100',
+            'image' => 'nullable|image|max:2048',
         ]);
 
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('cities', 'public');
+            $validated['image_path'] = '/storage/' . $path;
+        }
+
         $city = City::create([
-            ...$validated,
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'latitude' => $validated['latitude'],
+            'longitude' => $validated['longitude'],
+            'radius_meters' => $validated['radius_meters'],
+            'image_path' => $validated['image_path'] ?? null,
             'creator_id' => auth()->id(),
             'is_active' => true,
         ]);
@@ -59,7 +70,7 @@ class MairieController extends Controller
         }
 
         return Inertia::render('Mairie/CityShow', [
-            'city' => $city->load(['locations.enigmas']),
+            'city' => $city->load(['locations.enigmas.questions.options']),
         ]);
     }
 
@@ -72,11 +83,39 @@ class MairieController extends Controller
             'radius_meters' => 'required|integer|min:10',
             'description' => 'nullable|string',
             'category' => 'nullable|string',
+            'image' => 'nullable|image|max:2048',
         ]);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('locations', 'public');
+            $validated['images'] = ['/storage/' . $path];
+        }
 
         $city->locations()->create($validated);
 
         return redirect()->back()->with('success', 'Lieu ajouté avec succès.');
+    }
+
+    public function updateLocation(Request $request, \App\Models\Location $location)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'radius_meters' => 'required|integer|min:10',
+            'description' => 'nullable|string',
+            'category' => 'nullable|string',
+            'image' => 'nullable|image|max:2048',
+        ]);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('locations', 'public');
+            $validated['images'] = ['/storage/' . $path];
+        }
+
+        $location->update($validated);
+
+        return redirect()->back()->with('success', 'Lieu mis à jour avec succès.');
     }
 
     public function storeEnigma(Request $request, \App\Models\Location $location)
@@ -93,6 +132,11 @@ class MairieController extends Controller
             'type' => 'required|string', // text, qr, image
             'image' => 'nullable|image|max:2048', // 2MB max
             'is_site_specific' => 'boolean',
+            'questions' => 'nullable|array',
+            'questions.*.question_text' => 'required|string',
+            'questions.*.options' => 'required|array|min:2',
+            'questions.*.options.*.option_text' => 'required|string',
+            'questions.*.options.*.is_correct' => 'required|boolean',
         ]);
 
         if ($request->hasFile('image')) {
@@ -101,24 +145,46 @@ class MairieController extends Controller
         }
 
         $enigmaId = $validated['id'] ?? null;
-        unset($validated['id'], $validated['image']);
+        $questions = $validated['questions'] ?? [];
 
-        $location->enigmas()->updateOrCreate(
+        unset($validated['id'], $validated['image'], $validated['questions']);
+
+        $enigma = $location->enigmas()->updateOrCreate(
             ['id' => $enigmaId],
             $validated
         );
+
+        // Sync questions
+        if (!empty($questions)) {
+            // Simple approach: delete existing questions and recreate
+            // (In production, you might want a more sophisticated sync)
+            $enigma->questions()->delete();
+
+            foreach ($questions as $qData) {
+                $question = $enigma->questions()->create([
+                    'question_text' => $qData['question_text']
+                ]);
+
+                foreach ($qData['options'] as $oData) {
+                    $question->options()->create($oData);
+                }
+            }
+        }
 
         return redirect()->back()->with('success', 'Énigme enregistrée avec succès.');
     }
 
     public function storeLocationImage(Request $request, \App\Models\Location $location)
     {
-        $validated = $request->validate([
-            'image_url' => 'required|url',
+        $request->validate([
+            'image' => 'required|image|max:2048',
         ]);
 
-        $location->images = [$validated['image_url']];
-        $location->save();
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('locations', 'public');
+            $location->images = ['/storage/' . $path];
+            $location->save();
+        }
 
         return redirect()->back()->with('success', 'Image du lieu mise à jour.');
     }

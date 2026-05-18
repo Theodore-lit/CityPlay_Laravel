@@ -60,26 +60,26 @@ const isActive = (routeName) => route().current(routeName);
 </script>
 
 <template>
-  <header class="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
+  <header class="sticky top-0 z-50 glass-strong border-b border-white/20">
     <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-      <Link :href="route('dashboard')" class="flex items-center gap-2 group">
-        <div class="relative h-9 w-9 rounded-lg bg-primary/10 border border-primary/20 grid place-items-center">
-          <Compass class="h-5 w-5 text-primary neon-text" />
+      <Link :href="route('dashboard')" class="flex items-center gap-3 group">
+        <div class="relative h-10 w-10 rounded-xl bg-gradient-premium grid place-items-center shadow-neon group-hover:scale-110 transition-transform">
+          <Compass class="h-6 w-6 text-white" />
         </div>
-        <div class="font-display font-black tracking-widest text-sm sm:text-base text-foreground">
+        <div class="font-display font-black tracking-[0.2em] text-sm sm:text-lg text-foreground">
           CITY<span class="text-primary neon-text">PLAY</span>
         </div>
       </Link>
 
-      <nav class="hidden md:flex items-center gap-1">
+      <nav class="hidden md:flex items-center gap-2">
         <template v-for="l in links" :key="l.to">
           <Link
             :href="route(l.to)"
             :class="cn(
-              'px-4 py-2 rounded-lg text-sm font-medium tracking-wide transition-colors',
+              'px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all',
               isActive(l.to)
-                ? 'text-primary bg-primary/10'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                ? 'text-primary bg-primary/10 shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
             )"
           >
             {{ l.label }}
@@ -88,7 +88,7 @@ const isActive = (routeName) => route().current(routeName);
       </nav>
 
       <div class="hidden md:block">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-3">
           <template v-if="user">
             <div class="flex items-center gap-4 mr-4 bg-muted px-4 py-1.5 rounded-full border border-border">
               <div class="flex items-center text-accent neon-text-purple">
@@ -107,14 +107,13 @@ const isActive = (routeName) => route().current(routeName);
                   </span>
               </button>
             </div>
-            <button @click="showLogoutModal = true" class="text-muted-foreground hover:text-electric text-sm font-medium">
-              Déconnexion
-            </button>
+            <Link :href="route('profile.edit')" class="h-10 w-10 rounded-xl bg-muted border border-border grid place-items-center hover:border-primary transition-colors">
+              <User class="h-5 w-5 text-muted-foreground" />
+            </Link>
           </template>
           <template v-else>
-            <NeonButton :href="route('login')" variant="outline" size="sm">
-              Connexion
-            </NeonButton>
+            <NeonButton :href="route('login')" variant="ghost" size="sm">Connexion</NeonButton>
+            <NeonButton :href="route('register')" size="sm">Rejoindre</NeonButton>
           </template>
         </div>
       </div>
