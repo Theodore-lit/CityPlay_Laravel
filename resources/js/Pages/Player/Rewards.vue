@@ -43,14 +43,14 @@ const rareColors = {
     <div class="mx-auto max-w-6xl px-4 sm:px-6 py-10 pb-28 md:pb-12">
       <div class="text-center">
         <Sparkles class="h-10 w-10 mx-auto text-purple-neon animate-pulse-glow rounded-lg p-1" />
-        <h1 class="font-display text-3xl md:text-5xl mt-3 text-white">Coffre aux <span class="text-electric neon-text">Trophées</span></h1>
+        <h1 class="font-display text-3xl md:text-5xl mt-3 text-foreground">Coffre aux <span class="text-electric neon-text">Trophées</span></h1>
         <p class="mt-2 text-muted-foreground">12 sur 48 badges débloqués. La légende grandit.</p>
       </div>
 
       <div class="mt-8 grid grid-cols-3 gap-4 max-w-xl mx-auto">
         <div v-for="s in [
-          { v: 12, l: 'Débloqués', c: 'text-electric' }, 
-          { v: 3, l: 'Légendaires', c: 'text-warning' }, 
+          { v: 12, l: 'Débloqués', c: 'text-electric' },
+          { v: 3, l: 'Légendaires', c: 'text-warning' },
           { v: 36, l: 'Restants', c: 'text-muted-foreground' }
         ]" :key="s.l" class="rounded-2xl glass p-4 text-center">
           <div :class="cn('font-display text-2xl md:text-3xl', s.c)">{{ s.v }}</div>
@@ -76,7 +76,7 @@ const rareColors = {
               <div v-if="!b.unlocked" class="absolute inset-0 rounded-2xl bg-gaming-darker/60 backdrop-blur-sm grid place-items-center z-10">
                 <Lock class="h-6 w-6 text-muted-foreground" />
               </div>
-              
+
               <div :class="cn(
                 'h-16 w-16 mx-auto rounded-2xl grid place-items-center border-2 transition-all',
                 b.unlocked ? rareColors[b.rare] : 'border-electric/20',
@@ -84,7 +84,7 @@ const rareColors = {
               )">
                 <component :is="b.icon" class="h-7 w-7" />
               </div>
-              <div class="mt-3 font-display text-sm text-white">{{ b.name }}</div>
+              <div class="mt-3 font-display text-sm text-foreground">{{ b.name }}</div>
               <div class="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">{{ b.rare }}</div>
               <div class="mt-2 text-xs text-muted-foreground leading-tight">{{ b.desc }}</div>
             </div>

@@ -41,6 +41,11 @@ class Location extends Model
         return $this->hasMany(Enigma::class);
     }
 
+    public function quizzes()
+    {
+        return $this->hasMany(Quiz::class);
+    }
+
     public function userProgress()
     {
         return $this->hasMany(UserLocationProgress::class);

@@ -59,6 +59,14 @@ class City extends Model
     }
 
     /**
+     * Relation : Une ville contient plusieurs quiz.
+     */
+    public function quizzes()
+    {
+        return $this->hasMany(Quiz::class);
+    }
+
+    /**
      * Relation : Une ville peut avoir plusieurs sessions de jeu actives ou passées.
      */
     public function gameSessions()

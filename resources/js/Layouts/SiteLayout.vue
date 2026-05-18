@@ -13,9 +13,19 @@ const props = defineProps({
 
 const isDark = ref(true);
 
+const updateDOM = (dark) => {
+  if (dark) {
+    document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('light');
+  } else {
+    document.documentElement.classList.add('light');
+    document.documentElement.classList.remove('dark');
+  }
+};
+
 const toggleTheme = () => {
   isDark.value = !isDark.value;
-  document.documentElement.classList.toggle('light', !isDark.value);
+  updateDOM(isDark.value);
   localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
 };
 
@@ -23,19 +33,19 @@ onMounted(() => {
   const savedTheme = localStorage.getItem('theme');
   if (savedTheme === 'light') {
     isDark.value = false;
-    document.documentElement.classList.add('light');
   }
+  updateDOM(isDark.value);
 });
 </script>
 
 <template>
   <div class="min-h-screen flex flex-col transition-colors duration-500 bg-background text-foreground">
     <Navbar />
-    
+
     <!-- Theme Toggle Floating Button -->
-    <button 
-      @click="toggleTheme" 
-      class="fixed right-6 bottom-24 md:bottom-10 z-[60] h-12 w-12 rounded-full glass-strong border border-electric/30 flex items-center justify-center text-electric shadow-neon hover:scale-110 transition-all"
+    <button
+      @click="toggleTheme"
+      class="fixed right-6 bottom-24 md:bottom-10 z-[60] h-12 w-12 rounded-full bg-card border border-border flex items-center justify-center text-primary shadow-lg hover:scale-110 transition-all"
       aria-label="Changer le thème"
     >
       <Sun v-if="isDark" class="h-5 w-5" />

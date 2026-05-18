@@ -56,4 +56,9 @@ class User extends Authenticatable
             ->withPivot('stars', 'is_discovered', 'discovered_at')
             ->withTimestamps();
     }
+
+    public function quizResults()
+    {
+        return $this->hasMany(QuizResult::class);
+    }
 }

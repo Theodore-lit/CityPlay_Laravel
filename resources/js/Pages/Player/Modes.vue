@@ -31,18 +31,18 @@ const selectMode = (mode) => {
 
       <div class="mt-12 grid gap-8 md:grid-cols-2">
         <!-- MODE QUIZ -->
-        <div 
+        <div
           @click="selectMode('quiz')"
           class="group relative overflow-hidden rounded-3xl glass-strong p-8 md:p-10 border border-electric/10 cursor-pointer hover:border-electric/40 transition-all"
         >
           <div class="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-electric/20 blur-3xl" />
           <div class="absolute inset-0 grid-bg opacity-10" />
-          
+
           <div class="relative">
             <div class="h-16 w-16 rounded-2xl bg-white/5 border border-electric/20 grid place-items-center shadow-neon">
               <Brain class="h-8 w-8 text-electric neon-text" />
             </div>
-            <h2 class="mt-6 font-display text-3xl text-white">Mode Quiz & Devinette</h2>
+            <h2 class="mt-6 font-display text-3xl text-foreground">Mode Quiz & Devinette</h2>
             <p class="mt-3 text-muted-foreground text-sm leading-relaxed">
               Testez vos connaissances sur le Bénin. Histoire, culture, géographie : débloquez des lieux en répondant correctement aux énigmes.
             </p>
@@ -55,13 +55,13 @@ const selectMode = (mode) => {
         </div>
 
         <!-- MODE AVENTURE -->
-        <div 
+        <div
           @click="selectMode('aventure')"
           class="group relative overflow-hidden rounded-3xl glass-strong p-8 md:p-10 border border-purple-neon/10 cursor-pointer hover:border-purple-neon/40 transition-all"
         >
           <div class="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-purple-neon/20 blur-3xl" />
           <div class="absolute inset-0 grid-bg opacity-10" />
-          
+
           <div class="relative flex flex-col h-full">
             <div class="flex justify-between items-start">
                 <div class="h-16 w-16 rounded-2xl bg-white/5 border border-purple-neon/20 grid place-items-center shadow-purple">
@@ -71,16 +71,16 @@ const selectMode = (mode) => {
                     EN DIRECT
                 </div>
             </div>
-            
-            <h2 class="mt-6 font-display text-3xl text-white">Mode Aventure</h2>
+
+            <h2 class="mt-6 font-display text-3xl text-foreground">Mode Aventure</h2>
             <p class="mt-3 text-muted-foreground text-sm leading-relaxed">
               Vivez l'histoire sur le terrain. Missions GPS réelles, scan de QR codes historiques et énigmes immersives basées sur votre position.
             </p>
 
             <div class="mt-8 flex items-center justify-between">
                 <div class="flex gap-2">
-                    <div class="px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-[10px] text-white">GPS ACTIF</div>
-                    <div class="px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-[10px] text-white">CARTE</div>
+                    <div class="px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-[10px] text-foreground">GPS ACTIF</div>
+                    <div class="px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-[10px] text-foreground">CARTE</div>
                 </div>
                 <NeonButton variant="purple" size="sm">Sélectionner</NeonButton>
             </div>

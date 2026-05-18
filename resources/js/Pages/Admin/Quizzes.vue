@@ -6,8 +6,9 @@ import GlowInput from '@/Components/GlowInput.vue';
 import Modal from '@/Components/Modal.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import { 
-  Brain, Plus, Trash2, Edit2, ChevronLeft, HelpCircle, 
+import { cn } from '@/lib/utils';
+import {
+  Brain, Plus, Trash2, Edit2, ChevronLeft, HelpCircle,
   Clock, Zap, Save, X, CheckCircle2
 } from 'lucide-vue-next';
 
@@ -117,7 +118,7 @@ const deleteQuestion = (id) => {
             </Link>
             <div>
               <div class="text-xs text-purple-neon uppercase tracking-[0.2em] font-black mb-1">Éditeur de Défis</div>
-              <h1 class="font-display text-3xl md:text-5xl text-white">{{ city.name }}</h1>
+              <h1 class="font-display text-3xl md:text-5xl text-foreground">{{ city.name }}</h1>
             </div>
         </div>
         <NeonButton @click="openQuizModal()" size="sm" variant="purple">
@@ -134,7 +135,7 @@ const deleteQuestion = (id) => {
                     <Brain class="h-7 w-7" />
                 </div>
                 <div>
-                    <h2 class="font-display text-2xl text-white">{{ quiz.title }}</h2>
+                    <h2 class="font-display text-2xl text-foreground">{{ quiz.title }}</h2>
                     <div class="flex flex-wrap gap-4 mt-2">
                         <span class="text-[10px] px-2 py-1 rounded bg-white/5 text-muted-foreground uppercase font-bold tracking-tighter">{{ quiz.category }}</span>
                         <span class="text-[10px] text-electric font-mono flex items-center gap-1.5"><Zap class="h-3 w-3" />+{{ quiz.xp_reward }} XP</span>
@@ -169,7 +170,7 @@ const deleteQuestion = (id) => {
               <tbody>
                 <tr v-for="q in quiz.questions" :key="q.id" class="border-b border-white/5 hover:bg-white/5 transition-all">
                   <td class="p-4">
-                    <div class="text-white font-medium max-w-md">{{ q.question_text }}</div>
+                    <div class="text-foreground font-medium max-w-md">{{ q.question_text }}</div>
                   </td>
                   <td class="p-4">
                     <div class="flex items-center gap-2">
@@ -198,7 +199,7 @@ const deleteQuestion = (id) => {
 
         <div v-if="!city.quizzes?.length" class="p-20 text-center glass-strong rounded-[3rem] border border-white/5">
             <Brain class="h-16 w-16 mx-auto mb-6 text-muted-foreground/20" />
-            <h3 class="font-display text-2xl text-white">Zone de Défis Vierge</h3>
+            <h3 class="font-display text-2xl text-foreground">Zone de Défis Vierge</h3>
             <p class="text-muted-foreground mt-2 max-w-sm mx-auto">Commencez par créer un quiz pour tester les connaissances des explorateurs dans cette ville.</p>
         </div>
       </div>
@@ -208,14 +209,14 @@ const deleteQuestion = (id) => {
     <Modal :show="showQuizModal" @close="showQuizModal = false">
         <div class="p-8 bg-gaming-darker border border-purple-neon/20 rounded-[2.5rem] overflow-hidden relative">
             <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-            <h2 class="font-display text-2xl text-white mb-8 relative z-10">{{ editingQuiz ? 'Modifier le Quiz' : 'Nouveau Quiz Tactique' }}</h2>
-            
+            <h2 class="font-display text-2xl text-foreground mb-8 relative z-10">{{ editingQuiz ? 'Modifier le Quiz' : 'Nouveau Quiz Tactique' }}</h2>
+
             <form @submit.prevent="submitQuiz" class="space-y-6 relative z-10">
                 <GlowInput label="Titre du Quiz" v-model="quizForm.title" placeholder="Ex: Les Secrets de Cotonou" required />
                 <div class="grid grid-cols-2 gap-6">
                     <div class="space-y-2">
                         <label class="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-black ml-1">Catégorie</label>
-                        <select v-model="quizForm.category" class="w-full h-12 rounded-xl bg-gaming-darker border border-white/10 px-4 text-sm text-white focus:border-purple-neon outline-none">
+                        <select v-model="quizForm.category" class="w-full h-12 rounded-xl bg-gaming-darker border border-white/10 px-4 text-sm text-foreground focus:border-purple-neon outline-none">
                             <option value="Histoire">Histoire</option>
                             <option value="Culture">Culture</option>
                             <option value="Géographie">Géographie</option>
@@ -230,7 +231,7 @@ const deleteQuestion = (id) => {
                 </div>
                 <div class="space-y-2">
                     <label class="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-black ml-1">Description</label>
-                    <textarea v-model="quizForm.description" class="w-full h-24 rounded-2xl bg-gaming-darker border border-white/10 p-4 text-sm text-white placeholder:text-muted-foreground/40 focus:border-purple-neon outline-none resize-none" placeholder="Briefing du défi..."></textarea>
+                    <textarea v-model="quizForm.description" class="w-full h-24 rounded-2xl bg-gaming-darker border border-white/10 p-4 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-purple-neon outline-none resize-none" placeholder="Briefing du défi..."></textarea>
                 </div>
 
                 <div class="pt-4 flex gap-3">
@@ -245,30 +246,30 @@ const deleteQuestion = (id) => {
     <Modal :show="showQuestionModal" @close="showQuestionModal = false">
         <div class="p-8 bg-gaming-darker border border-electric/20 rounded-[2.5rem] overflow-hidden relative max-h-[90vh] overflow-y-auto">
             <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-            <h2 class="font-display text-2xl text-white mb-8 relative z-10">{{ editingQuestion ? 'Modifier la Question' : 'Nouvelle Question' }}</h2>
-            
+            <h2 class="font-display text-2xl text-foreground mb-8 relative z-10">{{ editingQuestion ? 'Modifier la Question' : 'Nouvelle Question' }}</h2>
+
             <form @submit.prevent="submitQuestion" class="space-y-6 relative z-10">
                 <div class="space-y-2">
                     <label class="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-black ml-1">Énoncé de la Question</label>
-                    <textarea v-model="questionForm.question_text" class="w-full h-24 rounded-2xl bg-gaming-darker border border-white/10 p-4 text-sm text-white focus:border-electric outline-none resize-none" placeholder="Saisissez la question..." required></textarea>
+                    <textarea v-model="questionForm.question_text" class="w-full h-24 rounded-2xl bg-gaming-darker border border-white/10 p-4 text-sm text-foreground focus:border-electric outline-none resize-none" placeholder="Saisissez la question..." required></textarea>
                 </div>
 
                 <div class="grid gap-4">
                     <label class="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-black ml-1">Options de Réponse</label>
                     <div v-for="opt in ['A', 'B', 'C', 'D']" :key="opt" class="flex gap-3">
-                        <button 
+                        <button
                             type="button"
                             @click="questionForm.correct_option = opt"
                             :class="cn(
                                 'h-12 w-12 rounded-xl border font-display font-bold transition-all',
-                                questionForm.correct_option === opt ? 'bg-success border-success text-black' : 'bg-white/5 border-white/10 text-white hover:border-white/20'
+                                questionForm.correct_option === opt ? 'bg-success border-success text-black' : 'bg-white/5 border-white/10 text-foreground hover:border-white/20'
                             )"
                         >
                             {{ opt }}
                         </button>
-                        <input 
-                            v-model="questionForm.options[opt]" 
-                            class="flex-1 h-12 rounded-xl bg-gaming-darker border border-white/10 px-4 text-sm text-white focus:border-electric outline-none"
+                        <input
+                            v-model="questionForm.options[opt]"
+                            class="flex-1 h-12 rounded-xl bg-gaming-darker border border-white/10 px-4 text-sm text-foreground focus:border-electric outline-none"
                             :placeholder="`Réponse ${opt}...`"
                             required
                         />

@@ -24,9 +24,9 @@ const xpMax = 4000;
 const pct = (xp / xpMax) * 100;
 
 const stats = [
-  { icon: Trophy, label: 'Missions', value: '47', color: 'text-electric' },
-  { icon: Zap, label: 'Total XP', value: '12,840', color: 'text-cyan-neon' },
-  { icon: MapPin, label: 'Villes', value: '4 / 5', color: 'text-purple-neon' },
+  { icon: Trophy, label: 'Missions', value: '47', color: 'text-primary' },
+  { icon: Zap, label: 'Total XP', value: '12,840', color: 'text-secondary' },
+  { icon: MapPin, label: 'Villes', value: '4 / 5', color: 'text-accent' },
   { icon: Flame, label: 'Série', value: '32j', color: 'text-warning' },
 ];
 
@@ -43,33 +43,31 @@ const achievements = [
   <SiteLayout>
     <div class="mx-auto max-w-7xl px-4 sm:px-6 py-8 pb-28 md:pb-12">
       <!-- PROFILE HERO -->
-      <div class="relative overflow-hidden rounded-3xl glass-strong p-6 md:p-10">
-        <div class="absolute inset-0 grid-bg opacity-20" />
-        <div class="absolute -top-20 -right-10 h-72 w-72 rounded-full bg-electric/30 blur-3xl" />
+      <div class="relative overflow-hidden rounded-3xl bg-card border border-border p-6 md:p-10 shadow-md">
+        <div class="absolute -top-20 -right-10 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
         <div class="relative flex flex-col md:flex-row md:items-center gap-6">
           <div class="relative">
-            <div class="h-24 w-24 md:h-28 md:w-28 rounded-2xl bg-gradient-electric grid place-items-center font-display text-4xl font-black text-electric-foreground shadow-neon animate-pulse-glow">
+            <div class="h-24 w-24 md:h-28 md:w-28 rounded-2xl bg-primary grid place-items-center font-display text-4xl font-black text-white shadow-sm">
               {{ user.name.substring(0, 2).toUpperCase() }}
             </div>
-            <div class="absolute -bottom-2 -right-2 px-2 py-1 rounded-lg bg-purple-neon text-xs font-display font-black shadow-purple">
+            <div class="absolute -bottom-2 -right-2 px-2 py-1 rounded-lg bg-accent text-white text-[10px] font-display font-black shadow-sm">
               LVL 24
             </div>
           </div>
           <div class="flex-1">
-            <div class="text-xs text-electric uppercase tracking-widest font-bold">Explorateur Mythique</div>
+            <div class="text-xs text-primary uppercase tracking-widest font-bold">Explorateur Mythique</div>
             <h1 class="font-display text-3xl md:text-4xl mt-1">{{ user.name }}</h1>
             <p class="text-muted-foreground text-sm mt-1">Bénin • Membre depuis 2024 • 32 jours de série 🔥</p>
             <div class="mt-5">
               <div class="flex justify-between text-xs mb-2">
                 <span class="text-muted-foreground">Progression XP</span>
-                <span class="text-electric font-bold">{{ xp }} / {{ xpMax }} XP</span>
+                <span class="text-primary font-bold">{{ xp }} / {{ xpMax }} XP</span>
               </div>
-              <div class="h-3 rounded-full bg-gaming-darker overflow-hidden border border-electric/30">
+              <div class="h-3 rounded-full bg-muted overflow-hidden border border-border">
                 <div
-                  class="h-full bg-gradient-electric relative overflow-hidden"
+                  class="h-full bg-primary relative overflow-hidden"
                   :style="{ width: `${pct}%` }"
                 >
-                  <div class="absolute inset-0 animate-shimmer" />
                 </div>
               </div>
             </div>
@@ -84,7 +82,7 @@ const achievements = [
 
       <!-- STATS -->
       <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div v-for="s in stats" :key="s.label" class="rounded-2xl p-5 glass hover-lift">
+        <div v-for="s in stats" :key="s.label" class="rounded-2xl p-5 bg-card border border-border shadow-sm hover:shadow-md transition-shadow">
           <component :is="s.icon" :class="`h-6 w-6 ${s.color}`" />
           <div class="mt-3 font-display text-2xl md:text-3xl">{{ s.value }}</div>
           <div class="text-xs uppercase tracking-widest text-muted-foreground mt-1">{{ s.label }}</div>
@@ -96,10 +94,10 @@ const achievements = [
         <div class="lg:col-span-2 space-y-4">
           <div class="flex items-center justify-between">
             <h2 class="font-display text-lg flex items-center gap-2">
-              <MapPin class="h-5 w-5 text-electric" />Villes à Explorer
+              <MapPin class="h-5 w-5 text-primary" />Villes à Explorer
             </h2>
           </div>
-          
+
           <div class="grid gap-6 sm:grid-cols-2">
             <Link
               v-for="city in cities"
@@ -112,9 +110,9 @@ const achievements = [
                 <div v-else class="absolute inset-0 bg-gradient-to-br from-electric/20 to-purple-neon/20 flex items-center justify-center">
                   <MapPin class="h-12 w-12 text-electric/40" />
                 </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-gaming-darker via-transparent to-transparent" />
+                <div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
                 <div class="absolute bottom-4 left-4">
-                  <h3 class="font-display text-xl text-white">{{ city.name }}</h3>
+                  <h3 class="font-display text-xl text-foreground">{{ city.name }}</h3>
                   <div class="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                     <span class="text-electric font-bold">{{ city.locations_count || 0 }} Lieux</span>
                     <span>•</span>
