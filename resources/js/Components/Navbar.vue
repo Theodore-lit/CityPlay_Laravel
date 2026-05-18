@@ -1,6 +1,6 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
-import { Compass, Menu, X } from 'lucide-vue-next';
+import { Compass, Menu, X, User, LogOut } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import NeonButton from './NeonButton.vue';
 import Modal from './Modal.vue';
@@ -107,9 +107,25 @@ const isActive = (routeName) => route().current(routeName);
                   </span>
               </button>
             </div>
-            <Link :href="route('profile.edit')" class="h-10 w-10 rounded-xl bg-muted border border-border grid place-items-center hover:border-primary transition-colors">
-              <User class="h-5 w-5 text-muted-foreground" />
-            </Link>
+            <div class="flex items-center gap-3">
+              <Link :href="route('profile.edit')" class="flex items-center gap-2 group p-1 pr-3 rounded-xl bg-white/5 border border-white/10 hover:border-primary/50 transition-all">
+                <div class="h-8 w-8 rounded-lg bg-primary/20 grid place-items-center border border-primary/30 group-hover:bg-primary/30">
+                  <User class="h-4 w-4 text-primary" />
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-[10px] font-black text-white uppercase leading-none">{{ user.name }}</span>
+                  <span class="text-[8px] text-muted-foreground uppercase tracking-tighter">{{ user.role }}</span>
+                </div>
+              </Link>
+
+              <button 
+                @click="showLogoutModal = true"
+                class="h-10 w-10 rounded-xl bg-destructive/10 border border-destructive/20 grid place-items-center text-destructive hover:bg-destructive hover:text-white transition-all shadow-sm"
+                title="Déconnexion"
+              >
+                <LogOut class="h-5 w-5" />
+              </button>
+            </div>
           </template>
           <template v-else>
             <NeonButton :href="route('login')" variant="ghost" size="sm">Connexion</NeonButton>

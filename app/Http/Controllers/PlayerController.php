@@ -144,17 +144,17 @@ class PlayerController extends Controller
             }
         }
 
-        // 1. Règle des étoiles corrigée :
+        // 1. Règle des étoiles mise à jour :
         // 5/5 -> 3 étoiles
         // 4/5 -> 2 étoiles
-        // 1, 2 ou 3 -> 1 étoile
-        // 0 -> 0 étoile
+        // 3/5 -> 1 étoile
+        // < 3 -> 0 étoile
         $stars = 0;
         if ($score === 5) {
             $stars = 3;
         } elseif ($score === 4) {
             $stars = 2;
-        } elseif ($score >= 1) {
+        } elseif ($score === 3) {
             $stars = 1;
         }
 

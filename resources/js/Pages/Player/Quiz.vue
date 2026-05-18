@@ -1,7 +1,8 @@
 ﻿<script setup>
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import NeonButton from '@/Components/NeonButton.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import Modal from '@/Components/Modal.vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Brain, Clock, Zap, ArrowRight, CheckCircle2, XCircle, Info, Trophy } from 'lucide-vue-next';
 
@@ -9,8 +10,10 @@ const props = defineProps({
     quiz: Object
 });
 
+const page = usePage();
 const currentQuestionIndex = ref(0);
 const answers = ref([]);
+const isFinished = ref(false);
 const timer = ref(null);
 const hearts = ref(5);
 const xpGained = ref(0);
@@ -18,8 +21,10 @@ const usedHintsCount = ref(0);
 const showHint = ref(false);
 const feedback = ref(null); // 'correct' or 'incorrect'
 const isSubmitting = ref(false);
+const isTimeOut = ref(false);
+const showTimeoutModal = ref(false);
 
-// Simplification et robustesse de la rÃ©cupÃ©ration des questions
+// Simplification et robustesse de la récupération des questions
 const questions = computed(() => {
     const q = props.quiz?.questions;
     if (!q) return [];
@@ -33,8 +38,12 @@ const progress = computed(() => {
     return ((currentQuestionIndex.value + 1) / totalQuestions.value) * 100;
 });
 
-// Initialisation sÃ©curisÃ©e du temps
+// Initialisation sécurisée du temps
 const timeLeft = ref(60);
+onMounted(() => {
+    timeLeft.value = props.quiz?.time_limit || 60;
+    startTimer();
+});
 
 const selectOption = (option) => {
     // Bloquer si déjà soumis, si pas de question, ou si une réponse a DÉJÀ été choisie pour cette question
@@ -79,13 +88,58 @@ const submitResults = () => {
         time_left: timeLeft.value,
         failed: hearts.value <= 0,
     }, {
+        onSuccess: () => {
+            isFinished.value = true;
+            isSubmitting.value = false;
+        },
         onError: () => {
+            isSubmitting.value = false;
             alert("Une erreur est survenue.");
+        }
+    });
+};
+
+const handleRetry = () => {
+    // Réinitialisation simple sans consommer de cœur (bouton juste informatif ou relance)
+    currentQuestionIndex.value = 0;
+    answers.value = [];
+    isFinished.value = false;
+    isTimeOut.value = false;
+    timeLeft.value = props.quiz?.time_limit || 60;
+    hearts.value = 5;
+    xpGained.value = 0;
+    usedHintsCount.value = 0;
+    showHint.value = false;
+    feedback.value = null;
+    startTimer();
+};
+
+const continueWithHeart = () => {
+    if (page.props.auth.user.hearts < 1) {
+        alert("Vous n'avez plus de cœurs ! Achetez-en un dans la boutique.");
+        return;
+    }
+
+    isSubmitting.value = true;
+    router.post(route('player.quiz.retry', props.quiz.id), {}, {
+        onSuccess: () => {
+            isTimeOut.value = false;
+            showTimeoutModal.value = false;
+            isFinished.value = false;
+            timeLeft.value = 30; // On redonne 30 secondes pour continuer
+            isSubmitting.value = false;
+            startTimer();
         },
         onFinish: () => {
             isSubmitting.value = false;
-        },
+        }
     });
+};
+
+const handleTimeoutSubmit = () => {
+    showTimeoutModal.value = false;
+    isFinished.value = true;
+    submitResults();
 };
 
 const useHint = () => {
@@ -95,20 +149,29 @@ const useHint = () => {
     }
 };
 
+const calculateStars = () => {
+    const correctCount = answers.value.filter((ans, index) => {
+        return ans === questions.value[index]?.correct_option;
+    }).length;
+
+    if (correctCount === 5) return 3;
+    if (correctCount === 4) return 2;
+    if (correctCount === 3) return 1;
+    return 0;
+};
+
 const startTimer = () => {
+    clearInterval(timer.value);
     timer.value = setInterval(() => {
         if (timeLeft.value > 0) {
             timeLeft.value--;
         } else {
-            submitResults();
+            clearInterval(timer.value);
+            isTimeOut.value = true;
+            showTimeoutModal.value = true;
         }
     }, 1000);
 };
-
-onMounted(() => {
-    timeLeft.value = props.quiz?.time_limit || 60;
-    startTimer();
-});
 
 onUnmounted(() => {
     clearInterval(timer.value);
@@ -166,7 +229,7 @@ onUnmounted(() => {
             </div>
 
             <!-- Question Card -->
-            <div v-else class="glass-strong rounded-3xl p-8 md:p-10 border border-electric/20 relative overflow-hidden">
+            <div v-else-if="!isFinished" class="glass-strong rounded-3xl p-8 md:p-10 border border-electric/20 relative overflow-hidden">
                 <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
                 
                 <div class="flex justify-between items-start mb-6">
@@ -183,41 +246,41 @@ onUnmounted(() => {
                 </div>
 
                 <div v-if="showHint" class="mb-8 p-4 rounded-2xl bg-warning/5 border border-warning/20 text-warning text-xs italic animate-fade-down">
-                    ðŸ’¡ <span class="text-white">{{ currentQuestion?.hint }}</span>
+                    💡 <span class="text-white">{{ currentQuestion?.hint }}</span>
                 </div>
 
                 <div class="grid gap-4 relative z-10 mb-10">
                     <div v-if="currentQuestion && (!currentQuestion.options || (typeof currentQuestion.options === 'object' && Object.keys(currentQuestion.options).length === 0))" class="text-white text-center p-8 border border-dashed border-white/10 rounded-2xl">
-                        Aucune option de rÃ©ponse n'a Ã©tÃ© configurÃ©e pour cette question.
+                        Aucune option de réponse n'a été configurée pour cette question.
                     </div>
                     <button 
                         v-for="(text, key) in currentQuestion?.options" 
                         :key="key"
                         @click="selectOption(key)"
                         :disabled="!!answers[currentQuestionIndex]"
-                        class="w-full p-5 rounded-2xl border transition-all duration-300 text-left flex items-center gap-4 group"
+                        class="w-full p-5 rounded-2xl border-2 transition-all duration-300 text-left flex items-center gap-4 group"
                         :class="[
                             answers[currentQuestionIndex] === key 
                                 ? (key === currentQuestion.correct_option 
-                                    ? 'bg-success/20 border-success shadow-[0_0_20px_rgba(34,197,94,0.2)] text-white' 
-                                    : 'bg-destructive/20 border-destructive shadow-[0_0_20px_rgba(239,68,68,0.2)] text-white')
+                                    ? 'bg-green-500/20 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.4)] text-white' 
+                                    : 'bg-red-500/20 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)] text-white')
                                 : (answers[currentQuestionIndex] 
                                     ? 'bg-white/5 border-white/10 opacity-50 cursor-not-allowed' 
                                     : 'bg-white/5 border-white/10 text-muted-foreground hover:bg-white/10 hover:border-white/20')
                         ]"
                     >
-                        <div class="h-8 w-8 rounded-lg border border-current grid place-items-center font-display font-bold text-sm shrink-0 transition-colors"
+                        <div class="h-8 w-8 rounded-lg border-2 border-current grid place-items-center font-display font-bold text-sm shrink-0 transition-colors"
                              :class="[
                                  answers[currentQuestionIndex] === key 
-                                    ? (key === currentQuestion.correct_option ? 'bg-success text-white' : 'bg-destructive text-white')
+                                    ? (key === currentQuestion.correct_option ? 'bg-green-500 text-white border-green-500' : 'bg-red-500 text-white border-red-500')
                                     : ''
                              ]">
                             {{ key }}
                         </div>
-                        <span class="font-medium text-white">{{ text }}</span>
+                        <span class="font-bold text-white">{{ text }}</span>
                         
-                        <CheckCircle2 v-if="answers[currentQuestionIndex] === key && key === currentQuestion.correct_option" class="h-5 w-5 text-success ml-auto" />
-                        <XCircle v-if="answers[currentQuestionIndex] === key && key !== currentQuestion.correct_option" class="h-5 w-5 text-destructive ml-auto" />
+                        <CheckCircle2 v-if="answers[currentQuestionIndex] === key && key === currentQuestion.correct_option" class="h-6 w-6 text-green-500 ml-auto" />
+                        <XCircle v-if="answers[currentQuestionIndex] === key && key !== currentQuestion.correct_option" class="h-6 w-6 text-red-500 ml-auto" />
                     </button>
                 </div>
 
@@ -242,6 +305,128 @@ onUnmounted(() => {
                     </button>
                 </div>
             </div>
+
+            <!-- Results View -->
+            <div v-else class="text-center animate-fade-up">
+                <div v-if="isTimeOut" class="mb-8">
+                    <div class="h-24 w-24 rounded-3xl bg-destructive mx-auto grid place-items-center shadow-[0_0_30px_rgba(239,68,68,0.5)] mb-6 animate-pulse">
+                        <Clock class="h-12 w-12 text-white" />
+                    </div>
+                    <h2 class="font-display text-4xl text-white mb-2 uppercase">TEMPS ÉCOULÉ !</h2>
+                    <p class="text-muted-foreground text-sm mb-10">
+                        Le chronomètre s'est arrêté avant que vous ne terminiez.
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button 
+                            @click="continueWithHeart"
+                            :disabled="isSubmitting"
+                            class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-premium text-white font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center justify-center gap-3 shadow-neon"
+                        >
+                            <Heart class="h-5 w-5 fill-current animate-pulse" />
+                            Continuer la partie (-1 ❤️)
+                        </button>
+                        <button 
+                            @click="handleRetry"
+                            class="w-full sm:w-auto px-8 py-4 rounded-2xl border-2 border-white/10 text-white font-black uppercase tracking-widest hover:bg-white/5 transition-all"
+                        >
+                            Réessayer
+                        </button>
+                    </div>
+                </div>
+
+                <div v-else>
+                    <div class="h-24 w-24 rounded-3xl bg-gradient-electric mx-auto grid place-items-center shadow-neon mb-6 animate-bounce">
+                        <Trophy v-if="hearts > 0" class="h-12 w-12 text-white" />
+                        <Heart v-else class="h-12 w-12 text-white" />
+                    </div>
+                    
+                    <h2 class="font-display text-4xl text-white mb-2 uppercase">
+                        {{ hearts > 0 ? 'DÉFI TERMINÉ !' : 'SESSION ÉCHOUÉE' }}
+                    </h2>
+                    <p class="text-muted-foreground text-sm mb-10">
+                        {{ hearts > 0 ? 'Vous avez brillamment surmonté les épreuves.' : 'Vos vies sont épuisées. Entraînez-vous encore !' }}
+                    </p>
+
+                    <div v-if="hearts > 0" class="flex justify-center gap-3 mb-10">
+                        <Star 
+                            v-for="s in 3" 
+                            :key="s" 
+                            :class="[
+                                'h-12 w-12 transition-all duration-700',
+                                s <= calculateStars() ? 'text-yellow-400 fill-yellow-400 scale-110' : 'text-white/5'
+                            ]"
+                            :style="{ transitionDelay: `${s * 200}ms` }"
+                        />
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+                        <div class="p-5 rounded-3xl bg-white/5 border border-white/10">
+                            <div class="text-[10px] text-muted-foreground uppercase mb-1">XP GAGNÉS</div>
+                            <div class="text-2xl font-display text-electric">+{{ xpGained }}</div>
+                        </div>
+                        <div class="p-5 rounded-3xl bg-white/5 border border-white/10">
+                            <div class="text-[10px] text-muted-foreground uppercase mb-1">INDICES UTILISÉS</div>
+                            <div class="text-2xl font-display text-warning">{{ usedHintsCount }}</div>
+                        </div>
+                        <div class="p-5 rounded-3xl bg-white/5 border border-white/10">
+                            <div class="text-[10px] text-muted-foreground uppercase mb-1">TEMPS RESTANT</div>
+                            <div class="text-2xl font-display text-cyan-neon">{{ timeLeft }}s</div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button 
+                            @click="handleRetry"
+                            class="w-full sm:w-auto px-8 py-3 rounded-xl border-2 border-white/10 text-white font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
+                        >
+                            Réessayer
+                        </button>
+                        <Link :href="route('player.cities')">
+                            <NeonButton variant="outline" class="w-full sm:w-auto">
+                                Revenir aux Quiz
+                            </NeonButton>
+                        </Link>
+                    </div>
+                </div>
+                <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+            </div>
+
+            <!-- MODAL TEMPS ÉCOULÉ -->
+            <Modal :show="showTimeoutModal" @close="handleTimeoutSubmit">
+                <div class="p-8 bg-gaming-darker border border-destructive/30 rounded-3xl overflow-hidden relative text-center">
+                    <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+                    
+                    <div class="relative z-10">
+                        <div class="h-20 w-20 rounded-2xl bg-destructive/20 border border-destructive/50 grid place-items-center mx-auto mb-6 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+                            <Clock class="h-10 w-10 text-destructive animate-pulse" />
+                        </div>
+                        
+                        <h2 class="font-display text-3xl text-white mb-2 uppercase tracking-tight">Temps Écoulé !</h2>
+                        <p class="text-muted-foreground text-sm mb-8 px-4">
+                            Le chronomètre s'est arrêté. Voulez-vous utiliser un cœur pour continuer la partie et obtenir 30 secondes supplémentaires ?
+                        </p>
+
+                        <div class="flex flex-col gap-3">
+                            <button 
+                                @click="continueWithHeart"
+                                :disabled="isSubmitting"
+                                class="w-full py-4 rounded-2xl bg-gradient-premium text-white font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 shadow-neon"
+                            >
+                                <Heart class="h-5 w-5 fill-current" />
+                                Continuer (-1 ❤️)
+                            </button>
+                            
+                            <button 
+                                @click="handleTimeoutSubmit"
+                                class="w-full py-4 rounded-2xl border-2 border-white/5 text-muted-foreground font-bold uppercase tracking-widest hover:bg-white/5 transition-all"
+                            >
+                                Arrêter et voir le score
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
         </div>
     </SiteLayout>
 </template>

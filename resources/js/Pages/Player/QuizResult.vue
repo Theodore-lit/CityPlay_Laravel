@@ -13,12 +13,7 @@ const props = defineProps({
 const page = usePage();
 
 const handleRetry = () => {
-    if (page.props.auth.user.hearts < 1) {
-        alert("Vous n'avez plus de cœurs !");
-        return;
-    }
-
-    router.post(route('player.quiz.retry', props.quiz.id));
+    router.visit(route('player.quiz', props.quiz.id));
 };
 
 const backUrl = props.city
@@ -82,10 +77,9 @@ const backUrl = props.city
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                     @click="handleRetry"
-                    class="w-full sm:w-auto px-8 py-3 rounded-xl border-2 border-red-500 text-red-500 font-bold hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 group"
+                    class="w-full sm:w-auto px-8 py-3 rounded-xl border-2 border-white/10 text-white font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
                 >
-                    <Heart class="h-4 w-4 fill-current group-hover:animate-ping" />
-                    Réessayer (-1 ❤️)
+                    Réessayer
                 </button>
                 <Link :href="backUrl">
                     <NeonButton variant="outline" class="w-full sm:w-auto">
