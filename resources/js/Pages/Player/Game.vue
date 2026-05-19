@@ -212,12 +212,12 @@ const submitRiddle = () => {
 
 const handleSuccess = () => {
     // Calcul des étoiles basé sur les erreurs du quiz
-    // 0 erreur = 3 étoiles, 1 erreur = 2 étoiles, 2+ erreurs = 1 étoile
     earnedStars.value = Math.max(1, 3 - totalErrors.value);
     
     router.post(route('player.complete-location', selectedLocation.value.id), {
         stars: earnedStars.value,
-        xp: 150
+        xp: 150,
+        duration: gameTime.value // Envoyer la durée finale
     }, {
         onSuccess: () => {
             showRiddleModal.value = false;

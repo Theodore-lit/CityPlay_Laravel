@@ -2,6 +2,7 @@
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
 import NeonButton from '@/Components/NeonButton.vue';
+import AppImage from '@/Components/AppImage.vue';
 import GlowInput from '@/Components/GlowInput.vue';
 import GpsSearchInput from '@/Components/GpsSearchInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
@@ -264,11 +265,16 @@ const removeIndex = (index) => {
                 <div class="lg:col-span-4 space-y-6">
                     <div class="rounded-[2.5rem] glass overflow-hidden border border-white/10 group">
                         <div class="h-48 w-full bg-gaming-darker relative overflow-hidden">
-                            <img v-if="city.image_path" :src="'/storage/' + city.image_path"
-                                class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                            <div v-else class="h-full w-full grid place-items-center opacity-20">
-                                <Map class="h-12 w-12" />
-                            </div>
+                            <AppImage
+                                :src="city.image_url || city.image_path"
+                                class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            >
+                                <template #placeholder>
+                                    <div class="h-full w-full grid place-items-center opacity-20">
+                                        <Map class="h-12 w-12" />
+                                    </div>
+                                </template>
+                            </AppImage>
                             <div
                                 class="absolute inset-0 bg-gradient-to-t from-gaming-dark via-transparent to-transparent" />
                         </div>
@@ -338,11 +344,16 @@ const removeIndex = (index) => {
                                     <div class="flex items-start gap-5 group/loc">
                                         <div
                                             class="h-14 w-14 rounded-2xl overflow-hidden bg-gaming-darker border border-white/10 shrink-0 shadow-inner group-hover:border-electric/40 transition-colors">
-                                            <img v-if="loc.images && loc.images[0]" :src="'/storage/' + loc.images[0]"
-                                                class="h-full w-full object-cover group-hover/loc:scale-110 transition-transform" />
-                                            <div v-else class="h-full w-full grid place-items-center text-white/20">
-                                                <ImageIcon class="h-7 w-7" />
-                                            </div>
+                                            <AppImage
+                                                :src="loc.cover_image || loc.image_urls?.[0] || loc.images?.[0]"
+                                                class="h-full w-full object-cover group-hover/loc:scale-110 transition-transform"
+                                            >
+                                                <template #placeholder>
+                                                    <div class="h-full w-full grid place-items-center text-white/20">
+                                                        <ImageIcon class="h-7 w-7" />
+                                                    </div>
+                                                </template>
+                                            </AppImage>
                                         </div>
                                         <div>
                                             <div class="flex items-center gap-3">
@@ -402,15 +413,17 @@ const removeIndex = (index) => {
 
                                         <div class="space-y-4 pl-7">
                                             <div class="h-48 w-full rounded-2xl bg-gaming-darker border border-white/10 overflow-hidden relative group/enigma_img">
-                                                <img 
-                                                    v-if="enigma.image_path" 
-                                                    :src="'/storage/' + enigma.image_path" 
-                                                    class="w-full h-full object-cover group-hover/enigma_img:scale-105 transition-transform" 
-                                                />
-                                                <div v-else class="w-full h-full flex flex-col items-center justify-center text-white/10">
-                                                    <ImageIcon class="h-12 w-12 mb-2" />
-                                                    <span class="text-[10px] uppercase font-bold tracking-widest">Aucun visuel tactique</span>
-                                                </div>
+                                                <AppImage
+                                                    :src="enigma.image_url || enigma.image_path"
+                                                    class="w-full h-full object-cover group-hover/enigma_img:scale-105 transition-transform"
+                                                >
+                                                    <template #placeholder>
+                                                        <div class="w-full h-full flex flex-col items-center justify-center text-white/10">
+                                                            <ImageIcon class="h-12 w-12 mb-2" />
+                                                            <span class="text-[10px] uppercase font-bold tracking-widest">Aucun visuel tactique</span>
+                                                        </div>
+                                                    </template>
+                                                </AppImage>
                                             </div>
                                             <div>
                                                 <div class="text-[10px] text-purple-neon font-black uppercase tracking-[0.2em] mb-1">Briefing</div>

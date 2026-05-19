@@ -22,11 +22,16 @@ class GameSession extends Model
         'current_enigma_id',
         'current_location_id',
         'discovery_sequence',
+        'final_score',
+        'total_time',
+        'items_found',
+        'date_completion',
     ];
 
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
+        'date_completion' => 'datetime',
         'discovery_sequence' => 'array',
     ];
 

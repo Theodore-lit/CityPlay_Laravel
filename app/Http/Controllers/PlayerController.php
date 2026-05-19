@@ -163,7 +163,7 @@ class PlayerController extends Controller
                 }]);
             }])
             ->get()
-            ->map(function ($city) {
+            ->map(function ($city) use ($user) {
                 $totalLocations = $city->locations->count();
                 $discoveredLocations = $city->locations->filter(function ($location) {
                     return $location->userProgress->where('is_discovered', true)->isNotEmpty();
@@ -174,6 +174,12 @@ class PlayerController extends Controller
                     : 0;
                 $city->discovered_count = $discoveredLocations;
                 $city->total_count = $totalLocations;
+
+                // Vérifier si une session terminée existe pour cette ville
+                $city->has_completed_adventure = \App\Models\GameSession::where('city_id', $city->id)
+                    ->where('user_id', $user->id)
+                    ->where('status', 'completed')
+                    ->exists();
 
                 return $city;
             });
@@ -311,6 +317,17 @@ class PlayerController extends Controller
         $user = auth()->user();
         $mode = session('game_mode', 'aventure');
 
+        // Vérifier si une session terminée existe déjà pour ce mode
+        $hasCompleted = \App\Models\GameSession::where('city_id', $city->id)
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->exists();
+
+        if ($hasCompleted && $mode === 'aventure') {
+            return redirect()->route('player.adventure.solo', $city->id)
+                ->with('error', 'Cette mission est déjà terminée. Vous pouvez consulter vos statistiques dans le lobby.');
+        }
+
         if ($mode === 'quiz') {
             // On récupère tous les quiz de la ville
             $quizzes = \App\Models\Quiz::where('city_id', $city->id)
@@ -423,6 +440,12 @@ class PlayerController extends Controller
         $transport = $request->input('transport', 'bike');
         $difficulty = $request->input('difficulty', 'medium');
 
+        // Vérifier si une session terminée existe déjà
+        $completedSession = \App\Models\GameSession::where('city_id', $city->id)
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->first();
+
         $availableLocations = $city->locations()->whereHas('enigmas', function($q) use ($difficulty) {
             $q->where('difficulty', $difficulty);
         })->with(['enigmas' => function($q) use ($difficulty) {
@@ -444,6 +467,7 @@ class PlayerController extends Controller
         return Inertia::render('Player/ExplorerLobby', [
             'city' => $city,
             'locations' => $availableLocations->values(),
+            'completedSession' => $completedSession,
             'config' => [
                 'transport' => $transport,
                 'difficulty' => $difficulty,
@@ -459,6 +483,16 @@ class PlayerController extends Controller
         $locationId = $request->input('location_id');
         $enigmaId = $request->input('enigma_id');
         $difficulty = $request->input('difficulty', 'medium');
+
+        // Garde de sécurité : Empêcher le lancement si déjà complété
+        $hasCompleted = \App\Models\GameSession::where('city_id', $city->id)
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->exists();
+
+        if ($hasCompleted) {
+            return back()->with('error', 'Accès refusé : Mission déjà terminée.');
+        }
 
         $location = \App\Models\Location::findOrFail($locationId);
 
@@ -537,6 +571,7 @@ class PlayerController extends Controller
         $stars = $request->input('stars', 1);
         $xp = $request->input('xp', 250);
         $teamId = $request->input('team_id');
+        $duration = $request->input('duration', 0); // Durée en secondes envoyée par le front
 
         // Mark as discovered for the user
         \App\Models\UserLocationProgress::updateOrCreate(
@@ -572,7 +607,14 @@ class PlayerController extends Controller
                 ]);
             } else {
                 // End of city!
-                $session->update(['status' => 'completed', 'end_time' => now()]);
+                $session->update([
+                    'status' => 'completed',
+                    'end_time' => now(),
+                    'date_completion' => now(),
+                    'total_time' => $duration,
+                    'final_score' => $user->xp + $xp, // Score cumulé ou juste XP de la session? On va mettre XP gagné ici
+                    'items_found' => count($sequence)
+                ]);
             }
         }
 
@@ -580,5 +622,20 @@ class PlayerController extends Controller
         $user->save();
 
         return back()->with('success', 'Félicitations ! Lieu découvert.');
+    }
+
+    public function getMissionDetails(City $city)
+    {
+        $user = auth()->user();
+        $completedSession = \App\Models\GameSession::where('city_id', $city->id)
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->first();
+
+        return response()->json([
+            'city' => $city,
+            'has_played' => $completedSession !== null,
+            'completed_session' => $completedSession,
+        ]);
     }
 }

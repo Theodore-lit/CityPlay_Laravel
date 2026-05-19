@@ -1,6 +1,7 @@
 <script setup>
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
+import AppImage from '@/Components/AppImage.vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import {
   Trophy, Zap, MapPin, Award, Flame, ArrowRight, Crown, Sparkles,
@@ -173,9 +174,8 @@ const cityCardClass = (locked) =>
                   :class="cityCardClass(false)"
                 >
                   <div class="relative w-36 sm:w-44 shrink-0 overflow-hidden">
-                    <img
-                      v-if="city.image_path"
-                      :src="city.image_path"
+                    <AppImage
+                      :src="city.image_url || city.image_path"
                       :alt="city.name"
                       class="h-full w-full object-cover min-h-[100px] transition-transform duration-500 group-hover:scale-105"
                     />
@@ -195,9 +195,8 @@ const cityCardClass = (locked) =>
 
                 <div v-else :class="cityCardClass(true)">
                   <div class="relative w-36 sm:w-44 shrink-0 overflow-hidden">
-                    <img
-                      v-if="city.image_path"
-                      :src="city.image_path"
+                    <AppImage
+                      :src="city.image_url || city.image_path"
                       :alt="city.name"
                       class="h-full w-full object-cover min-h-[100px] grayscale opacity-50"
                     />

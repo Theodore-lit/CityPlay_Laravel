@@ -2,11 +2,13 @@
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
 import NeonButton from '@/Components/NeonButton.vue';
+import AppImage from '@/Components/AppImage.vue';
+import { firstStorageUrl, storageUrl } from '@/lib/storageUrl';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { 
   Search, Lock, MapPin, Star, Filter, ArrowRight, 
   Calendar, Image as ImageIcon, ChevronLeft, 
-  ChevronRight, X, Eye 
+  ChevronRight, X, Eye, CheckCircle2 
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 
@@ -62,6 +64,10 @@ const formatDate = (dateString) => {
 };
 
 const DEFAULT_EVENT_IMAGE = 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&q=80&w=800';
+const DEFAULT_CITY_IMAGE = 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?auto=format&fit=crop&q=80&w=800';
+
+const cityImage = (city) => city?.image_url || storageUrl(city?.image_path) || DEFAULT_CITY_IMAGE;
+const eventImage = (event) => firstStorageUrl(event?.image_urls) || firstStorageUrl(event?.images) || DEFAULT_EVENT_IMAGE;
 
 // Markers for the mini map - simplified version
 const mapPoints = [
@@ -119,11 +125,12 @@ const mapPoints = [
           :key="c.id"
           :href="gameMode === 'aventure' ? route('player.adventure.setup', c.id) : route('player.game', c.id)"
           class="group relative overflow-hidden rounded-2xl glass hover-lift block aspect-[4/5] animate-fade-up"
+          :class="{ 'grayscale-[0.8] opacity-80': c.has_completed_adventure }"
           :style="{ animationDelay: `${i * 60}ms` }"
         >
-          <img 
-            :src="c.image_path ? '/storage/' + c.image_path : 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?auto=format&fit=crop&q=80&w=800'" 
-            :alt="c.name" 
+          <img
+            :src="c.image_path || 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?auto=format&fit=crop&q=80&w=800'"
+            :alt="c.name"
             loading="lazy"
             class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
@@ -131,7 +138,10 @@ const mapPoints = [
 
           <div class="absolute top-4 left-4 right-4 flex justify-between">      
             <span class="px-3 py-1 rounded-full glass text-[10px] text-electric font-bold uppercase tracking-widest">Bénin</span>
-            <span class="px-2 py-1 rounded-full glass text-xs flex items-center gap-1">
+            <div v-if="c.has_completed_adventure" class="px-2 py-1 rounded-full bg-success/20 border border-success/40 text-success text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+              <CheckCircle2 class="h-3 w-3" /> Explorée
+            </div>
+            <span v-else class="px-2 py-1 rounded-full glass text-xs flex items-center gap-1">
               <Star class="h-3 w-3 fill-electric text-electric" />4.9
             </span>
           </div>
@@ -187,7 +197,7 @@ const mapPoints = [
           >
             <div class="relative aspect-video overflow-hidden bg-black">
               <img 
-                :src="event.images?.[0] || DEFAULT_EVENT_IMAGE" 
+                :src="eventImage(event)" 
                 :alt="event.title"
                 class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
@@ -242,7 +252,7 @@ const mapPoints = [
             <!-- Left Side: Image Gallery -->
             <div class="relative flex h-[40vh] items-center justify-center bg-black lg:h-full">
               <img 
-                :src="selectedEvent.images?.[currentImageIndex] || DEFAULT_EVENT_IMAGE" 
+                :src="firstStorageUrl(selectedEvent?.image_urls) || storageUrl(selectedEvent?.images?.[currentImageIndex]) || DEFAULT_EVENT_IMAGE" 
                 :alt="selectedEvent.title"
                 class="h-full w-full object-cover transition-all duration-500"
               />

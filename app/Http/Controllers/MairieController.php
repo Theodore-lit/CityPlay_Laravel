@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\City;
 use App\Models\GameSession;
+use App\Support\StorageUrl;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -82,8 +83,8 @@ class MairieController extends Controller
 
         if ($request->hasFile('image')) {
             // Delete old image if exists
-            if ($city->image_path) {
-                Storage::disk('public')->delete($city->image_path);
+            if ($diskPath = StorageUrl::diskPath($city->image_path)) {
+                Storage::disk('public')->delete($diskPath);
             }
             $path = $request->file('image')->store('cities', 'public');
             $validated['image_path'] = $path;
@@ -151,7 +152,7 @@ class MairieController extends Controller
         if ($request->hasFile('image')) {
             // Delete old images if exist (assuming first image for now based on previous code)
             if (!empty($location->images) && is_array($location->images)) {
-                foreach ($location->images as $oldPath) {
+                foreach (StorageUrl::diskPaths($location->images) as $oldPath) {
                     Storage::disk('public')->delete($oldPath);
                 }
             }
@@ -190,8 +191,8 @@ class MairieController extends Controller
 
         if ($request->hasFile('image')) {
             // Delete old image if exists
-            if ($enigma && $enigma->image_path) {
-                Storage::disk('public')->delete($enigma->image_path);
+            if ($enigma && ($diskPath = StorageUrl::diskPath($enigma->image_path))) {
+                Storage::disk('public')->delete($diskPath);
             }
             $path = $request->file('image')->store('enigmas', 'public');
             $validated['image_path'] = $path;
@@ -234,7 +235,7 @@ class MairieController extends Controller
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('locations', 'public');
-            $location->images = ['/storage/' . $path];
+            $location->images = [$path];
             $location->save();
         }
 
@@ -272,12 +273,11 @@ class MairieController extends Controller
         ]);
 
         $eventId = $validated['id'] ?? null;
-        $images = $validated['existing_images'] ?? [];
+        $images = StorageUrl::diskPaths($validated['existing_images'] ?? []);
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                $path = $image->store('events', 'public');
-                $images[] = '/storage/' . $path;
+                $images[] = $image->store('events', 'public');
             }
         }
 

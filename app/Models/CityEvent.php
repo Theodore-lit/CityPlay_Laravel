@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\StorageUrl;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -24,6 +26,15 @@ class CityEvent extends Model
         'event_date' => 'datetime',
         'is_active' => 'boolean',
     ];
+
+    protected $appends = [
+        'image_urls',
+    ];
+
+    protected function imageUrls(): Attribute
+    {
+        return Attribute::get(fn () => StorageUrl::urls($this->images ?? []));
+    }
 
     public function city()
     {

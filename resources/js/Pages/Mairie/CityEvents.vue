@@ -1,6 +1,8 @@
 <script setup>
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import NeonButton from '@/Components/NeonButton.vue';
+import AppImage from '@/Components/AppImage.vue';
+import { firstStorageUrl } from '@/lib/storageUrl';
 import GlowInput from '@/Components/GlowInput.vue';
 import Modal from '@/Components/Modal.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
@@ -39,7 +41,7 @@ const openEventModal = (event = null) => {
         const formattedDate = date.toISOString().slice(0, 16);
         eventForm.event_date = formattedDate;
         eventForm.location_name = event.location_name;
-        eventForm.existing_images = event.images || [];
+        eventForm.existing_images = event.image_urls?.length ? event.image_urls : (event.images || []);
         eventForm.images = [];
     } else {
         selectedEvent.value = null;
@@ -118,8 +120,9 @@ const formatDate = (dateString) => {
             class="group relative overflow-hidden rounded-[2.5rem] glass-strong border-white/5 hover:border-accent/30 transition-all duration-500"
         >
             <div class="aspect-video overflow-hidden relative">
-                <img 
-                    :src="event.images?.[0] || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&q=80&w=800'" 
+                <AppImage
+                    :src="firstStorageUrl(event.image_urls) || firstStorageUrl(event.images)"
+                    fallback="https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&q=80&w=800"
                     class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div class="absolute inset-0 bg-gradient-to-t from-gaming-darker via-transparent to-transparent opacity-60" />
@@ -224,7 +227,7 @@ const formatDate = (dateString) => {
                         <div class="grid grid-cols-4 gap-4 mb-4">
                             <!-- Existing Images -->
                             <div v-for="(img, idx) in eventForm.existing_images" :key="idx" class="relative aspect-square rounded-xl overflow-hidden border border-white/10 group">
-                                <img :src="img" class="w-full h-full object-cover" />
+                                <AppImage :src="img" class="w-full h-full object-cover" />
                                 <button @click.prevent="removeExistingImage(idx)" class="absolute top-1 right-1 h-6 w-6 rounded-lg bg-destructive text-white opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
                                     <X class="h-4 w-4" />
                                 </button>

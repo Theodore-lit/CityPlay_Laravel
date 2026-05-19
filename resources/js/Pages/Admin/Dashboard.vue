@@ -5,6 +5,7 @@ import NeonButton from '@/Components/NeonButton.vue';
 import GlowInput from '@/Components/GlowInput.vue';
 import GpsSearchInput from '@/Components/GpsSearchInput.vue';
 import Pagination from '@/Components/Pagination.vue';
+import AppImage from '@/Components/AppImage.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { 
   Users, Map, Target, TrendingUp, Activity, DollarSign, 
@@ -195,15 +196,17 @@ const copyShareLink = async (city) => {
                                 <td class="p-6">
                                     <Link :href="route('mairie.cities.show', city.id)" class="flex items-center gap-4 group/link">
                                         <div class="h-12 w-16 rounded-xl bg-gaming-darker border border-white/10 overflow-hidden shrink-0">
-                                            <img 
-                                                v-if="city.image_path" 
-                                                :src="'/storage/' + city.image_path" 
+                                            <AppImage
+                                                :src="city.image_url || city.image_path"
                                                 class="w-full h-full object-cover group-hover/link:scale-110 transition-transform"
                                                 alt=""
-                                            />
-                                            <div v-else class="w-full h-full flex items-center justify-center text-white/20">
-                                                <ImageIcon class="h-6 w-6" />
-                                            </div>
+                                            >
+                                                <template #placeholder>
+                                                    <div class="w-full h-full flex items-center justify-center text-white/20">
+                                                        <ImageIcon class="h-6 w-6" />
+                                                    </div>
+                                                </template>
+                                            </AppImage>
                                         </div>
                                         <div>
                                             <div class="font-display text-lg text-white group-hover/city:text-electric transition-colors">{{ city.name }}</div>
