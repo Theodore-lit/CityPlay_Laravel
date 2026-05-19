@@ -10,7 +10,7 @@ import {
   Plus, Settings, Building2, Brain, ChevronRight, Zap, Share2
 } from 'lucide-vue-next';
 
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -69,11 +69,15 @@ const adminStats = [
   { icon: Target, label: "Missions", value: props.cities?.reduce((acc, c) => acc + (c.locations_count || 0), 0) || "0", delta: "Total", color: "text-warning" },
 ];
 
-const quickActions = [
-  { icon: Map, label: "Gérer les Lieux", to: route('mairie.dashboard') }, // Link to city list
-  { icon: Brain, label: "Gérer les Quiz", to: route('player.modes') }, // Link to quiz for now
+const quickActions = computed(() => [
+  { icon: Map, label: "Gérer les Lieux", to: route('mairie.dashboard') },
+  { 
+    icon: Brain, 
+    label: "Gérer les Quiz", 
+    to: props.cities?.length > 0 ? route('admin.cities.quizzes', props.cities[0].id) : route('mairie.dashboard') 
+  },
   { icon: Target, label: "Statistiques", to: route('mairie.dashboard') },
-];
+]);
 </script>
 
 <template>
@@ -191,6 +195,9 @@ const quickActions = [
                     <button @click="copyShareLink(city)" class="h-9 w-9 rounded-xl glass border-white/10 grid place-items-center text-purple-neon hover:bg-purple-neon hover:text-white transition-all shadow-sm" title="Partager le lien">
                       <Share2 class="h-5 w-5" />
                     </button>
+                    <Link :href="route('admin.cities.quizzes', city.id)" class="h-9 w-9 rounded-xl glass border-white/10 grid place-items-center text-warning hover:bg-warning hover:text-white transition-all shadow-sm" title="Gérer les Quiz">
+                      <Brain class="h-5 w-5" />
+                    </Link>
                     <Link
                       :href="route('mairie.city.toggle', city.id)"
                       method="patch"

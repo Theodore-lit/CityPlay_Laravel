@@ -9,15 +9,20 @@ use App\Models\Quiz;
 use App\Models\Question;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
     public function dashboard()
     {
+        if (auth()->user()->role !== 'super_admin') {
+            return redirect()->route('mairie.dashboard');
+        }
+
         return Inertia::render('Admin/Dashboard', [
             'mairies' => User::where('role', 'mairie')->get(),
-            'players' => User::where('role', 'joueur')->orderBy('created_at', 'desc')->get(),
-            'cities' => City::withCount(['locations', 'quizzes'])->get(), // Super Admin voit toutes les villes
+            'players' => User::where('role', 'joueur')->orderBy('created_at', 'desc')->paginate(5, ['*'], 'players'),
+            'cities' => City::with(['creator'])->withCount(['locations', 'quizzes'])->paginate(5, ['*'], 'cities'), // Super Admin voit toutes les villes
             'stats' => [
                 'total_sessions' => GameSession::count(),
                 'active_players' => GameSession::where('status', 'in_progress')->count(),
@@ -28,6 +33,11 @@ class AdminController extends Controller
 
     public function cityQuizzes(City $city)
     {
+        // Security check for Mairie
+        if (auth()->user()->role === 'mairie' && $city->creator_id !== auth()->id()) {
+            abort(403, 'Vous n\'êtes pas autorisé à gérer les quiz de cette ville.');
+        }
+
         return Inertia::render('Admin/Quizzes', [
             'city' => $city->load('quizzes.questions'),
         ]);
@@ -35,6 +45,11 @@ class AdminController extends Controller
 
     public function storeQuiz(Request $request, City $city)
     {
+        // Security check for Mairie
+        if (auth()->user()->role === 'mairie' && $city->creator_id !== auth()->id()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'id' => 'nullable|exists:quizzes,id',
             'title' => 'required|string|max:255',
@@ -57,6 +72,11 @@ class AdminController extends Controller
 
     public function storeQuestion(Request $request, Quiz $quiz)
     {
+        // Security check for Mairie
+        if (auth()->user()->role === 'mairie' && $quiz->city->creator_id !== auth()->id()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'id' => 'nullable|exists:questions,id',
             'question_text' => 'required|string',
@@ -79,12 +99,22 @@ class AdminController extends Controller
 
     public function deleteQuiz(Quiz $quiz)
     {
+        // Security check for Mairie
+        if (auth()->user()->role === 'mairie' && $quiz->city->creator_id !== auth()->id()) {
+            abort(403);
+        }
+
         $quiz->delete();
         return redirect()->back()->with('success', 'Quiz supprimé.');
     }
 
     public function deleteQuestion(Question $question)
     {
+        // Security check for Mairie
+        if (auth()->user()->role === 'mairie' && $question->quiz->city->creator_id !== auth()->id()) {
+            abort(403);
+        }
+
         $question->delete();
         return redirect()->back()->with('success', 'Question supprimée.');
     }
@@ -108,7 +138,13 @@ class AdminController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'radius_meters' => 'required|integer|min:100',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('cities', 'public');
+            $validated['image_path'] = $path;
+        }
 
         // Créer le compte Mairie
         $mairie = User::create([
@@ -125,6 +161,7 @@ class AdminController extends Controller
             'latitude' => $validated['latitude'],
             'longitude' => $validated['longitude'],
             'radius_meters' => $validated['radius_meters'],
+            'image_path' => $validated['image_path'] ?? null,
             'creator_id' => $mairie->id,
             'is_active' => true,
         ]);

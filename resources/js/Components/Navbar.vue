@@ -28,24 +28,21 @@ const confirmLogout = () => {
 };
 
 const links = computed(() => {
-    const baseLinks = [
-        { to: 'welcome', label: 'Accueil' },
-    ];
-
     if (user.value?.role === 'super_admin') {
         return [
-            ...baseLinks,
-            { to: 'admin.dashboard', label: 'Admin HQ' },
-            { to: 'mairie.dashboard', label: 'Console Maire' },
-        ];
+            ];
+            // { to: 'admin.dashboard', label: 'Admin HQ' }, 
     }
 
     if (user.value?.role === 'mairie') {
         return [
-            ...baseLinks,
-            { to: 'mairie.dashboard', label: 'Console Maire' },
-        ];
+            ];
+            // { to: 'mairie.dashboard', label: 'Commandement' },   
     }
+
+    const baseLinks = [
+        { to: 'welcome', label: 'Accueil' },
+    ];
 
     return [
         { to: 'dashboard', label: 'Tableau de bord' },
@@ -90,7 +87,7 @@ const isActive = (routeName) => route().current(routeName);
       <div class="hidden md:block">
         <div class="flex items-center gap-3">
           <template v-if="user">
-            <div class="flex items-center gap-4 mr-4 bg-muted px-4 py-1.5 rounded-full border border-border">
+            <div v-if="user.role !== 'super_admin' && user.role !== 'mairie'" class="flex items-center gap-4 mr-4 bg-muted px-4 py-1.5 rounded-full border border-border">
               <div class="flex items-center text-accent neon-text-purple">
                   <span class="text-lg mr-1">⚡</span>
                   <span class="font-bold">{{ user.xp || 0 }}</span>

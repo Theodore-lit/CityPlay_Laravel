@@ -4,8 +4,8 @@ import MobileTabBar from '@/Components/MobileTabBar.vue';
 import NeonButton from '@/Components/NeonButton.vue';
 import GlowInput from '@/Components/GlowInput.vue';
 import Modal from '@/Components/Modal.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
 import { cn } from '@/lib/utils';
 import {
   Brain, Plus, Trash2, Edit2, ChevronLeft, HelpCircle,
@@ -14,6 +14,11 @@ import {
 
 const props = defineProps({
     city: Object,
+});
+
+const page = usePage();
+const dashboardRoute = computed(() => {
+    return page.props.auth.user.role === 'super_admin' ? 'admin.dashboard' : 'mairie.dashboard';
 });
 
 // Quiz Form
@@ -113,7 +118,7 @@ const deleteQuestion = (id) => {
       <!-- Header -->
       <div class="flex items-center justify-between gap-6 mb-10">
         <div class="flex items-center gap-5">
-            <Link :href="route('admin.dashboard')" class="h-12 w-12 rounded-2xl glass grid place-items-center text-electric hover:scale-110 transition-all shadow-neon border border-electric/20">
+            <Link :href="route(dashboardRoute)" class="h-12 w-12 rounded-2xl glass grid place-items-center text-electric hover:scale-110 transition-all shadow-neon border border-electric/20">
               <ChevronLeft class="h-6 w-6" />
             </Link>
             <div>
