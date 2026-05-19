@@ -82,15 +82,50 @@ class TeamController extends Controller
             abort(403);
         }
 
-        // Créer une session de jeu pour l'équipe
-        $session = GameSession::create([
-            'team_id' => $team->id,
-            'city_id' => $city->id,
-            'start_time' => now(),
-            'status' => 'in_progress',
-            'current_enigma_id' => $city->locations()->first()->enigmas()->first()->id ?? null,
-        ]);
+        $availableLocations = $city->locations()->get()->collect();
+        $sequence = [];
 
-        return redirect()->route('player.game', ['city' => $city->id, 'team_id' => $team->id]);
+        // Pour l'équipe, on peut utiliser la position du leader ou la position actuelle de celui qui lance
+        // Mais par défaut, on prend l'ordre alphabétique ou un ordre fixe si pas de position GPS
+        // Ou on demande la position dans le request si possible
+        $lat = $request->input('lat');
+        $lng = $request->input('lng');
+
+        if ($lat && $lng && $availableLocations->isNotEmpty()) {
+            $currentLat = $lat;
+            $currentLng = $lng;
+
+            while ($availableLocations->isNotEmpty()) {
+                $closest = $availableLocations->sortBy(function ($location) use ($currentLat, $currentLng) {
+                    $lat1 = deg2rad($currentLat);
+                    $lon1 = deg2rad($currentLng);
+                    $lat2 = deg2rad($location->latitude);
+                    $lon2 = deg2rad($location->longitude);
+                    return 6371000 * 2 * atan2(sqrt(pow(sin(($lat2 - $lat1) / 2), 2) + cos($lat1) * cos($lat2) * pow(sin(($lon2 - $lon1) / 2), 2)), sqrt(1 - (pow(sin(($lat2 - $lat1) / 2), 2) + cos($lat1) * cos($lat2) * pow(sin(($lon2 - $lon1) / 2), 2))));
+                })->first();
+
+                $sequence[] = $closest->id;
+                $currentLat = $closest->latitude;
+                $currentLng = $closest->longitude;
+                $availableLocations = $availableLocations->reject(fn($l) => $l->id === $closest->id);
+            }
+        } else {
+            $sequence = $availableLocations->pluck('id')->toArray();
+        }
+
+        // Créer ou mettre à jour la session de jeu pour l'équipe
+        $session = GameSession::updateOrCreate(
+            ['team_id' => $team->id, 'city_id' => $city->id, 'status' => 'in_progress'],
+            [
+                'start_time' => now(),
+                'discovery_sequence' => $sequence,
+                'current_location_id' => $sequence[0] ?? null,
+                'current_enigma_id' => \App\Models\Enigma::where('location_id', $sequence[0] ?? null)
+                    ->where('is_site_specific', false)
+                    ->first()->id ?? null,
+            ]
+        );
+
+        return redirect()->route('player.game', $city->id);
     }
 }

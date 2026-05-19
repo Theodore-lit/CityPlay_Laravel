@@ -42,6 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/player/adventure/solo/{city}', [PlayerController::class, 'startSoloQuest'])->name('player.adventure.solo');
     Route::post('/player/location/{location}/unlock', [PlayerController::class, 'unlockLocation'])->name('player.unlock-location');
     Route::post('/player/location/{location}/complete', [PlayerController::class, 'completeLocation'])->name('player.complete-location');
+    Route::post('/player/update-position', [PlayerController::class, 'updatePosition'])->name('player.update-position');
 
     // Team Routes
     Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');

@@ -15,20 +15,47 @@ class PlayerController extends Controller
         ]);
     }
 
+    public function updatePosition(Request $request)
+    {
+        $user = auth()->user();
+        $lat = $request->input('lat');
+        $lng = $request->input('lng');
+        $teamId = $request->input('team_id');
+
+        $user->update([
+            'latitude' => $lat,
+            'longitude' => $lng
+        ]);
+
+        $teamPositions = [];
+        if ($teamId) {
+            $team = \App\Models\Team::find($teamId);
+            if ($team) {
+                $teamPositions = $team->members()
+                    ->where('users.id', '!=', $user->id)
+                    ->whereNotNull('latitude')
+                    ->whereNotNull('longitude')
+                    ->get(['users.id', 'users.name', 'latitude as lat', 'longitude as lng']);
+            }
+        }
+
+        return back()->with('teamPositions', $teamPositions);
+    }
+
     /**
      * Achat d'un cœur avec des XP (1 cœur = 500 XP)
      */
     public function buyHeart()
     {
         $user = auth()->user();
-        
+
         if ($user->xp >= 500) {
             $user->decrement('xp', 500);
             $user->increment('hearts', 1);
-            
+
             return back()->with('success', 'Cœur acheté avec succès ! ❤️');
         }
-        
+
         return back()->with('error', 'Pas assez d\'XP pour acheter un cœur.');
     }
 
@@ -38,7 +65,7 @@ class PlayerController extends Controller
     public function retryQuiz(\App\Models\Quiz $quiz)
     {
         $user = auth()->user();
-        
+
         if ($user->hearts >= 1) {
             $user->decrement('hearts', 1);
             return redirect()
@@ -180,8 +207,8 @@ class PlayerController extends Controller
         // 3. Mise à jour de l'utilisateur : on AJOUTE les XP au total existant
         $user = auth()->user();
         $user->increment('xp', $xpEarned);
-        
-        // Note : On ne touche PAS aux cœurs ici. 
+
+        // Note : On ne touche PAS aux cœurs ici.
         // Les vies du quiz sont temporaires, les cœurs du compte sont permanents et s'achètent.
 
         return redirect()
@@ -244,7 +271,7 @@ class PlayerController extends Controller
             // Facile est toujours ouvert
             // Moyen s'ouvre si TOUS les quiz Faciles sont réussis
             // Difficile s'ouvre si TOUS les quiz Moyens sont réussis
-            
+
             $allEasyDone = $categorizedQuizzes['easy']->every(fn($q) => in_array($q->id, $completedQuizIds));
             $allMediumDone = $categorizedQuizzes['medium']->every(fn($q) => in_array($q->id, $completedQuizIds));
 
@@ -260,11 +287,24 @@ class PlayerController extends Controller
             ]);
         }
 
-        // Get current session
-        $session = \App\Models\GameSession::where('user_id', $user->id)
-            ->where('city_id', $city->id)
+        // Get current session (Check Solo first, then Teams)
+        $session = \App\Models\GameSession::where('city_id', $city->id)
             ->where('status', 'in_progress')
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->orWhereIn('team_id', $user->teams->pluck('id'));
+            })
             ->first();
+
+        $teamPositions = [];
+        if ($session && $session->team_id) {
+            $teamPositions = \App\Models\Team::find($session->team_id)
+                ->members()
+                ->where('users.id', '!=', $user->id)
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->get(['users.id', 'users.name', 'latitude as lat', 'longitude as lng']);
+        }
 
         $city->load(['locations.enigmas.questions.options']);
 
@@ -299,6 +339,7 @@ class PlayerController extends Controller
             'locations' => $locations,
             'gameMode' => session('game_mode', 'aventure'),
             'currentSession' => $session,
+            'initialTeamPositions' => $teamPositions,
         ]);
     }
 
