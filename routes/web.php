@@ -40,6 +40,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/player/game/{city}', [PlayerController::class, 'game'])->name('player.game');
     Route::get('/player/adventure/setup/{city}', [PlayerController::class, 'adventureSetup'])->name('player.adventure.setup');
     Route::post('/player/adventure/solo/{city}', [PlayerController::class, 'startSoloQuest'])->name('player.adventure.solo');
+    Route::post('/player/adventure/launch/{city}', [PlayerController::class, 'launchAdventure'])->name('player.adventure.launch');
     Route::post('/player/location/{location}/unlock', [PlayerController::class, 'unlockLocation'])->name('player.unlock-location');
     Route::post('/player/location/{location}/complete', [PlayerController::class, 'completeLocation'])->name('player.complete-location');
     Route::post('/player/update-position', [PlayerController::class, 'updatePosition'])->name('player.update-position');
