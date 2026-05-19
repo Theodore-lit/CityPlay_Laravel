@@ -2,8 +2,9 @@
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
 import NeonButton from '@/Components/NeonButton.vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import { Users, MapPin, Play, Trophy, Shield, Calendar, ArrowLeft } from 'lucide-vue-next';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
+import { Users, MapPin, Play, Trophy, Shield, Calendar, ArrowLeft, Copy, Check, Share2, Link as LinkIcon } from 'lucide-vue-next';
+import { ref } from 'vue';
 
 const props = defineProps({
     team: Object,
@@ -11,6 +12,21 @@ const props = defineProps({
 });
 
 const startQuestForm = useForm({});
+const copied = ref(false);
+const gameLinkCopied = ref(false);
+
+const copyInviteCode = () => {
+    navigator.clipboard.writeText(props.team.invite_code);
+    copied.value = true;
+    setTimeout(() => copied.value = false, 2000);
+};
+
+const copyGameLink = (cityId) => {
+    const url = `${window.location.origin}/teams/${props.team.id}/join-game/${cityId}`;
+    navigator.clipboard.writeText(url);
+    gameLinkCopied.value = cityId;
+    setTimeout(() => gameLinkCopied.value = false, 2000);
+};
 
 const startQuest = (cityId) => {
     if ("geolocation" in navigator) {
@@ -18,6 +34,10 @@ const startQuest = (cityId) => {
             router.post(route('teams.start-quest', { team: props.team.id, city: cityId }), {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude
+            }, {
+                onSuccess: () => {
+                    // La notification sera gérée côté serveur via flash ou broadcast
+                }
             });
         }, () => {
             router.post(route('teams.start-quest', { team: props.team.id, city: cityId }));
@@ -33,6 +53,10 @@ const startQuest = (cityId) => {
 
     <SiteLayout>
         <div class="mx-auto max-w-7xl px-4 sm:px-6 py-12 pb-28 md:pb-12">
+            <div v-if="$page.props.flash?.success" class="mb-8 p-4 rounded-2xl bg-success/20 border border-success/40 text-success text-center font-bold animate-fade-up">
+                {{ $page.props.flash?.success }}
+            </div>
+
             <div class="mb-8">
                 <Link :href="route('teams.index')" class="text-muted-foreground hover:text-white flex items-center gap-2 transition-colors">
                     <ArrowLeft class="h-4 w-4" /> Retour aux équipes
@@ -50,7 +74,17 @@ const startQuest = (cityId) => {
                                 <Users class="h-10 w-10 text-electric-foreground" />
                             </div>
                             <h1 class="font-display text-3xl text-white">{{ team.name }}</h1>
-                            <p class="text-electric font-mono tracking-widest text-sm mt-2">CODE: {{ team.invite_code }}</p>
+                            
+                            <div class="mt-4 flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                                <div>
+                                    <div class="text-[10px] text-muted-foreground uppercase font-black">Code d'invitation</div>
+                                    <div class="text-electric font-mono tracking-widest font-bold">{{ team.invite_code }}</div>
+                                </div>
+                                <button @click="copyInviteCode" class="h-10 w-10 rounded-lg bg-electric/10 border border-electric/20 flex items-center justify-center text-electric hover:bg-electric/20 transition-all">
+                                    <Check v-if="copied" class="h-5 w-5" />
+                                    <Copy v-else class="h-5 w-5" />
+                                </button>
+                            </div>
 
                             <div class="mt-8 space-y-4">
                                 <div class="flex items-center gap-3 text-sm text-muted-foreground">
@@ -104,9 +138,20 @@ const startQuest = (cityId) => {
                                         <MapPin class="h-5 w-5 text-electric" />
                                     </div>
                                     <p class="text-sm text-muted-foreground line-clamp-2 mb-6">{{ city.description }}</p>
-                                    <NeonButton @click="startQuest(city.id)" class="w-full" :disabled="startQuestForm.processing">
-                                        Démarrer l'Aventure
-                                    </NeonButton>
+                                    
+                                    <div class="flex gap-2">
+                                        <NeonButton @click="startQuest(city.id)" class="flex-1" :disabled="startQuestForm.processing">
+                                            Démarrer l'Aventure
+                                        </NeonButton>
+                                        <button 
+                                            @click="copyGameLink(city.id)" 
+                                            class="h-12 w-12 rounded-xl glass border-white/10 flex items-center justify-center text-white hover:border-electric/50 transition-all"
+                                            title="Lien de partage de la partie"
+                                        >
+                                            <Check v-if="gameLinkCopied === city.id" class="h-5 w-5 text-success" />
+                                            <LinkIcon v-else class="h-5 w-5" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

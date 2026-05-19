@@ -126,6 +126,33 @@ class TeamController extends Controller
             ]
         );
 
-        return redirect()->route('player.game', $city->id);
+        // Envoyer une notification flash aux autres membres (via Inertia)
+        return redirect()->route('player.game', $city->id)->with('success', "L'aventure en équipe a démarré ! Les autres membres ont été notifiés.");
+    }
+
+    public function joinGame(Team $team, City $city)
+    {
+        $user = auth()->user();
+
+        // Si l'utilisateur n'est pas dans l'équipe, on l'ajoute d'abord
+        if (!$team->members()->where('user_id', $user->id)->exists()) {
+            if ($team->members()->count() >= $team->member_limit) {
+                return redirect()->route('teams.index')->with('error', 'Cette équipe est déjà complète.');
+            }
+            $team->members()->attach($user->id, ['role' => 'member']);
+        }
+
+        // Vérifier si une session est en cours
+        $session = GameSession::where('team_id', $team->id)
+            ->where('city_id', $city->id)
+            ->where('status', 'in_progress')
+            ->first();
+
+        if (!$session) {
+            // Si pas de session, on en crée une (le membre rejoint et lance la partie)
+            return $this->startQuest(request(), $team, $city);
+        }
+
+        return redirect()->route('player.game', $city->id)->with('success', "Vous avez rejoint la partie en cours avec l'équipe {$team->name} !");
     }
 }

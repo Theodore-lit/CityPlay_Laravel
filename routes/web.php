@@ -51,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/teams/join', [TeamController::class, 'join'])->name('teams.join');
     Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
     Route::post('/teams/{team}/start-quest/{city}', [TeamController::class, 'startQuest'])->name('teams.start-quest');
+    Route::get('/teams/{team}/join-game/{city}', [TeamController::class, 'joinGame'])->name('teams.join-game');
 
     // Admin Routes
     Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
@@ -74,6 +75,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/mairie/location/{location}/enigma', [MairieController::class, 'storeEnigma'])->name('mairie.enigmas.store');
     Route::post('/mairie/location/{location}/image', [MairieController::class, 'storeLocationImage'])->name('mairie.locations.image');
     Route::patch('/mairie/city/{city}/toggle', [MairieController::class, 'toggleStatus'])->name('mairie.city.toggle');
+
+    // Mairie Event Routes
+    Route::get('/mairie/city/{city}/events', [MairieController::class, 'cityEvents'])->name('mairie.cities.events');
+    Route::post('/mairie/city/{city}/events', [MairieController::class, 'storeEvent'])->name('mairie.events.store');
+    Route::delete('/mairie/events/{event}', [MairieController::class, 'deleteEvent'])->name('mairie.events.delete');
 });
 
 Route::middleware('auth')->group(function () {

@@ -76,10 +76,10 @@ const isActive = (routeName) => route().current(routeName);
           <Link
             :href="route(l.to)"
             :class="cn(
-              'px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all',
+              'px-5 py-2 text-xs font-black uppercase tracking-widest transition-all border-b-2',
               isActive(l.to)
-                ? 'text-primary bg-primary/10 shadow-sm'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                ? 'text-primary border-primary'
+                : 'text-muted-foreground border-transparent hover:text-foreground hover:border-primary/30'
             )"
           >
             {{ l.label }}

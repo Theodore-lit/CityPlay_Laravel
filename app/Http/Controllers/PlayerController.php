@@ -10,8 +10,57 @@ class PlayerController extends Controller
 {
     public function dashboard()
     {
+        $user = auth()->user();
+
+        $cities = City::where('is_active', true)
+            ->withCount('locations')
+            ->orderBy('name')
+            ->get()
+            ->map(function ($city, $index) use ($user) {
+                $discoveredInCity = \App\Models\UserLocationProgress::where('user_id', $user->id)
+                    ->whereHas('location', fn ($q) => $q->where('city_id', $city->id))
+                    ->where('is_discovered', true)
+                    ->count();
+
+                if ($city->locations_count === 0) {
+                    $city->mission_status = 'lock';
+                } elseif ($discoveredInCity === 0 && $city->created_at?->gt(now()->subDays(14))) {
+                    $city->mission_status = 'new';
+                } else {
+                    $city->mission_status = 'good';
+                }
+
+                return $city;
+            });
+
+        $citiesUnlocked = \App\Models\UserLocationProgress::where('user_id', $user->id)
+            ->where('is_discovered', true)
+            ->with('location')
+            ->get()
+            ->pluck('location.city_id')
+            ->filter()
+            ->unique()
+            ->count();
+
+        $missionsCompleted = \App\Models\UserLocationProgress::where('user_id', $user->id)
+            ->where('is_discovered', true)
+            ->count()
+            + \App\Models\QuizResult::where('user_id', $user->id)->count();
+
+        $xpPerLevel = 4000;
+        $xpInLevel = $user->xp % $xpPerLevel;
+
         return Inertia::render('Player/Dashboard', [
-            'cities' => City::where('is_active', true)->withCount('locations')->get()
+            'cities' => $cities,
+            'stats' => [
+                'missions' => $missionsCompleted,
+                'total_xp' => $user->xp,
+                'cities_unlocked' => $citiesUnlocked,
+                'cities_total' => $cities->count(),
+                'streak_days' => $user->last_activity_at?->isToday() ? 1 : 0,
+                'xp_in_level' => $xpInLevel,
+                'xp_per_level' => $xpPerLevel,
+            ],
         ]);
     }
 
@@ -108,7 +157,7 @@ class PlayerController extends Controller
             $query->whereHas('locations.enigmas');
         }
 
-        $cities = $query->with(['locations' => function ($query) use ($user) {
+        $cities = $query->with(['events', 'locations' => function ($query) use ($user) {
                 $query->with(['userProgress' => function ($q) use ($user) {
                     $q->where('user_id', $user->id);
                 }]);

@@ -24,6 +24,7 @@ const props = defineProps({
 const userPosition = ref(null);
 const teamMembers = ref(props.initialTeamPositions || []);
 const isPaused = ref(false);
+const totalErrors = ref(0);
 const showHint = ref(false);
 const usedHints = ref(0);
 const gameTime = ref(0);
@@ -48,6 +49,22 @@ const earnedXp = ref(150);
 // Toast
 const toast = ref({ show: false, message: '', type: 'info' });
 
+const updateGPS = () => {
+    if ("geolocation" in navigator) {
+        navigator.geolocation.watchPosition((position) => {
+            console.log(position.coords.latitude)
+            console.log(position.coords.longitude)
+            userPosition.value = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+        }, (err) => {
+            console.error("Erreur GPS:", err);
+        }, { enableHighAccuracy: true });
+    }
+};
+
+
 // --- COMPUTED ---
 const rawDistance = computed(() => {
     if (!userPosition.value || !currentTarget.value) return null;
@@ -56,6 +73,8 @@ const rawDistance = computed(() => {
         currentTarget.value.latitude, currentTarget.value.longitude
     );
 });
+
+console.log(rawDistance.value)
 
 const distanceToClosest = computed(() => {
     if (rawDistance.value === null) return '---';
@@ -78,8 +97,8 @@ const cityData = computed(() => props.city);
 const gameMode = computed(() => props.currentSession ? 'aventure' : 'classique');
 
 const currentTarget = computed(() => {
-    if (!props.currentSession || !props.locations) return null;
-    return props.locations.find(l => l.id === props.currentSession.current_location_id);
+    if (!props.locations || !props.currentSession) return null;
+    return props.locations.find(l => l.id === props.currentSession.current_location_id) || props.locations[0] || null;
 });
 
 const activeEnigma = computed(() => {
@@ -130,6 +149,7 @@ const handleUseHint = () => {
 
 const verifyPosition = () => {
     if (isNearLocation.value && currentTarget.value) {
+        isPaused.value = true; // Arrête le chrono dès la validation du lieu
         showGameToast("Position confirmée !", "success");
         setTimeout(() => {
             selectedLocation.value = currentTarget.value;
@@ -154,11 +174,15 @@ const startQuestionnaire = () => {
     isQuestionnaireActive.value = true;
     currentQuestionIndex.value = 0;
     questionnaireAnswers.value = [];
+    totalErrors.value = 0;
     showRiddleModal.value = true;
 };
 
 const selectQuestionOption = (option) => {
+    if (questionnaireAnswers.value[currentQuestionIndex.value]) return;
+
     questionnaireAnswers.value[currentQuestionIndex.value] = option;
+    
     if (option.is_correct) {
         if (currentQuestionIndex.value < currentRiddle.value.questions.length - 1) {
             setTimeout(() => { currentQuestionIndex.value++; }, 1000);
@@ -166,7 +190,14 @@ const selectQuestionOption = (option) => {
             handleSuccess();
         }
     } else {
-        showGameToast("Mauvaise réponse, réessayez !", "error");
+        totalErrors.value++;
+        showGameToast("Mauvaise réponse !", "error");
+        // On passe quand même à la suivante pour la logique de quiz
+        if (currentQuestionIndex.value < currentRiddle.value.questions.length - 1) {
+            setTimeout(() => { currentQuestionIndex.value++; }, 1000);
+        } else {
+            handleSuccess();
+        }
     }
 };
 
@@ -174,12 +205,16 @@ const submitRiddle = () => {
     if (riddleAnswer.value.toLowerCase().trim() === currentRiddle.value.answer?.toLowerCase().trim()) {
         handleSuccess();
     } else {
+        totalErrors.value++;
         showGameToast("Réponse incorrecte.", "error");
     }
 };
 
 const handleSuccess = () => {
-    earnedStars.value = Math.max(1, 3 - usedHints.value);
+    // Calcul des étoiles basé sur les erreurs du quiz
+    // 0 erreur = 3 étoiles, 1 erreur = 2 étoiles, 2+ erreurs = 1 étoile
+    earnedStars.value = Math.max(1, 3 - totalErrors.value);
+    
     router.post(route('player.complete-location', selectedLocation.value.id), {
         stars: earnedStars.value,
         xp: 150
@@ -192,17 +227,8 @@ const handleSuccess = () => {
     });
 };
 
-const updateGPS = () => {
-    if ("geolocation" in navigator) {
-        navigator.geolocation.watchPosition((position) => {
-            userPosition.value = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude
-            };
-        }, (err) => {
-            console.error("Erreur GPS:", err);
-        }, { enableHighAccuracy: true });
-    }
+const goBackToLobby = () => {
+    router.get(route('player.adventure.solo', props.city.id));
 };
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -369,7 +395,7 @@ onUnmounted(() => {
             <Trophy class="h-16 w-16 text-electric mx-auto mb-6" />
             <h2 class="font-display text-3xl mb-2 text-white">FÉLICITATIONS !</h2>
             <div class="flex justify-center gap-2 mb-8">
-                <Star v-for="s in 3" :key="s" class="h-8 w-8 text-yellow-400 fill-yellow-400" />
+                <Star v-for="s in 3" :key="s" :class="cn('h-8 w-8', s <= earnedStars ? 'text-yellow-400 fill-yellow-400' : 'text-white/10')" />
             </div>
             <div class="grid grid-cols-2 gap-4 mb-8">
                 <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
@@ -381,7 +407,12 @@ onUnmounted(() => {
                     <div class="text-xl font-display text-success">{{ formatTime(gameTime) }}</div>
                 </div>
             </div>
-            <NeonButton size="xl" class="w-full rounded-2xl" @click="showSuccessModal = false">CONTINUER</NeonButton>
+            <div class="flex flex-col gap-3">
+                <NeonButton size="xl" class="w-full rounded-2xl" @click="showSuccessModal = false">CONTINUER</NeonButton>
+                <button @click="goBackToLobby" class="text-xs text-electric font-black uppercase tracking-[0.2em] hover:text-white transition-colors">
+                    REJOUER / LOBBY
+                </button>
+            </div>
         </div>
     </Modal>
   </SiteLayout>
