@@ -11,6 +11,7 @@ class Quiz extends Model
         'location_id',
         'title',
         'description',
+        'difficulty',
         'category',
         'xp_reward',
         'time_limit',
