@@ -179,9 +179,9 @@ const cityCardClass = (locked) =>
                       :alt="city.name"
                       class="h-full w-full object-cover min-h-[100px] transition-transform duration-500 group-hover:scale-105"
                     />
-                    <div v-else class="h-full min-h-[100px] w-full bg-muted/40 flex items-center justify-center">
+                    <!-- <div v-else class="h-full min-h-[100px] w-full bg-muted/40 flex items-center justify-center">
                       <MapPin class="h-8 w-8 text-muted-foreground/40" />
-                    </div>
+                    </div> -->
                   </div>
                   <div class="flex flex-1 flex-col justify-center p-4 sm:p-5">
                     <span class="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-1">Ville</span>
@@ -200,9 +200,9 @@ const cityCardClass = (locked) =>
                       :alt="city.name"
                       class="h-full w-full object-cover min-h-[100px] grayscale opacity-50"
                     />
-                    <div v-else class="h-full min-h-[100px] w-full bg-muted/40 flex items-center justify-center">
+                    <!-- <div v-else class="h-full min-h-[100px] w-full bg-muted/40 flex items-center justify-center">
                       <MapPin class="h-8 w-8 text-muted-foreground/40" />
-                    </div>
+                    </div> -->
                     <div class="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-[1px]">
                       <div class="flex flex-col items-center gap-1">
                         <Lock class="h-8 w-8 text-white/70" />
