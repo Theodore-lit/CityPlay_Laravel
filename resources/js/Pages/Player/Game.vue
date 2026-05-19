@@ -17,6 +17,7 @@ const props = defineProps({
     locations: Array,
     gameMode: String,
     currentSession: Object,
+    initialTeamPositions: Array,
 });
 
 // --- États Réactifs ---
@@ -28,6 +29,7 @@ const distanceToClosest = ref(null);
 const closestLocation = ref(null);
 const watchId = ref(null);
 const isNearLocation = ref(false);
+const teamMembers = ref(props.initialTeamPositions || []); // Initialisation avec les positions déjà connues
 
 const nextTarget = computed(() => {
     if (!props.currentSession || !props.currentSession.discovery_sequence) return null;
@@ -273,6 +275,11 @@ const startTracking = () => {
                 userPosition.value = { lat: latitude, lng: longitude };
                 updateDistances(latitude, longitude);
 
+                // Si on est en équipe, on met à jour notre position sur le serveur
+                if (props.currentSession?.team_id) {
+                    updateUserPositionOnServer(latitude, longitude);
+                }
+
                 if (accuracy > 30) {
                     console.warn(`Précision GPS faible : ${accuracy}m`);
                 }
@@ -290,6 +297,23 @@ const startTracking = () => {
     } else {
         showGameToast("La géolocalisation n'est pas supportée par votre navigateur.", "error");
     }
+};
+
+const updateUserPositionOnServer = (lat, lng) => {
+    router.post(route('player.update-position'), {
+        lat: lat,
+        lng: lng,
+        team_id: props.currentSession?.team_id
+    }, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: (page) => {
+            // Le serveur renvoie la position des autres membres de l'équipe via flash
+            if (page.props.flash?.teamPositions) {
+                teamMembers.value = page.props.flash.teamPositions;
+            }
+        }
+    });
 };
 
 const validatePosition = () => {
@@ -384,6 +408,7 @@ onUnmounted(() => {
               :locations="locations"
               :userPosition="userPosition"
               :targetLocation="currentTarget"
+              :teamMembers="teamMembers"
             />
           </div>
 

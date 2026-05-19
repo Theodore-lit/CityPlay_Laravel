@@ -10,6 +10,7 @@ const props = defineProps({
     locations: Array,     // Liste des lieux à afficher (latitude, longitude, radius)
     userPosition: Object, // Position GPS actuelle de l'utilisateur {lat, lng}
     targetLocation: Object, // Lieu cible actuel
+    teamMembers: Array,   // Liste des membres de l'équipe avec leur position {id, name, lat, lng}
 });
 
 const emit = defineEmits(['locationReached']);
@@ -17,6 +18,7 @@ const emit = defineEmits(['locationReached']);
 const mapContainer = ref(null);
 let map = null;
 let userMarker = null;
+const teamMarkers = {}; // Stockage des marqueurs par ID de membre
 let targetMarker = null;
 let pathLine = null;
 let radarCircle = null;
@@ -160,6 +162,47 @@ const updateUserMarker = (pos) => {
 };
 
 /**
+ * Met à jour les marqueurs des membres de l'équipe
+ */
+const updateTeamMarkers = () => {
+    if (!map || !props.teamMembers) return;
+
+    props.teamMembers.forEach(member => {
+        if (!member.lat || !member.lng) return;
+        
+        const latlng = [member.lat, member.lng];
+
+        if (teamMarkers[member.id]) {
+            teamMarkers[member.id].setLatLng(latlng);
+        } else {
+            const memberIcon = L.divIcon({
+                className: 'team-member-icon',
+                html: `
+                    <div class="relative group">
+                        <div class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gaming-dark border border-electric/30 rounded text-[8px] text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                            ${member.name}
+                        </div>
+                        <div class="absolute -inset-2 bg-electric/20 rounded-full animate-pulse"></div>
+                        <div class="relative w-3 h-3 bg-electric border border-white rounded-full shadow-neon"></div>
+                    </div>`,
+                iconSize: [12, 12],
+                iconAnchor: [6, 6]
+            });
+            teamMarkers[member.id] = L.marker(latlng, { icon: memberIcon }).addTo(map);
+        }
+    });
+
+    // Optionnel : Supprimer les marqueurs des membres qui ne sont plus dans la liste
+    const currentMemberIds = props.teamMembers.map(m => m.id);
+    Object.keys(teamMarkers).forEach(id => {
+        if (!currentMemberIds.includes(parseInt(id))) {
+            teamMarkers[id].remove();
+            delete teamMarkers[id];
+        }
+    });
+};
+
+/**
  * Permet de forcer manuellement le rafraîchissement depuis le parent si nécessaire
  */
 const forceRefreshSize = () => {
@@ -170,6 +213,10 @@ const forceRefreshSize = () => {
 
 // Exposer la méthode au composant parent
 defineExpose({ refreshSize: forceRefreshSize });
+
+watch(() => props.teamMembers, () => {
+    updateTeamMarkers();
+}, { deep: true });
 
 watch(() => props.userPosition, (newPos) => {
     if (newPos) {
@@ -228,7 +275,7 @@ onUnmounted(() => {
 
 <style>
 /* Styles spécifiques pour l'icône de position utilisateur */
-.user-position-icon, .target-marker-icon {
+.user-position-icon, .target-marker-icon, .team-member-icon {
     background: transparent !important;
     border: none !important;
 }

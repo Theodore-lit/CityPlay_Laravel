@@ -2,7 +2,7 @@
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
 import NeonButton from '@/Components/NeonButton.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { Users, MapPin, Play, Trophy, Shield, Calendar, ArrowLeft } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -13,7 +13,18 @@ const props = defineProps({
 const startQuestForm = useForm({});
 
 const startQuest = (cityId) => {
-    startQuestForm.post(route('teams.start-quest', { team: props.team.id, city: cityId }));
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition((position) => {
+            router.post(route('teams.start-quest', { team: props.team.id, city: cityId }), {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            });
+        }, () => {
+            router.post(route('teams.start-quest', { team: props.team.id, city: cityId }));
+        });
+    } else {
+        router.post(route('teams.start-quest', { team: props.team.id, city: cityId }));
+    }
 };
 </script>
 
@@ -33,14 +44,14 @@ const startQuest = (cityId) => {
                 <div class="lg:col-span-1 space-y-6">
                     <div class="glass-strong rounded-3xl p-8 border border-white/10 relative overflow-hidden">
                         <div class="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-electric/10 blur-3xl" />
-                        
+
                         <div class="relative">
                             <div class="h-20 w-20 rounded-2xl bg-gradient-electric grid place-items-center shadow-neon mb-6">
                                 <Users class="h-10 w-10 text-electric-foreground" />
                             </div>
                             <h1 class="font-display text-3xl text-white">{{ team.name }}</h1>
                             <p class="text-electric font-mono tracking-widest text-sm mt-2">CODE: {{ team.invite_code }}</p>
-                            
+
                             <div class="mt-8 space-y-4">
                                 <div class="flex items-center gap-3 text-sm text-muted-foreground">
                                     <Shield class="h-4 w-4 text-electric" />
