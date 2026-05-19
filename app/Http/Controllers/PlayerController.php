@@ -42,21 +42,25 @@ class PlayerController extends Controller
         return back()->with('teamPositions', $teamPositions);
     }
 
-    /**
-     * Achat d'un cœur avec des XP (1 cœur = 500 XP)
-     */
-    public function buyHeart()
+    public function buyHeart(Request $request)
     {
         $user = auth()->user();
-
         if ($user->xp >= 500) {
             $user->decrement('xp', 500);
             $user->increment('hearts', 1);
-
-            return back()->with('success', 'Cœur acheté avec succès ! ❤️');
+            return back()->with('success', 'Un cœur ajouté !');
         }
+        return back()->with('error', 'XP insuffisants.');
+    }
 
-        return back()->with('error', 'Pas assez d\'XP pour acheter un cœur.');
+    public function useHint(Request $request)
+    {
+        $user = auth()->user();
+        if ($user->xp >= 50) {
+            $user->decrement('xp', 50);
+            return back()->with('success', 'Indice débloqué (-50 PX)');
+        }
+        return back()->with('error', 'XP insuffisants pour un indice.');
     }
 
     /**
@@ -372,13 +376,15 @@ class PlayerController extends Controller
 
         $availableLocations = $city->locations()->whereHas('enigmas', function($q) use ($difficulty) {
             $q->where('difficulty', $difficulty);
-        })->get();
+        })->with(['enigmas' => function($q) use ($difficulty) {
+            $q->where('difficulty', $difficulty);
+        }])->get();
 
         if ($lat && $lng) {
-            // Filtrage par distance selon le mode de transport
-            $maxDistance = 8000; // Pied/Vélo
-            if ($transport === 'moto') $maxDistance = 20000;
-            if ($transport === 'car') $maxDistance = 100000;
+            // Filtrage par distance selon le mode de transport (Règles strictes)
+            $maxDistance = 8000; // Pied/Vélo : 8 km
+            if ($transport === 'moto') $maxDistance = 20000; // Moto : 20 km
+            if ($transport === 'car') $maxDistance = 100000; // Voiture : 100 km (Plafonné)
 
             $availableLocations = $availableLocations->filter(function ($location) use ($lat, $lng, $maxDistance) {
                 $distance = $this->calculateDistance($lat, $lng, $location->latitude, $location->longitude);
@@ -386,7 +392,6 @@ class PlayerController extends Controller
             });
         }
 
-        // Au lieu de créer la session tout de suite, on redirige vers le lobby avec les lieux filtrés
         return Inertia::render('Player/ExplorerLobby', [
             'city' => $city,
             'locations' => $availableLocations->values(),
@@ -403,21 +408,24 @@ class PlayerController extends Controller
     {
         $user = auth()->user();
         $locationId = $request->input('location_id');
+        $enigmaId = $request->input('enigma_id');
         $difficulty = $request->input('difficulty', 'medium');
 
         $location = \App\Models\Location::findOrFail($locationId);
 
-        // Initialiser la session pour cette énigme spécifique
+        // Initialiser la session pour cette énigme spécifique choisie par le joueur
         $session = \App\Models\GameSession::updateOrCreate(
-            ['user_id' => $user->id, 'city_id' => $city->id, 'team_id' => null, 'status' => 'in_progress'],
+            [
+                'user_id' => $user->id,
+                'city_id' => $city->id,
+                'team_id' => null,
+                'status' => 'in_progress'
+            ],
             [
                 'start_time' => now(),
                 'discovery_sequence' => [$locationId],
                 'current_location_id' => $locationId,
-                'current_enigma_id' => \App\Models\Enigma::where('location_id', $locationId)
-                    ->where('difficulty', $difficulty)
-                    ->where('is_site_specific', false)
-                    ->first()->id ?? \App\Models\Enigma::where('location_id', $locationId)->first()->id,
+                'current_enigma_id' => $enigmaId,
             ]
         );
 

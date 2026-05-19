@@ -1,201 +1,188 @@
 <script setup>
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
-import MapComponent from '@/Components/MapComponent.vue';
 import NeonButton from '@/Components/NeonButton.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import MapComponent from '@/Components/MapComponent.vue';
 import Modal from '@/Components/Modal.vue';
 import {
   MapPin, QrCode, Navigation, Sparkles, Lock, Target, Zap,
-  ChevronLeft, Star, Heart, Clock, Play, Info, CheckCircle2, Trophy, Brain
+  ChevronLeft, Star, Heart, Clock, Play, Info, CheckCircle2, Trophy, Brain,
+  Pause, HelpCircle, Eye, XCircle, ArrowRight
 } from 'lucide-vue-next';
-import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
 import { cn } from '@/lib/utils';
 
 const props = defineProps({
     city: Object,
     locations: Array,
-    gameMode: String,
     currentSession: Object,
     initialTeamPositions: Array,
 });
 
-// --- États Réactifs ---
-const cityData = computed(() => props.city);
-const activeTab = ref('map');
-const mapRef = ref(null);
+// --- ÉTATS RÉACTIFS ---
 const userPosition = ref(null);
-const distanceToClosest = ref(null);
-const closestLocation = ref(null);
-const watchId = ref(null);
-const isNearLocation = ref(false);
-const teamMembers = ref(props.initialTeamPositions || []); // Initialisation avec les positions déjà connues
+const teamMembers = ref(props.initialTeamPositions || []);
+const isPaused = ref(false);
+const showHint = ref(false);
+const usedHints = ref(0);
+const gameTime = ref(0);
+const timerInterval = ref(null);
+const mapRef = ref(null);
 
-const nextTarget = computed(() => {
-    if (!props.currentSession || !props.currentSession.discovery_sequence) return null;
-    const sequence = props.currentSession.discovery_sequence;
-    const currentIndex = sequence.indexOf(props.currentSession.current_location_id);
+// Modal Énigme / Questionnaire
+const showRiddleModal = ref(false);
+const riddleType = ref('site'); // 'unlock' or 'site'
+const selectedLocation = ref(null);
+const currentRiddle = ref(null);
+const riddleAnswer = ref('');
+const isQuestionnaireActive = ref(false);
+const currentQuestionIndex = ref(0);
+const questionnaireAnswers = ref([]);
 
-    if (currentIndex !== -1 && sequence[currentIndex + 1]) {
-        return props.locations.find(l => l.id === sequence[currentIndex + 1]);
-    }
-    return null;
+// Modal Succès
+const showSuccessModal = ref(false);
+const earnedStars = ref(3);
+const earnedXp = ref(150);
+
+// Toast
+const toast = ref({ show: false, message: '', type: 'info' });
+
+// --- COMPUTED ---
+const rawDistance = computed(() => {
+    if (!userPosition.value || !currentTarget.value) return null;
+    return calculateDistance(
+        userPosition.value.lat, userPosition.value.lng,
+        currentTarget.value.latitude, currentTarget.value.longitude
+    );
 });
 
-const activeEnigma = computed(() => {
-    if (!props.currentSession || !props.locations) return null;
-
-    // Si on est sur place (navigation résolue), on pourrait vouloir montrer l'énigme suivante
-    // Mais pour l'instant, on affiche l'énigme active de la session
-    const loc = props.locations.find(l => l.id === props.currentSession.current_location_id);
-    if (!loc) return null;
-
-    const enigma = loc.enigmas?.find(e => e.id === props.currentSession.current_enigma_id);
-    return enigma;
+const distanceToClosest = computed(() => {
+    if (rawDistance.value === null) return '---';
+    const dist = rawDistance.value;
+    return dist > 1000 ? (dist/1000).toFixed(1) + 'km' : Math.round(dist) + 'm';
 });
 
-const displayEnigma = computed(() => {
-    // Si on a déjà débloqué le lieu actuel (is_site_specific actif ou déjà découvert)
-    // On montre l'énigme du LIEU SUIVANT dans le HUD pour guider le joueur
-    if (activeEnigma.value?.is_site_specific && nextTarget.value) {
-        return nextTarget.value.enigmas?.find(e => !e.is_site_specific)?.content || "Suivez le radar vers la prochaine zone.";
-    }
-    return activeEnigma.value?.content || "Analysez le radar pour localiser le prochain secret.";
-});
-const currentTarget = computed(() => {
-    return props.locations.find(l => l.is_current_target);
+const isNearLocation = computed(() => {
+    return rawDistance.value !== null && rawDistance.value < 50;
 });
 
 const proximityScore = computed(() => {
-    if (!distanceToClosest.value) return 0;
-    const dist = parseFloat(distanceToClosest.value.replace(/[^0-9.]/g, ''));
-    const isKm = distanceToClosest.value.includes('km');
-    const meters = isKm ? dist * 1000 : dist;
-
-    // On considère que 500m est le début de la zone "chaude"
-    if (meters > 500) return 0;
-    return Math.round(((500 - meters) / 500) * 100);
+    if (rawDistance.value === null) return 0;
+    const dist = rawDistance.value;
+    if (dist > 1000) return 0;
+    return Math.max(0, 100 - (dist / 10)); // 0m = 100%, 1000m = 0%
 });
 
-// Nouveaux états pour le gameplay
-const selectedLocation = ref(null);
-const showRiddleModal = ref(false);
-const riddleType = ref(null); // 'unlock' or 'site'
-const selectedDifficulty = ref(null);
-const riddleAnswer = ref('');
-const showSuccessModal = ref(false);
-const earnedStars = ref(0);
-const earnedXp = ref(0);
-const currentRiddle = ref(null);
-const usedHints = ref(0);
+const cityData = computed(() => props.city);
+const gameMode = computed(() => props.currentSession ? 'aventure' : 'classique');
 
-// Questionnaire state
-const currentQuestionIndex = ref(0);
-const questionnaireAnswers = ref([]);
-const isQuestionnaireActive = ref(false);
+const currentTarget = computed(() => {
+    if (!props.currentSession || !props.locations) return null;
+    return props.locations.find(l => l.id === props.currentSession.current_location_id);
+});
 
-const selectLocation = (loc) => {
-    selectedLocation.value = loc;
+const activeEnigma = computed(() => {
+    if (!currentTarget.value) return null;
+    return currentTarget.value.enigmas?.find(e => e.id === props.currentSession.current_enigma_id) || currentTarget.value.enigmas?.[0];
+});
 
-    if (loc.is_discovered) {
-        activeTab.value = 'map';
+const displayEnigma = computed(() => {
+    return activeEnigma.value?.content || "Suivez le radar pour découvrir ce lieu mystérieux...";
+});
+
+// --- MÉTHODES ---
+const startTimer = () => {
+    if (timerInterval.value) clearInterval(timerInterval.value);
+    timerInterval.value = setInterval(() => {
+        if (!isPaused.value) gameTime.value++;
+    }, 1000);
+};
+
+const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+const showGameToast = (message, type = 'info') => {
+    toast.value = { show: true, message, type };
+    setTimeout(() => { toast.value.show = false; }, 3000);
+};
+
+const togglePause = () => {
+    isPaused.value = !isPaused.value;
+};
+
+const handleUseHint = () => {
+    if (usePage().props.auth.user.xp < 50) {
+        showGameToast("XP insuffisants pour un indice.", "error");
         return;
     }
-
-    if (loc.is_current_target) {
-        // On vérifie si on a déjà résolu l'énigme de navigation
-        const currentEnigma = props.city.locations.find(l => l.id === loc.id).enigmas.find(e => e.id === props.currentSession?.current_enigma_id);
-
-        if (currentEnigma && !currentEnigma.is_site_specific) {
-            riddleType.value = 'unlock';
-            isQuestionnaireActive.value = false;
-            showRiddleModal.value = true;
-        } else {
-            // Déjà résolu l'énigme de navigation, on doit se rendre sur place
-            activeTab.value = 'map';
-        }
-    } else {
-        showGameToast("Ce lieu est encore verrouillé. Suivez l'ordre de l'aventure !", "error");
-    }
-};
-
-const startRiddle = (difficulty) => {
-    selectedDifficulty.value = difficulty;
-    // On prend une énigme de la bonne difficulté et non spécifique au site pour débloquer
-    const enigmas = selectedLocation.value.enigmas || [];
-    currentRiddle.value = enigmas.find(e =>
-        e.difficulty === difficulty && !e.is_site_specific
-    ) || enigmas[0];
-
-    riddleAnswer.value = '';
-    usedHints.value = 0;
-};
-
-const submitRiddle = () => {
-    if (riddleAnswer.value.toLowerCase() === currentRiddle.value.answer.toLowerCase()) {
-        if (riddleType.value === 'unlock') {
-            handleUnlockSuccess();
-        } else {
-            handleSiteSuccess();
-        }
-    } else {
-        showGameToast("Réponse incorrecte. Réessayez !", "error");
-    }
-};
-
-const handleUnlockSuccess = () => {
-    router.post(route('player.unlock-location', selectedLocation.value.id), {
-        difficulty: selectedDifficulty.value,
-        team_id: props.currentSession?.team_id
-    }, {
+    router.post(route('player.use-hint'), {}, {
         onSuccess: () => {
-            showRiddleModal.value = false;
-            showGameToast("Lieu débloqué ! Direction la cible.", "success");
+            showHint.value = true;
+            usedHints.value++;
+            showGameToast("Indice débloqué (-50 PX)", "success");
         }
     });
 };
 
+const verifyPosition = () => {
+    if (isNearLocation.value && currentTarget.value) {
+        showGameToast("Position confirmée !", "success");
+        setTimeout(() => {
+            selectedLocation.value = currentTarget.value;
+            riddleType.value = 'site';
+            const locWithEnigmas = props.locations.find(l => l.id === selectedLocation.value.id);
+            const enigmas = locWithEnigmas?.enigmas || [];
+            currentRiddle.value = enigmas.find(e => e.is_site_specific) || enigmas[0];
+            
+            if (currentRiddle.value?.questions?.length > 0) {
+                startQuestionnaire();
+            } else {
+                showRiddleModal.value = true;
+            }
+        }, 800);
+    } else {
+        const distMsg = distanceToClosest.value !== '---' ? ` (${distanceToClosest.value})` : '';
+        showGameToast(`Signal trop faible. Rapprochez-vous du point cible.${distMsg}`, "warning");
+    }
+};
+
 const startQuestionnaire = () => {
+    isQuestionnaireActive.value = true;
     currentQuestionIndex.value = 0;
     questionnaireAnswers.value = [];
-    isQuestionnaireActive.value = true;
     showRiddleModal.value = true;
 };
 
 const selectQuestionOption = (option) => {
     questionnaireAnswers.value[currentQuestionIndex.value] = option;
-
-    setTimeout(() => {
+    if (option.is_correct) {
         if (currentQuestionIndex.value < currentRiddle.value.questions.length - 1) {
-            currentQuestionIndex.value++;
+            setTimeout(() => { currentQuestionIndex.value++; }, 1000);
         } else {
-            submitQuestionnaire();
+            handleSuccess();
         }
-    }, 500);
-};
-
-const submitQuestionnaire = () => {
-    const correctCount = questionnaireAnswers.value.filter(a => a.is_correct).length;
-    const totalCount = currentRiddle.value.questions.length;
-
-    if (correctCount === totalCount) {
-        handleSiteSuccess();
     } else {
-        showGameToast(`Vous avez ${correctCount}/${totalCount} bonnes réponses. Réessayez !`, "warning");
-        currentQuestionIndex.value = 0;
-        questionnaireAnswers.value = [];
+        showGameToast("Mauvaise réponse, réessayez !", "error");
     }
 };
 
-const handleSiteSuccess = () => {
-    const stars = 3 - usedHints.value;
-    earnedStars.value = Math.max(1, stars);
-    earnedXp.value = currentRiddle.value.reward_coins * 10 || 250;
+const submitRiddle = () => {
+    if (riddleAnswer.value.toLowerCase().trim() === currentRiddle.value.answer?.toLowerCase().trim()) {
+        handleSuccess();
+    } else {
+        showGameToast("Réponse incorrecte.", "error");
+    }
+};
 
+const handleSuccess = () => {
+    earnedStars.value = Math.max(1, 3 - usedHints.value);
     router.post(route('player.complete-location', selectedLocation.value.id), {
         stars: earnedStars.value,
-        xp: earnedXp.value,
-        team_id: props.currentSession?.team_id
+        xp: 150
     }, {
         onSuccess: () => {
             showRiddleModal.value = false;
@@ -205,568 +192,209 @@ const handleSiteSuccess = () => {
     });
 };
 
-/**
- * Surveille le changement d'onglet pour rafraîchir la carte si elle passe au premier plan
- */
-watch(activeTab, (newTab) => {
-    if (newTab === 'map') {
-        nextTick(() => {
-            // Appel de la méthode exposée du MapComponent pour forcer l'affichage des tuiles
-            if (mapRef.value && typeof mapRef.value.refreshSize === 'function') {
-                mapRef.value.refreshSize();
-            }
-        });
+const updateGPS = () => {
+    if ("geolocation" in navigator) {
+        navigator.geolocation.watchPosition((position) => {
+            userPosition.value = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+        }, (err) => {
+            console.error("Erreur GPS:", err);
+        }, { enableHighAccuracy: true });
     }
-});
+};
 
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // Rayon de la Terre en mètres
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3;
     const φ1 = lat1 * Math.PI / 180;
     const φ2 = lat2 * Math.PI / 180;
     const Δφ = (lat2 - lat1) * Math.PI / 180;
     const Δλ = (lon2 - lon1) * Math.PI / 180;
-
     const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
               Math.cos(φ1) * Math.cos(φ2) *
               Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
     return R * c;
-};
-
-const updateDistances = (lat, lng) => {
-    if (!props.city || !props.locations) return;
-
-    // Priorité à la cible actuelle en mode aventure
-    if (currentTarget.value) {
-        const d = calculateDistance(lat, lng, currentTarget.value.latitude, currentTarget.value.longitude);
-        closestLocation.value = currentTarget.value;
-        isNearLocation.value = d <= (currentTarget.value.radius_meters || 50);
-        distanceToClosest.value = d > 1000
-            ? (d / 1000).toFixed(1) + 'km'
-            : Math.round(d) + 'm';
-        return;
-    }
-
-    let minDistance = Infinity;
-    let closest = null;
-
-    props.locations.forEach(loc => {
-        const d = calculateDistance(lat, lng, loc.latitude, loc.longitude);
-        if (d < minDistance) {
-            minDistance = d;
-            closest = loc;
-        }
-    });
-
-    closestLocation.value = closest;
-    isNearLocation.value = closest && minDistance <= (closest.radius_meters || 50);
-
-    distanceToClosest.value = minDistance > 1000
-        ? (minDistance / 1000).toFixed(1) + 'km'
-        : Math.round(minDistance) + 'm';
-};
-
-const startTracking = () => {
-    if ("geolocation" in navigator) {
-        watchId.value = navigator.geolocation.watchPosition(
-            (position) => {
-                const { latitude, longitude, accuracy } = position.coords;
-                userPosition.value = { lat: latitude, lng: longitude };
-                updateDistances(latitude, longitude);
-
-                // Si on est en équipe, on met à jour notre position sur le serveur
-                if (props.currentSession?.team_id) {
-                    updateUserPositionOnServer(latitude, longitude);
-                }
-
-                if (accuracy > 30) {
-                    console.warn(`Précision GPS faible : ${accuracy}m`);
-                }
-            },
-            (error) => {
-                console.error("Erreur GPS :", error);
-                showGameToast("Erreur de localisation. Vérifiez vos paramètres GPS.", "error");
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 5000,
-                maximumAge: 0,
-            }
-        );
-    } else {
-        showGameToast("La géolocalisation n'est pas supportée par votre navigateur.", "error");
-    }
-};
-
-const updateUserPositionOnServer = (lat, lng) => {
-    router.post(route('player.update-position'), {
-        lat: lat,
-        lng: lng,
-        team_id: props.currentSession?.team_id
-    }, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            // Le serveur renvoie la position des autres membres de l'équipe via flash
-            if (page.props.flash?.teamPositions) {
-                teamMembers.value = page.props.flash.teamPositions;
-            }
-        }
-    });
-};
-
-const validatePosition = () => {
-    if (isNearLocation.value && closestLocation.value) {
-        if (!closestLocation.value.is_current_target && !closestLocation.value.is_discovered) {
-            showGameToast("Ce n'est pas votre destination actuelle !", "error");
-            return;
-        }
-
-        showGameToast("Position confirmée ! Accès à l'énigme locale...", "success");
-
-        setTimeout(() => {
-            selectedLocation.value = closestLocation.value;
-            riddleType.value = 'site';
-
-            // On cherche l'énigme de site
-            const enigmas = selectedLocation.value.enigmas || [];
-            currentRiddle.value = enigmas.find(e => e.is_site_specific) || enigmas[0];
-
-            riddleAnswer.value = '';
-            usedHints.value = 0;
-
-            if (currentRiddle.value?.questions?.length > 0) {
-                startQuestionnaire();
-            } else {
-                showRiddleModal.value = true;
-            }
-        }, 1000);
-    } else {
-        showGameToast("Signal trop faible. Rapprochez-vous du point cible.", "warning");
-    }
-};
-
-// Toast simple pour le feedback
-const toast = ref({ show: false, message: '', type: 'info' });
-const showGameToast = (msg, type = 'info') => {
-    toast.value = { show: true, message: msg, type };
-    setTimeout(() => {
-        toast.value.show = false;
-    }, 4000);
-};
+}
 
 onMounted(() => {
-    startTracking();
-    // Forcer un rafraîchissement initial une fois le layout posé et les animations terminées
-    setTimeout(() => {
-        if (mapRef.value && typeof mapRef.value.refreshSize === 'function') {
-            mapRef.value.refreshSize();
-        }
-    }, 500);
+    startTimer();
+    updateGPS();
 });
 
 onUnmounted(() => {
-    if (watchId.value) navigator.geolocation.clearWatch(watchId.value);
+    if (timerInterval.value) clearInterval(timerInterval.value);
 });
 </script>
-
-<style scoped>
-.vertical-text {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    transform: rotate(180deg);
-}
-
-.toast-enter-active,
-.toast-leave-active {
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.toast-enter-from {
-  opacity: 0;
-  transform: translate(-50%, -20px) scale(0.95);
-}
-
-.toast-leave-to {
-  opacity: 0;
-  transform: translate(-50%, -20px) scale(0.95);
-}
-</style>
 
 <template>
   <Head :title="`${city?.name || 'Aventure'} — Mode Aventure`" />
 
   <SiteLayout hideFooter>
-    <div class="mx-auto max-w-7xl px-2 sm:px-6 py-4 md:py-6 pb-28 md:pb-12 h-full flex flex-col">
-      <div class="grid gap-4 md:gap-6 lg:grid-cols-12 flex-1 min-h-0">
-        <!-- MAIN MAP / GAME AREA -->
-        <div class="lg:col-span-8 relative rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-white/20 glass-strong shadow-lg group bg-gaming-dark h-[50vh] md:h-auto min-h-[350px]">
+    <div class="mx-auto max-w-7xl px-2 sm:px-6 py-4 md:py-6 pb-28 md:pb-12 h-full flex flex-col bg-gaming-darker">
+      
+      <!-- MODE AVENTURE -->
+      <div v-if="gameMode === 'aventure'" class="flex flex-col gap-4 flex-1">
+          <!-- HUD TOP -->
+          <div class="w-full max-w-3xl mx-auto animate-fade-up z-20">
+              <div class="glass-strong rounded-2xl border border-electric/30 p-4 md:p-5 backdrop-blur-xl shadow-neon-blue relative overflow-hidden">
+                  <div class="flex items-center justify-between gap-4 mb-3">
+                      <div class="flex items-center gap-3">
+                          <div class="h-10 w-10 rounded-xl bg-electric/10 border border-electric/20 flex items-center justify-center text-electric">
+                              <Brain class="h-5 w-5 animate-pulse-soft" />
+                          </div>
+                          <div>
+                              <div class="text-[8px] text-electric font-black uppercase tracking-[0.2em]">Mission Active</div>
+                              <h3 class="font-display text-base md:text-lg text-white uppercase tracking-tight">{{ currentTarget?.display_name }}</h3>
+                          </div>
+                      </div>
+                      <button @click="handleUseHint" :disabled="showHint || isPaused" class="h-9 px-4 rounded-xl bg-warning text-black flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-warning/80 transition-all shadow-neon-warning shrink-0">
+                          <HelpCircle class="h-3.5 w-3.5" /> Indice -50px
+                      </button>
+                  </div>
+                  <p class="text-xs md:text-sm text-foreground/90 italic leading-relaxed border-l-2 border-electric/30 pl-3">"{{ displayEnigma }}"</p>
+                  <Transition name="fade">
+                    <div v-if="showHint" class="mt-3 p-3 rounded-xl bg-warning/10 border border-warning/30 text-[10px] text-warning flex gap-2">
+                        <Eye class="h-4 w-4 shrink-0" />
+                        <div>{{ activeEnigma?.indices?.[0] || 'Observez bien les détails environnementaux.' }}</div>
+                    </div>
+                  </Transition>
+              </div>
+          </div>
+
+          <!-- RADAR AREA -->
+          <div class="flex-1 relative flex items-center justify-center min-h-[300px]">
+              <div class="w-full aspect-square max-w-[400px] relative">
+                  <div class="absolute inset-0 rounded-full border-2 border-electric/20 overflow-hidden shadow-neon-blue-lg bg-white">
+                      <MapComponent ref="mapRef" :locations="locations" :userPosition="userPosition" :targetLocation="currentTarget" :teamMembers="teamMembers" />
+                  </div>
+                  <div class="absolute inset-0 pointer-events-none rounded-full border-[8px] border-gaming-darker z-10"></div>
+                  <div class="absolute -top-2 -right-1 z-20 flex items-center gap-2 bg-gaming-dark/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 shadow-lg">
+                      <Clock class="h-3.5 w-3.5 text-electric" />
+                      <span class="text-xs font-mono font-bold text-white">{{ formatTime(gameTime) }}</span>
+                      <button @click="togglePause" class="ml-2 p-1 rounded-md hover:bg-white/10 transition-colors">
+                          <Pause v-if="!isPaused" class="h-3 w-3 text-electric" />
+                          <Play v-else class="h-3 w-3 text-electric" />
+                      </button>
+                  </div>
+              </div>
+          </div>
+
+          <!-- ACTIONS BOTTOM -->
+          <div class="w-full max-w-3xl mx-auto flex flex-col gap-4 mt-2 animate-fade-up">
+              <div class="flex items-center justify-between gap-4">
+                  <div class="flex-1 bg-white/5 border border-white/10 backdrop-blur-md px-6 py-4 rounded-2xl flex items-center justify-between">
+                      <div class="flex flex-col">
+                          <span class="text-[10px] text-electric font-black uppercase tracking-widest mb-1">Distance Cible</span>
+                          <div class="flex items-center gap-3">
+                              <Navigation class="h-5 w-5 text-electric animate-pulse" />
+                              <span class="text-2xl font-display text-white tracking-wider">{{ distanceToClosest || '---' }}</span>
+                          </div>
+                      </div>
+                      <div class="flex items-center gap-1">
+                          <div v-for="i in 5" :key="i" :class="cn('h-1.5 w-4 rounded-full transition-all duration-500', i/5 <= proximityScore/100 ? (proximityScore > 80 ? 'bg-destructive shadow-neon-error' : 'bg-electric shadow-neon') : 'bg-white/10')"></div>
+                      </div>
+                  </div>
+                  <button @click="verifyPosition" :disabled="isPaused" class="h-24 w-24 rounded-3xl bg-success text-white shadow-neon-success flex flex-col items-center justify-center gap-1 hover:scale-105 active:scale-95 transition-all border-4 border-gaming-darker shrink-0">
+                      <Target :class="['h-8 w-8', isNearLocation ? 'animate-pulse' : 'opacity-80']" />
+                      <span class="text-[10px] font-black uppercase tracking-widest">Vérifier</span>
+                  </button>
+              </div>
+          </div>
+      </div>
+
+      <!-- MODE CLASSIQUE -->
+      <div v-else class="grid gap-4 md:gap-6 lg:grid-cols-12 flex-1 min-h-0">
+        <div class="lg:col-span-8 relative rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-white/20 glass-strong shadow-lg group bg-gaming-dark h-[60vh] md:h-auto min-h-[450px]">
           <div class="absolute inset-0 z-0">
-            <MapComponent
-              ref="mapRef"
-              :locations="locations"
-              :userPosition="userPosition"
-              :targetLocation="currentTarget"
-              :teamMembers="teamMembers"
-            />
+            <MapComponent :locations="locations" :userPosition="userPosition" :teamMembers="teamMembers" />
           </div>
-
-          <!-- HUD OVERLAY -->
-          <div class="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-3 md:p-6">
-            <!-- HUD TOP: Radar Status -->
-            <div class="flex justify-between items-start gap-2">
-              <div class="px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl glass-strong border-electric/30 flex items-center gap-2 md:gap-3 backdrop-blur-md">
-                <div class="relative">
-                  <div class="h-1.5 md:h-2 w-1.5 md:w-2 rounded-full bg-electric animate-ping"></div>
-                  <div class="absolute inset-0 h-1.5 md:h-2 w-1.5 md:w-2 rounded-full bg-electric shadow-neon"></div>
-                </div>
-                <div class="flex flex-col">
-                  <span class="text-[6px] md:text-[8px] font-black uppercase tracking-[0.2em] text-electric">Signal GPS</span>
-                  <span class="text-[8px] md:text-[10px] font-bold text-foreground">SYNC: STABLE</span>
-                </div>
-              </div>
-
-              <div class="px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl glass-strong border-electric/30 flex items-center gap-2 md:gap-3 backdrop-blur-md">
-                <div class="flex flex-col text-right">
-                  <span class="text-[6px] md:text-[8px] font-black uppercase tracking-[0.2em] text-electric">Distance Cible</span>
-                  <span class="text-[8px] md:text-[10px] font-bold text-foreground">{{ distanceToClosest || 'RECHERCHE...' }}</span>
-                </div>
-                <Navigation class="h-3 md:h-4 w-3 md:w-4 text-electric animate-pulse" />
-              </div>
-            </div>
-
-            <!-- HUD MIDDLE: Proximity Gauge (Hidden on very small mobile) -->
-            <div class="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 hidden sm:flex flex-col items-center gap-4">
-              <div class="h-32 md:h-48 w-1 md:w-1.5 bg-white/5 rounded-full overflow-hidden border border-white/10 relative">
-                <div
-                  class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-electric via-cyan-400 to-white transition-all duration-500 shadow-neon"
-                  :style="{ height: `${proximityScore}%` }"
-                ></div>
-              </div>
-              <span class="text-[6px] md:text-[8px] font-black vertical-text tracking-widest text-electric/60 uppercase">Proximité</span>
-            </div>
-
-            <!-- HUD BOTTOM: Mission Brief -->
-            <div class="relative pointer-events-auto w-full max-w-2xl mx-auto">
-              <div class="glass-strong rounded-[1.2rem] md:rounded-[2rem] border border-electric/30 p-3 md:p-5 backdrop-blur-xl shadow-2xl animate-fade-up">
-                <div class="flex items-center gap-3 md:gap-4 mb-2 md:mb-3">
-                  <div class="h-8 md:h-10 w-8 md:w-10 rounded-lg md:rounded-xl bg-electric/10 border border-electric/20 grid place-items-center text-electric shrink-0">
-                    <Brain class="h-4 md:h-5 w-4 md:w-5 animate-pulse-soft" />
-                  </div>
-                  <div class="min-w-0 flex-1">
-                    <div class="text-[6px] md:text-[8px] text-electric font-black uppercase tracking-[0.3em]">Mission en cours</div>
-                    <h3 class="font-display text-sm md:text-lg text-foreground uppercase tracking-tight truncate">{{ currentTarget?.display_name }}</h3>
-                  </div>
-                  <div class="flex items-center gap-1 md:gap-2 shrink-0">
-                    <div v-for="i in 5" :key="i" :class="cn('h-1 w-2 md:w-4 rounded-full transition-colors', i/5 <= proximityScore/100 ? 'bg-electric shadow-neon' : 'bg-white/10')"></div>
-                  </div>
-                </div>
-
-                <p class="text-[10px] md:text-xs text-muted-foreground italic mb-3 md:mb-4 line-clamp-1 md:line-clamp-2 leading-relaxed">
-                  "{{ displayEnigma }}"
-                </p>
-
-                <div class="flex gap-2 md:gap-3">
-                  <NeonButton
-                    variant="outline"
-                    size="sm"
-                    class="flex-1 rounded-lg md:rounded-xl text-[9px] md:text-[10px] h-9 md:h-11"
-                    @click="selectLocation(currentTarget)"
-                  >
-                    VOIR L'ÉNIGME
-                  </NeonButton>
-                  <NeonButton
-                    size="sm"
-                    class="flex-1 rounded-lg md:rounded-xl text-[9px] md:text-[10px] h-9 md:h-11 group relative overflow-hidden"
-                    @click="validatePosition"
-                  >
-                    <div v-if="isNearLocation" class="absolute inset-0 bg-white/20 animate-shimmer"></div>
-                    <div v-if="isNearLocation" class="flex items-center justify-center gap-1">
-                        <CheckCircle2 class="h-3 w-3" /> PRÊT
-                    </div>
-                    <div v-else class="flex items-center justify-center gap-1">
-                        <Navigation class="h-3 w-3 opacity-50" /> VÉRIFIER
-                    </div>
-                  </NeonButton>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TOAST NOTIFICATION -->
-          <Transition name="toast">
-            <div v-if="toast.show"
-                 :class="cn(
-                    'absolute top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl border backdrop-blur-xl shadow-2xl flex items-center gap-3 min-w-[280px]',
-                    toast.type === 'success' ? 'bg-success/10 border-success/30 text-success' :
-                    toast.type === 'error' ? 'bg-destructive/10 border-destructive/30 text-destructive' :
-                    'bg-warning/10 border-warning/30 text-warning'
-                 )">
-                <component :is="toast.type === 'success' ? CheckCircle2 : Info" class="h-5 w-5" />
-                <span class="text-xs font-bold uppercase tracking-widest">{{ toast.message }}</span>
-            </div>
-          </Transition>
-
-          <div class="absolute inset-0 pointer-events-none border-[8px] md:border-[12px] border-white/5 rounded-[1.5rem] md:rounded-[2.5rem] z-20" />
         </div>
-
-        <!-- BARRE LATÉRALE -->
-        <aside class="lg:col-span-4 space-y-4 overflow-y-auto max-h-[50vh] md:max-h-full custom-scrollbar pb-10 md:pb-0">
-          <div class="rounded-2xl glass-strong p-4 md:p-5">
-            <div class="text-[10px] text-electric font-display tracking-widest uppercase">Quête Actuelle</div>
-            <h2 class="font-display text-lg md:text-xl mt-1">Exploration de {{ cityData?.name }}</h2>
-            <div class="mt-4 h-1.5 md:h-2 rounded-full bg-gaming-darker overflow-hidden">
-              <div
-                class="h-full bg-gradient-electric transition-all duration-1000"
-                :style="{ width: `${(locations.filter(l => l.is_discovered).length / locations.length) * 100}%` }"
-              />
+        <aside class="lg:col-span-4 space-y-4 overflow-y-auto max-h-[50vh] md:max-h-full custom-scrollbar pb-10">
+            <div class="rounded-2xl glass-strong p-5 border border-electric/30">
+                <h2 class="font-display text-lg">Exploration de {{ city?.name }}</h2>
+                <p class="text-xs text-muted-foreground mt-2">Activez le mode aventure pour commencer la quête.</p>
             </div>
-            <div class="mt-2 flex justify-between text-[10px] md:text-xs">
-              <span class="text-muted-foreground">{{ locations.filter(l => l.is_discovered).length }} sur {{ locations.length }} lieux</span>
-              <span class="text-electric font-bold">+{{ locations.filter(l => l.is_discovered).length * 250 }} XP</span>
-            </div>
-          </div>
-
-          <!-- LISTE DES LIEUX -->
-          <div class="rounded-2xl glass p-4 md:p-5 max-h-[30vh] md:max-h-[50vh] overflow-y-auto custom-scrollbar">
-            <div class="flex items-center justify-between mb-3 sticky top-0 bg-inherit z-10">
-              <h3 class="font-display text-xs md:text-sm flex items-center gap-2">
-                <Target class="h-3 md:h-4 w-3 md:w-4 text-electric" />VOTRE PROGRESSION
-              </h3>
-            </div>
-            <div class="space-y-2 md:space-y-3">
-              <div
-                v-for="loc in locations"
-                :key="loc.id"
-                class="flex items-center gap-2 md:gap-3 p-2 rounded-xl hover:bg-electric/5 transition cursor-pointer group/loc"
-                @click="selectLocation(loc)"
-              >
-                <div :class="cn(
-                    'h-10 w-10 md:h-12 md:w-12 rounded-lg border flex items-center justify-center shrink-0 transition-colors overflow-hidden',
-                    loc.is_discovered ? 'bg-electric/10 border-electric/20' : (loc.is_current_target ? 'bg-warning/10 border-warning/20' : 'bg-gaming-darker border-white/5')
-                )">
-                  <img v-if="loc.is_discovered && loc.images && loc.images[0]" :src="loc.images[0]" class="h-full w-full object-cover" />
-                  <MapPin v-else-if="loc.is_discovered" class="h-5 md:h-6 w-5 md:w-6 text-electric" />
-                  <Brain v-else-if="loc.is_current_target" class="h-5 md:h-6 w-5 md:w-6 text-warning animate-pulse" />
-                  <Lock v-else class="h-4 md:h-5 w-4 md:w-5 text-muted-foreground/30" />
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="text-[12px] md:text-sm font-bold truncate flex items-center gap-2 text-foreground">
-                    {{ loc.display_name }}
-                    <div v-if="loc.is_discovered" class="flex gap-0.5">
-                        <Star v-for="s in 3" :key="s" :class="cn('h-2 md:h-2.5 w-2 md:w-2.5', s <= (loc.stars || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-white/10')" />
+            <div class="space-y-2">
+                <div v-for="loc in locations" :key="loc.id" class="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/5">
+                    <div class="h-10 w-10 rounded-lg bg-gaming-darker flex items-center justify-center">
+                        <Lock v-if="!loc.is_discovered" class="h-4 w-4 text-muted-foreground/30" />
+                        <MapPin v-else class="h-4 w-4 text-electric" />
                     </div>
-                  </div>
-                  <div class="text-[8px] md:text-[10px] text-muted-foreground uppercase tracking-widest">
-                    {{ loc.is_discovered ? loc.category : 'Zone inconnue' }}
-                  </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-bold truncate text-foreground">{{ loc.display_name }}</div>
+                        <div class="text-[8px] text-muted-foreground uppercase">{{ loc.is_discovered ? loc.category : 'Zone inconnue' }}</div>
+                    </div>
                 </div>
-              </div>
             </div>
-          </div>
-
-          <!-- ÉNIGME ACTIVE -->
-          <div v-if="currentSession?.current_enigma_id" class="rounded-2xl glass-strong p-5 animate-fade-up border border-electric/30 shadow-neon">
-            <div class="text-xs text-electric font-display tracking-widest uppercase">Objectif Actuel</div>
-            <div class="mt-2 text-[10px] text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                <Target class="h-3 w-3" />
-                {{ locations.find(l => l.id === currentSession.current_location_id)?.display_name }}
-            </div>
-            <p class="mt-3 text-xs italic text-foreground/90 line-clamp-3">
-              "{{ locations.find(l => l.id === currentSession.current_location_id)?.enigmas?.find(e => e.id === currentSession.current_enigma_id)?.content || 'Résolvez l\'énigme pour avancer.' }}"
-            </p>
-            <div class="mt-4">
-                <NeonButton size="sm" class="w-full rounded-xl" @click="selectLocation(locations.find(l => l.id === currentSession.current_location_id))">
-                    VOIR LA MISSION
-                </NeonButton>
-            </div>
-          </div>
-          <div v-else class="rounded-2xl glass p-5 text-center">
-            <Trophy class="h-8 w-8 text-electric mx-auto mb-2 animate-bounce" />
-            <p class="text-xs text-muted-foreground uppercase font-black tracking-widest">Aventure terminée !</p>
-          </div>
         </aside>
       </div>
+
+      <!-- TOAST -->
+      <Transition name="toast">
+        <div v-if="toast.show" :class="cn('absolute top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl border backdrop-blur-xl shadow-2xl flex items-center gap-3 min-w-[280px]', toast.type === 'success' ? 'bg-success/10 border-success/30 text-success' : toast.type === 'error' ? 'bg-destructive/10 border-destructive/30 text-destructive' : 'bg-warning/10 border-warning/30 text-warning')">
+            <component :is="toast.type === 'success' ? CheckCircle2 : Info" class="h-5 w-5" />
+            <span class="text-xs font-bold uppercase tracking-widest">{{ toast.message }}</span>
+        </div>
+      </Transition>
     </div>
     <MobileTabBar />
 
-    <!-- MODAL ÉNIGME -->
+    <!-- MODALS -->
     <Modal :show="showRiddleModal" @close="showRiddleModal = false">
-        <div class="p-8 bg-gaming-darker border border-electric/20 rounded-[2.5rem] overflow-hidden relative max-w-lg mx-auto">
-            <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-
-            <div class="relative z-10">
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <div class="text-[10px] text-electric font-display tracking-widest uppercase mb-1">
-                            {{ riddleType === 'unlock' ? 'DÉBLOCAGE DE ZONE' : 'MISSION SUR SITE' }}
-                        </div>
-                        <h2 class="font-display text-2xl text-foreground">{{ selectedLocation?.display_name }}</h2>
-                    </div>
-                    <div class="h-12 w-12 rounded-2xl bg-electric/10 border border-electric/20 grid place-items-center text-electric">
-                        <Brain v-if="riddleType === 'unlock'" class="h-6 w-6" />
-                        <MapPin v-else class="h-6 w-6" />
-                    </div>
+        <div class="p-8 bg-gaming-darker border border-electric/20 rounded-[2.5rem] max-w-lg mx-auto">
+            <div v-if="isQuestionnaireActive" class="space-y-6">
+                <div class="text-[10px] text-electric font-black uppercase tracking-widest">Question {{ currentQuestionIndex + 1 }} / {{ currentRiddle?.questions?.length }}</div>
+                <div class="p-6 rounded-3xl bg-white/5 border border-white/10 text-lg text-white font-display">
+                    {{ currentRiddle?.questions?.[currentQuestionIndex]?.question_text }}
                 </div>
-
-                <!-- SELECTION DIFFICULTÉ (SEULEMENT POUR DÉBLOCAGE) -->
-                <div v-if="riddleType === 'unlock' && !selectedDifficulty" class="space-y-4">
-                    <p class="text-sm text-muted-foreground mb-6">Choisissez la complexité de l'énigme pour localiser ce lieu sur la carte :</p>
-                    <button
-                        @click="startRiddle('easy')"
-                        class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-success/40 hover:bg-success/5 transition-all text-left group"
-                    >
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-foreground group-hover:text-success transition-colors">Niveau Facile</span>
-                            <span class="text-[10px] px-2 py-1 rounded bg-success/20 text-success font-black">LÉGER</span>
-                        </div>
-                        <p class="text-[10px] text-muted-foreground mt-1">+100 XP • Localisation immédiate</p>
-                    </button>
-                    <button
-                        @click="startRiddle('medium')"
-                        class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-warning/40 hover:bg-warning/5 transition-all text-left group"
-                    >
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-foreground group-hover:text-warning transition-colors">Niveau Moyen</span>
-                            <span class="text-[10px] px-2 py-1 rounded bg-warning/20 text-warning font-black">TACTIQUE</span>
-                        </div>
-                        <p class="text-[10px] text-muted-foreground mt-1">+250 XP • Localisation précise</p>
-                    </button>
-                    <button
-                        @click="startRiddle('hard')"
-                        class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-destructive/40 hover:bg-destructive/5 transition-all text-left group"
-                    >
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-foreground group-hover:text-destructive transition-colors">Niveau Difficile</span>
-                            <span class="text-[10px] px-2 py-1 rounded bg-destructive/20 text-destructive font-black">LÉGENDAIRE</span>
-                        </div>
-                        <p class="text-[10px] text-muted-foreground mt-1">+500 XP • Bonus d'exploration</p>
+                <div class="grid gap-3">
+                    <button v-for="(option, idx) in currentRiddle?.questions?.[currentQuestionIndex]?.options" :key="idx" @click="selectQuestionOption(option)" class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-electric transition-all text-left">
+                        {{ option.option_text }}
                     </button>
                 </div>
-
-                <!-- QUESTIONNAIRE ACTIF (SITE) -->
-                <div v-else-if="isQuestionnaireActive && currentRiddle?.questions?.[currentQuestionIndex]" class="space-y-6 animate-fade-up">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="text-[10px] text-electric font-black uppercase tracking-widest">Question {{ currentQuestionIndex + 1 }} / {{ currentRiddle.questions.length }}</div>
-                        <div class="flex gap-1">
-                            <div v-for="i in currentRiddle.questions.length" :key="i" :class="cn('h-1 w-4 rounded-full transition-all', i-1 <= currentQuestionIndex ? 'bg-electric shadow-neon' : 'bg-white/10')"></div>
-                        </div>
-                    </div>
-
-                    <div class="p-6 rounded-3xl bg-white/5 border border-white/10 text-lg text-white font-display leading-relaxed">
-                        {{ currentRiddle.questions[currentQuestionIndex].question_text }}
-                    </div>
-
-                    <div class="grid gap-3">
-                        <button
-                            v-for="(option, idx) in currentRiddle.questions[currentQuestionIndex].options"
-                            :key="idx"
-                            @click="selectQuestionOption(option)"
-                            :class="cn(
-                                'w-full p-4 rounded-2xl border text-left transition-all duration-300 group flex items-center justify-between',
-                                questionnaireAnswers[currentQuestionIndex] === option
-                                    ? (option.is_correct ? 'bg-success/20 border-success shadow-neon-success' : 'bg-destructive/20 border-destructive shadow-neon-error')
-                                    : 'bg-white/5 border-white/10 hover:border-electric hover:bg-electric/5'
-                            )"
-                        >
-                            <span class="text-sm font-medium text-foreground group-hover:text-white">{{ option.option_text }}</span>
-                            <div v-if="questionnaireAnswers[currentQuestionIndex] === option" class="h-5 w-5 rounded-full grid place-items-center">
-                                <CheckCircle2 v-if="option.is_correct" class="h-4 w-4 text-success" />
-                                <XCircle v-else class="h-4 w-4 text-destructive" />
-                            </div>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- L'ÉNIGME CLASSIQUE (UNLOCK) -->
-                <div v-else-if="currentRiddle" class="space-y-6 animate-fade-up">
-                    <div v-if="currentRiddle.image_path" class="rounded-2xl overflow-hidden border border-white/10 mb-4 aspect-video bg-gaming-darker">
-                        <img :src="currentRiddle.image_path" class="w-full h-full object-cover" alt="Indice visuel" />
-                    </div>
-
-                    <div class="p-6 rounded-3xl bg-white/5 border border-white/10 italic text-foreground/90 leading-relaxed relative">
-                        <Info class="absolute -top-3 -right-3 h-8 w-8 text-electric/20" />
-                        "{{ currentRiddle.content }}"
-                    </div>
-
-                    <div>
-                        <label class="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black mb-2 block">VOTRE RÉPONSE</label>
-                        <input
-                            v-model="riddleAnswer"
-                            @keyup.enter="submitRiddle"
-                            placeholder="Saisissez la solution..."
-                            class="w-full h-14 rounded-2xl bg-gaming-darker border border-electric/30 px-6 text-foreground placeholder:text-muted-foreground/40 focus:border-electric focus:ring-4 focus:ring-electric/10 outline-none transition-all font-display"
-                        />
-                    </div>
-
-                    <div class="flex gap-3">
-                        <NeonButton variant="outline" class="flex-1" @click="usedHints++" :disabled="usedHints >= 2">
-                            Indice ({{ 2 - usedHints }})
-                        </NeonButton>
-                        <NeonButton class="flex-1" @click="submitRiddle">
-                            Soumettre
-                        </NeonButton>
-                    </div>
-
-                    <p v-if="usedHints > 0" class="text-xs text-warning animate-pulse bg-warning/5 p-3 rounded-xl border border-warning/20">
-                        💡 {{ currentRiddle.indices?.[usedHints - 1] || 'Observez bien les détails historiques.' }}
-                    </p>
-                </div>
+            </div>
+            <div v-else class="space-y-6">
+                <h2 class="font-display text-2xl">{{ selectedLocation?.display_name }}</h2>
+                <p class="p-6 rounded-3xl bg-white/5 border border-white/10 italic text-foreground/90 leading-relaxed">"{{ currentRiddle?.content }}"</p>
+                <input v-model="riddleAnswer" @keyup.enter="submitRiddle" placeholder="Votre réponse..." class="w-full h-14 rounded-2xl bg-gaming-darker border border-electric/30 px-6 text-white outline-none focus:border-electric transition-all" />
+                <NeonButton class="w-full" @click="submitRiddle">Soumettre</NeonButton>
             </div>
         </div>
     </Modal>
 
-    <!-- MODAL SUCCÈS -->
     <Modal :show="showSuccessModal" @close="showSuccessModal = false">
-        <div class="p-10 bg-gaming-darker border border-electric/20 rounded-[3rem] overflow-hidden relative text-center max-w-sm mx-auto">
-            <div class="absolute inset-0 bg-gradient-to-b from-electric/10 to-transparent pointer-events-none" />
-
-            <div class="relative z-10">
-                <div class="h-24 w-24 rounded-3xl bg-gradient-electric mx-auto grid place-items-center shadow-neon mb-6 animate-bounce">
-                    <Trophy class="h-12 w-12 text-white" />
+        <div class="p-10 bg-gaming-darker border border-electric/20 rounded-[3rem] text-center max-w-sm mx-auto">
+            <Trophy class="h-16 w-16 text-electric mx-auto mb-6" />
+            <h2 class="font-display text-3xl mb-2 text-white">FÉLICITATIONS !</h2>
+            <div class="flex justify-center gap-2 mb-8">
+                <Star v-for="s in 3" :key="s" class="h-8 w-8 text-yellow-400 fill-yellow-400" />
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                    <div class="text-[10px] text-muted-foreground uppercase">XP GAGNÉS</div>
+                    <div class="text-xl font-display text-electric">+150 PX</div>
                 </div>
-
-                <h2 class="font-display text-3xl text-foreground mb-2">MISSION RÉUSSIE !</h2>
-                <p class="text-muted-foreground text-sm mb-8">Vous avez percé les mystères de ce lieu.</p>
-
-                <div class="flex justify-center gap-2 mb-8">
-                    <Star
-                        v-for="s in 3"
-                        :key="s"
-                        :class="cn(
-                            'h-10 w-10 transition-all duration-700',
-                            s <= earnedStars ? 'text-yellow-400 fill-yellow-400 scale-110' : 'text-white/5'
-                        )"
-                        :style="{ transitionDelay: `${s * 200}ms` }"
-                    />
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-8">
-                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-                        <div class="text-[10px] text-muted-foreground uppercase mb-1">XP GAGNÉS</div>
-                        <div class="text-xl font-display text-electric">+{{ earnedXp }}</div>
-                    </div>
-                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-                        <div class="text-[10px] text-muted-foreground uppercase mb-1">STATUT</div>
-                        <div class="text-xl font-display text-success">EXPERT</div>
-                    </div>
-                </div>
-
-                <div class="flex flex-col gap-3">
-                    <NeonButton size="xl" class="w-full rounded-2xl group" @click="showSuccessModal = false">
-                        {{ currentSession?.current_enigma_id ? 'CONTINUER L\'AVENTURE' : 'TERMINER LA QUÊTE' }}
-                        <ArrowRight class="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </NeonButton>
-
-                    <Link v-if="!currentSession?.current_enigma_id || currentSession?.status === 'completed'" :href="route('player.cities')">
-                        <NeonButton variant="outline" size="lg" class="w-full rounded-2xl">
-                            REVENIR AUX VILLES
-                        </NeonButton>
-                    </Link>
+                <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                    <div class="text-[10px] text-muted-foreground uppercase">DURÉE</div>
+                    <div class="text-xl font-display text-success">{{ formatTime(gameTime) }}</div>
                 </div>
             </div>
+            <NeonButton size="xl" class="w-full rounded-2xl" @click="showSuccessModal = false">CONTINUER</NeonButton>
         </div>
     </Modal>
   </SiteLayout>
 </template>
+
+<style scoped>
+.glass-strong { background: rgba(15, 15, 25, 0.8); backdrop-filter: blur(20px); }
+.shadow-neon-blue { box-shadow: 0 0 20px rgba(0, 112, 255, 0.2); }
+.shadow-neon-blue-lg { box-shadow: 0 0 40px rgba(0, 112, 255, 0.3); }
+.shadow-neon-success { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+.shadow-neon-warning { box-shadow: 0 0 20px rgba(234, 179, 8, 0.3); }
+.toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, -20px); }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>

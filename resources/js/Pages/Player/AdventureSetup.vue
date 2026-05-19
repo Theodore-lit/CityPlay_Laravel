@@ -4,7 +4,8 @@ import MobileTabBar from '@/Components/MobileTabBar.vue';
 import NeonButton from '@/Components/NeonButton.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { User, Users, MapPin, ArrowRight, ShieldCheck, Zap, Terminal, Bike, Info, Car, Gauge, Target } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import gsap from 'gsap';
 
 const props = defineProps({
     city: Object,
@@ -14,28 +15,50 @@ const props = defineProps({
 const selectedMode = ref('solo'); // 'solo' par défaut
 const transportMode = ref('bike'); // 'bike', 'moto', 'car'
 const difficulty = ref('medium'); // 'easy', 'medium', 'hard'
+const isScanning = ref(false);
 
 const startAdventure = () => {
     if (selectedMode.value === 'solo') {
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition((position) => {
-                router.post(route('player.adventure.solo', props.city.id), {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                    transport: transportMode.value,
-                    difficulty: difficulty.value
-                });
-            }, () => {
-                // En cas d'erreur ou de refus, on ne peut pas filtrer par distance
-                alert("La géolocalisation est requise pour le mode exploration.");
-            });
-        } else {
-            alert("Votre navigateur ne supporte pas la géolocalisation.");
-        }
+        isScanning.value = true;
+
+        // Animation GSAP pour le scan
+        gsap.to(".scan-bar", {
+            width: "100%",
+            duration: 2,
+            ease: "power1.inOut",
+            onComplete: () => {
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition((position) => {
+                        router.get(route('player.adventure.solo', props.city.id), {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                            transport: transportMode.value,
+                            difficulty: difficulty.value
+                        });
+                    }, () => {
+                        isScanning.value = false;
+                        alert("La géolocalisation est requise pour le mode exploration.");
+                    });
+                } else {
+                    isScanning.value = false;
+                    alert("Votre navigateur ne supporte pas la géolocalisation.");
+                }
+            }
+        });
     } else if (selectedMode.value === 'team') {
         router.get(route('teams.index'));
     }
 };
+
+onMounted(() => {
+    gsap.from(".setup-section", {
+        opacity: 0,
+        y: 20,
+        stagger: 0.2,
+        duration: 0.8,
+        ease: "power2.out"
+    });
+});
 </script>
 
 <template>
@@ -43,8 +66,24 @@ const startAdventure = () => {
 
   <SiteLayout>
     <div class="mx-auto max-w-7xl px-4 sm:px-6 py-8 pb-28 md:pb-12">
+      <!-- LOADER SCAN GSAP -->
+      <div v-if="isScanning" class="fixed inset-0 z-50 bg-gaming-dark/90 backdrop-blur-xl flex flex-col items-center justify-center p-6">
+          <div class="relative w-64 h-64 mb-10">
+              <!-- Radar Pulse Animation -->
+              <div class="absolute inset-0 rounded-full border-2 border-electric/20 animate-ping"></div>
+              <div class="absolute inset-0 rounded-full border-2 border-electric/40 animate-pulse"></div>
+              <div class="absolute inset-4 rounded-full border border-electric/10 grid place-items-center">
+                  <Navigation class="h-12 w-12 text-electric animate-bounce" />
+              </div>
+          </div>
+          <div class="w-64 h-1 bg-white/10 rounded-full overflow-hidden mb-4">
+              <div class="scan-bar h-full bg-electric shadow-neon w-0"></div>
+          </div>
+          <div class="text-[10px] text-electric uppercase tracking-[0.4em] font-black animate-pulse">Triangulation GPS en cours...</div>
+      </div>
+
       <!-- HEADER -->
-      <div class="text-center max-w-2xl mx-auto mb-10">
+      <div class="setup-section text-center max-w-2xl mx-auto mb-10">
         <div class="text-[10px] text-electric uppercase tracking-[0.3em] font-black mb-2 animate-pulse">Système de Navigation</div>
         <h1 class="font-display text-3xl md:text-5xl neon-text uppercase tracking-tight">CONFIGURER <span class="text-electric">LA MISSION</span></h1>
         <p class="mt-4 text-muted-foreground text-xs md:text-sm flex items-center justify-center gap-2 bg-white/5 border border-white/10 w-fit mx-auto px-4 py-1.5 rounded-2xl backdrop-blur-md text-foreground">
@@ -54,7 +93,7 @@ const startAdventure = () => {
 
       <div class="max-w-4xl mx-auto space-y-8">
         <!-- MODE DE JEU -->
-        <section class="space-y-4">
+        <section class="setup-section space-y-4">
             <div class="flex items-center gap-3 mb-2">
                 <Users class="h-5 w-5 text-electric" />
                 <h2 class="font-display text-xl uppercase tracking-wider">Formation</h2>
@@ -75,7 +114,7 @@ const startAdventure = () => {
 
         <template v-if="selectedMode === 'solo'">
             <!-- MOYEN DE DÉPLACEMENT -->
-            <section class="space-y-4">
+            <section class="setup-section space-y-4">
                 <div class="flex items-center gap-3 mb-2">
                     <Bike class="h-5 w-5 text-electric" />
                     <h2 class="font-display text-xl uppercase tracking-wider">Moyen de transport</h2>
@@ -100,7 +139,7 @@ const startAdventure = () => {
             </section>
 
             <!-- NIVEAU DE DIFFICULTÉ -->
-            <section class="space-y-4">
+            <section class="setup-section space-y-4">
                 <div class="flex items-center gap-3 mb-2">
                     <Gauge class="h-5 w-5 text-electric" />
                     <h2 class="font-display text-xl uppercase tracking-wider">Niveau Tactique</h2>
@@ -120,7 +159,7 @@ const startAdventure = () => {
         </template>
 
         <!-- ACTION BUTTON -->
-        <div class="pt-8">
+        <div class="setup-section pt-8">
             <NeonButton
                 @click="startAdventure"
                 size="xl"
