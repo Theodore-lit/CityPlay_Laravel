@@ -1,6 +1,6 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
-import { Compass, Menu, X } from 'lucide-vue-next';
+import { Compass, Menu, X, User, LogOut } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import NeonButton from './NeonButton.vue';
 import Modal from './Modal.vue';
@@ -90,19 +90,42 @@ const isActive = (routeName) => route().current(routeName);
       <div class="hidden md:block">
         <div class="flex items-center gap-3">
           <template v-if="user">
-            <div class="flex items-center gap-5 mr-4 glass px-5 py-2 rounded-2xl border-white/40">
-              <div class="flex items-center text-accent group cursor-help">
-                  <span class="text-lg mr-2 group-hover:scale-125 transition-transform">🪙</span>
-                  <span class="font-display font-black">{{ user.coins || 0 }}</span>
+            <div class="flex items-center gap-4 mr-4 bg-muted px-4 py-1.5 rounded-full border border-border">
+              <div class="flex items-center text-accent neon-text-purple">
+                  <span class="text-lg mr-1">⚡</span>
+                  <span class="font-bold">{{ user.xp || 0 }}</span>
               </div>
-              <div class="flex items-center text-red-500 group cursor-help">
-                  <span class="text-lg mr-2 group-hover:scale-125 transition-transform">❤️</span>
-                  <span class="font-display font-black">{{ user.hearts || 0 }}</span>
-              </div>
+              <button 
+                @click="router.post(route('player.buy.heart'))"
+                class="flex items-center text-destructive hover:scale-110 transition-transform group relative"
+                title="Acheter un cœur (500 XP)"
+              >
+                  <span class="text-lg mr-1">❤️</span>
+                  <span class="font-bold">{{ user.hearts || 0 }}</span>
+                  <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-gaming-dark text-[10px] text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-white/10 pointer-events-none">
+                    +1 ❤️ (500 XP)
+                  </span>
+              </button>
             </div>
-            <Link :href="route('profile.edit')" class="h-10 w-10 rounded-xl bg-muted border border-border grid place-items-center hover:border-primary transition-colors">
-              <User class="h-5 w-5 text-muted-foreground" />
-            </Link>
+            <div class="flex items-center gap-3">
+              <Link :href="route('profile.edit')" class="flex items-center gap-2 group p-1 pr-3 rounded-xl bg-white/5 border border-white/10 hover:border-primary/50 transition-all">
+                <div class="h-8 w-8 rounded-lg bg-primary/20 grid place-items-center border border-primary/30 group-hover:bg-primary/30">
+                  <User class="h-4 w-4 text-primary" />
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-[10px] font-black text-white uppercase leading-none">{{ user.name }}</span>
+                  <span class="text-[8px] text-muted-foreground uppercase tracking-tighter">{{ user.role }}</span>
+                </div>
+              </Link>
+
+              <button 
+                @click="showLogoutModal = true"
+                class="h-10 w-10 rounded-xl bg-destructive/10 border border-destructive/20 grid place-items-center text-destructive hover:bg-destructive hover:text-white transition-all shadow-sm"
+                title="Déconnexion"
+              >
+                <LogOut class="h-5 w-5" />
+              </button>
+            </div>
           </template>
           <template v-else>
             <NeonButton :href="route('login')" variant="ghost" size="sm">Connexion</NeonButton>
