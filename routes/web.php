@@ -66,6 +66,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Mairie Routes
     Route::get('/mairie', [MairieController::class, 'dashboard'])->name('mairie.dashboard');
     Route::post('/mairie/cities', [MairieController::class, 'storeCity'])->name('mairie.cities.store');
+    Route::post('/mairie/cities/{city}/update', [MairieController::class, 'updateCity'])->name('mairie.cities.update');
     Route::get('/mairie/city/{city}', [MairieController::class, 'showCity'])->name('mairie.cities.show');
     Route::post('/mairie/city/{city}/location', [MairieController::class, 'storeLocation'])->name('mairie.locations.store');
     Route::post('/mairie/location/{location}/update', [MairieController::class, 'updateLocation'])->name('mairie.locations.update');

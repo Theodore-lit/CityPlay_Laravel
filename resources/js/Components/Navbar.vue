@@ -30,13 +30,13 @@ const confirmLogout = () => {
 const links = computed(() => {
     if (user.value?.role === 'super_admin') {
         return [
-            { to: 'admin.dashboard', label: '' },
+            { to: 'admin.dashboard', label: 'Admin HQ' },
         ];
     }
 
     if (user.value?.role === 'mairie') {
         return [
-            { to: 'mairie.dashboard', label: '' },
+            { to: 'mairie.dashboard', label: 'Commandement' },
         ];
     }
 

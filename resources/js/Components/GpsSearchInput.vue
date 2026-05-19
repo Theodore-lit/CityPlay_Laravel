@@ -26,17 +26,16 @@ const searchGps = async () => {
     try {
         let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query.value)}&limit=5`;
         
-        // Si on a un contexte de ville (lat/lon/radius), on peut essayer de restreindre
         if (props.cityContext && props.cityContext.lat && props.cityContext.lon) {
-            // approximation: 1 degré lat ~ 111km, 1 degré lon ~ 111km * cos(lat)
-            const radiusKm = (props.cityContext.radius_meters || 5000) / 1000;
-            const latDegreeOffset = radiusKm / 111;
-            const lonDegreeOffset = radiusKm / (111 * Math.cos(props.cityContext.lat * (Math.PI / 180)));
+            const lat = parseFloat(props.cityContext.lat);
+            const lon = parseFloat(props.cityContext.lon);
+            const radius = parseFloat(props.cityContext.radius_meters || 5000);
             
-            const left = props.cityContext.lon - lonDegreeOffset;
-            const right = props.cityContext.lon + lonDegreeOffset;
-            const top = props.cityContext.lat + latDegreeOffset;
-            const bottom = props.cityContext.lat - latDegreeOffset;
+            const radiusInDeg = radius / 111320;
+            const left = (lon - radiusInDeg).toFixed(7);
+            const right = (lon + radiusInDeg).toFixed(7);
+            const top = (lat + radiusInDeg).toFixed(7);
+            const bottom = (lat - radiusInDeg).toFixed(7);
             
             url += `&viewbox=${left},${top},${right},${bottom}&bounded=1`;
         }

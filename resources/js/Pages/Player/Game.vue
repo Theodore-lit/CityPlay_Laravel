@@ -521,7 +521,7 @@ onUnmounted(() => {
                     'h-10 w-10 md:h-12 md:w-12 rounded-lg border flex items-center justify-center shrink-0 transition-colors overflow-hidden',
                     loc.is_discovered ? 'bg-electric/10 border-electric/20' : (loc.is_current_target ? 'bg-warning/10 border-warning/20' : 'bg-gaming-darker border-white/5')
                 )">
-                  <img v-if="loc.is_discovered && loc.images && loc.images[0]" :src="loc.images[0]" class="h-full w-full object-cover" />
+                  <img v-if="loc.is_discovered && loc.images && loc.images[0]" :src="'/storage/' + loc.images[0]" class="h-full w-full object-cover" />
                   <MapPin v-else-if="loc.is_discovered" class="h-5 md:h-6 w-5 md:w-6 text-electric" />
                   <Brain v-else-if="loc.is_current_target" class="h-5 md:h-6 w-5 md:w-6 text-warning animate-pulse" />
                   <Lock v-else class="h-4 md:h-5 w-4 md:w-5 text-muted-foreground/30" />
@@ -657,7 +657,7 @@ onUnmounted(() => {
                 <!-- L'ÉNIGME CLASSIQUE (UNLOCK) -->
                 <div v-else-if="currentRiddle" class="space-y-6 animate-fade-up">
                     <div v-if="currentRiddle.image_path" class="rounded-2xl overflow-hidden border border-white/10 mb-4 aspect-video bg-gaming-darker">
-                        <img :src="currentRiddle.image_path" class="w-full h-full object-cover" alt="Indice visuel" />
+                        <img :src="'/storage/' + currentRiddle.image_path" class="w-full h-full object-cover" alt="Indice visuel" />
                     </div>
 
                     <div class="p-6 rounded-3xl bg-white/5 border border-white/10 italic text-foreground/90 leading-relaxed relative">
