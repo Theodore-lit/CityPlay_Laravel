@@ -30,6 +30,15 @@ class EmailJsService
      */
     public function sendOtp($toEmail, $toName, $otpCode)
     {
+        // Toujours loguer l'OTP en local pour le développement
+        Log::info("CODE OTP pour $toEmail ($toName) : $otpCode");
+
+        // Si les identifiants ne sont pas configurés, on s'arrête là sans erreur
+        if (!$this->serviceId || !$this->publicKey || $this->serviceId === 'service_id') {
+            Log::warning('EmailJS n\'est pas configuré. Le code OTP a été envoyé uniquement dans les logs.');
+            return true;
+        }
+
         try {
             $response = Http::withoutVerifying()->post('https://api.emailjs.com/api/v1.0/email/send', [
                 'service_id' => $this->serviceId,

@@ -15,20 +15,47 @@ class PlayerController extends Controller
         ]);
     }
 
+    public function updatePosition(Request $request)
+    {
+        $user = auth()->user();
+        $lat = $request->input('lat');
+        $lng = $request->input('lng');
+        $teamId = $request->input('team_id');
+
+        $user->update([
+            'latitude' => $lat,
+            'longitude' => $lng
+        ]);
+
+        $teamPositions = [];
+        if ($teamId) {
+            $team = \App\Models\Team::find($teamId);
+            if ($team) {
+                $teamPositions = $team->members()
+                    ->where('users.id', '!=', $user->id)
+                    ->whereNotNull('latitude')
+                    ->whereNotNull('longitude')
+                    ->get(['users.id', 'users.name', 'latitude as lat', 'longitude as lng']);
+            }
+        }
+
+        return back()->with('teamPositions', $teamPositions);
+    }
+
     /**
      * Achat d'un cœur avec des XP (1 cœur = 500 XP)
      */
     public function buyHeart()
     {
         $user = auth()->user();
-        
+
         if ($user->xp >= 500) {
             $user->decrement('xp', 500);
             $user->increment('hearts', 1);
-            
+
             return back()->with('success', 'Cœur acheté avec succès ! ❤️');
         }
-        
+
         return back()->with('error', 'Pas assez d\'XP pour acheter un cœur.');
     }
 
@@ -38,7 +65,7 @@ class PlayerController extends Controller
     public function retryQuiz(\App\Models\Quiz $quiz)
     {
         $user = auth()->user();
-        
+
         if ($user->hearts >= 1) {
             $user->decrement('hearts', 1);
             return redirect()
@@ -65,8 +92,19 @@ class PlayerController extends Controller
     public function cities()
     {
         $user = auth()->user();
-        $cities = City::where('is_active', true)
-            ->with(['locations' => function ($query) use ($user) {
+        $mode = session('game_mode', 'aventure');
+
+        $query = City::where('is_active', true);
+
+        if ($mode === 'quiz') {
+            // Uniquement les villes avec au moins un quiz
+            $query->whereHas('quizzes');
+        } else {
+            // Mode Aventure : Uniquement les villes avec des lieux et énigmes
+            $query->whereHas('locations.enigmas');
+        }
+
+        $cities = $query->with(['locations' => function ($query) use ($user) {
                 $query->with(['userProgress' => function ($q) use ($user) {
                     $q->where('user_id', $user->id);
                 }]);
@@ -89,7 +127,7 @@ class PlayerController extends Controller
 
         return Inertia::render('Player/Cities', [
             'cities' => $cities,
-            'gameMode' => session('game_mode', 'aventure'),
+            'gameMode' => $mode,
         ]);
     }
 
@@ -180,8 +218,8 @@ class PlayerController extends Controller
         // 3. Mise à jour de l'utilisateur : on AJOUTE les XP au total existant
         $user = auth()->user();
         $user->increment('xp', $xpEarned);
-        
-        // Note : On ne touche PAS aux cœurs ici. 
+
+        // Note : On ne touche PAS aux cœurs ici.
         // Les vies du quiz sont temporaires, les cœurs du compte sont permanents et s'achètent.
 
         return redirect()
@@ -244,7 +282,7 @@ class PlayerController extends Controller
             // Facile est toujours ouvert
             // Moyen s'ouvre si TOUS les quiz Faciles sont réussis
             // Difficile s'ouvre si TOUS les quiz Moyens sont réussis
-            
+
             $allEasyDone = $categorizedQuizzes['easy']->every(fn($q) => in_array($q->id, $completedQuizIds));
             $allMediumDone = $categorizedQuizzes['medium']->every(fn($q) => in_array($q->id, $completedQuizIds));
 
@@ -260,11 +298,24 @@ class PlayerController extends Controller
             ]);
         }
 
-        // Get current session
-        $session = \App\Models\GameSession::where('user_id', $user->id)
-            ->where('city_id', $city->id)
+        // Get current session (Check Solo first, then Teams)
+        $session = \App\Models\GameSession::where('city_id', $city->id)
             ->where('status', 'in_progress')
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->orWhereIn('team_id', $user->teams->pluck('id'));
+            })
             ->first();
+
+        $teamPositions = [];
+        if ($session && $session->team_id) {
+            $teamPositions = \App\Models\Team::find($session->team_id)
+                ->members()
+                ->where('users.id', '!=', $user->id)
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->get(['users.id', 'users.name', 'latitude as lat', 'longitude as lng']);
+        }
 
         $city->load(['locations.enigmas.questions.options']);
 
@@ -299,6 +350,7 @@ class PlayerController extends Controller
             'locations' => $locations,
             'gameMode' => session('game_mode', 'aventure'),
             'currentSession' => $session,
+            'initialTeamPositions' => $teamPositions,
         ]);
     }
 
@@ -315,45 +367,61 @@ class PlayerController extends Controller
         $user = auth()->user();
         $lat = $request->input('lat');
         $lng = $request->input('lng');
+        $transport = $request->input('transport', 'bike');
+        $difficulty = $request->input('difficulty', 'medium');
 
-        $availableLocations = $city->locations()->get()->collect();
-        $sequence = [];
+        $availableLocations = $city->locations()->whereHas('enigmas', function($q) use ($difficulty) {
+            $q->where('difficulty', $difficulty);
+        })->get();
 
-        if ($lat && $lng && $availableLocations->isNotEmpty()) {
-            $currentLat = $lat;
-            $currentLng = $lng;
+        if ($lat && $lng) {
+            // Filtrage par distance selon le mode de transport
+            $maxDistance = 8000; // Pied/Vélo
+            if ($transport === 'moto') $maxDistance = 20000;
+            if ($transport === 'car') $maxDistance = 100000;
 
-            while ($availableLocations->isNotEmpty()) {
-                // Trouver le lieu le plus proche de la position actuelle
-                $closest = $availableLocations->sortBy(function ($location) use ($currentLat, $currentLng) {
-                    return $this->calculateDistance($currentLat, $currentLng, $location->latitude, $location->longitude);
-                })->first();
-
-                $sequence[] = $closest->id;
-
-                // Mettre à jour la position actuelle pour le prochain calcul
-                $currentLat = $closest->latitude;
-                $currentLng = $closest->longitude;
-
-                // Retirer le lieu trouvé de la liste des lieux disponibles
-                $availableLocations = $availableLocations->reject(fn($l) => $l->id === $closest->id);
-            }
-        } else {
-            $sequence = $availableLocations->pluck('id')->toArray();
+            $availableLocations = $availableLocations->filter(function ($location) use ($lat, $lng, $maxDistance) {
+                $distance = $this->calculateDistance($lat, $lng, $location->latitude, $location->longitude);
+                return $distance <= $maxDistance;
+            });
         }
 
-        // Create or update game session for solo
+        // Au lieu de créer la session tout de suite, on redirige vers le lobby avec les lieux filtrés
+        return Inertia::render('Player/ExplorerLobby', [
+            'city' => $city,
+            'locations' => $availableLocations->values(),
+            'config' => [
+                'transport' => $transport,
+                'difficulty' => $difficulty,
+                'lat' => $lat,
+                'lng' => $lng
+            ]
+        ]);
+    }
+
+    public function launchAdventure(Request $request, City $city)
+    {
+        $user = auth()->user();
+        $locationId = $request->input('location_id');
+        $difficulty = $request->input('difficulty', 'medium');
+
+        $location = \App\Models\Location::findOrFail($locationId);
+
+        // Initialiser la session pour cette énigme spécifique
         $session = \App\Models\GameSession::updateOrCreate(
             ['user_id' => $user->id, 'city_id' => $city->id, 'team_id' => null, 'status' => 'in_progress'],
             [
                 'start_time' => now(),
-                'discovery_sequence' => $sequence,
-                'current_location_id' => $sequence[0] ?? null,
-                'current_enigma_id' => \App\Models\Enigma::where('location_id', $sequence[0] ?? null)
+                'discovery_sequence' => [$locationId],
+                'current_location_id' => $locationId,
+                'current_enigma_id' => \App\Models\Enigma::where('location_id', $locationId)
+                    ->where('difficulty', $difficulty)
                     ->where('is_site_specific', false)
-                    ->first()->id ?? null,
+                    ->first()->id ?? \App\Models\Enigma::where('location_id', $locationId)->first()->id,
             ]
         );
+
+        session(['adventure_start_time' => now()]);
 
         return redirect()->route('player.game', $city->id);
     }
