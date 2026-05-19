@@ -10,6 +10,10 @@ const props = defineProps({
     locations: Array,     // Liste des lieux à afficher (latitude, longitude, radius)
     userPosition: Object, // Position GPS actuelle de l'utilisateur {lat, lng}
     targetLocation: Object, // Lieu cible actuel
+    teamMembers: {
+        type: Array,
+        default: () => []
+    }
 });
 
 const emit = defineEmits(['locationReached']);
@@ -20,6 +24,7 @@ let userMarker = null;
 let targetMarker = null;
 let pathLine = null;
 let radarCircle = null;
+const teamMarkers = {}; // Stockage des marqueurs par ID utilisateur
 const markers = [];
 let resizeObserver = null;
 
@@ -160,6 +165,48 @@ const updateUserMarker = (pos) => {
 };
 
 /**
+ * Met à jour les marqueurs des membres de l'équipe
+ */
+const updateTeamMarkers = () => {
+    if (!map) return;
+
+    // Supprimer les marqueurs des membres qui ne sont plus dans la liste
+    const currentMemberIds = props.teamMembers.map(m => m.id);
+    Object.keys(teamMarkers).forEach(id => {
+        if (!currentMemberIds.includes(parseInt(id))) {
+            teamMarkers[id].remove();
+            delete teamMarkers[id];
+        }
+    });
+
+    // Ajouter ou mettre à jour les marqueurs
+    props.teamMembers.forEach(member => {
+        const latlng = [member.latitude, member.longitude];
+        
+        if (teamMarkers[member.id]) {
+            teamMarkers[member.id].setLatLng(latlng);
+        } else {
+            const memberIcon = L.divIcon({
+                className: 'team-member-icon',
+                html: `
+                    <div class="relative group">
+                        <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gaming-darker border border-primary/30 px-2 py-1 rounded text-[8px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            ${member.name}
+                        </div>
+                        <div class="absolute -inset-2 bg-primary/20 rounded-full animate-pulse"></div>
+                        <div class="relative h-5 w-5 rounded-full border-2 border-primary overflow-hidden bg-gaming-darker">
+                            ${member.avatar ? `<img src="${member.avatar}" class="w-full h-full object-cover" />` : `<div class="w-full h-full flex items-center justify-center text-[10px] font-black">${member.name.charAt(0)}</div>`}
+                        </div>
+                    </div>`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+            teamMarkers[member.id] = L.marker(latlng, { icon: memberIcon }).addTo(map);
+        }
+    });
+};
+
+/**
  * Permet de forcer manuellement le rafraîchissement depuis le parent si nécessaire
  */
 const forceRefreshSize = () => {
@@ -179,6 +226,10 @@ watch(() => props.userPosition, (newPos) => {
 
 watch(() => props.targetLocation, () => {
     updateTargetMarker();
+}, { deep: true });
+
+watch(() => props.teamMembers, () => {
+    updateTeamMarkers();
 }, { deep: true });
 
 onMounted(() => {
@@ -221,8 +272,8 @@ onUnmounted(() => {
 
         <div ref="mapContainer" class="w-full h-full z-10 bg-transparent"></div>
 
-        <!-- Overlay de bruit/grain -->
-        <div class="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+        <!-- Overlay de bruit/grain (Local Data URI pour éviter les 404) -->
+        <div class="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay bg-[url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.65\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E')]"></div>
     </div>
 </template>
 

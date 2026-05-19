@@ -1,29 +1,30 @@
 <script setup>
+import { ref } from 'vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { 
+  Users, Map, Target, Activity, Plus, Building2, 
+  Brain, ChevronRight, ShieldCheck, Zap, Share2, 
+  Ban, CheckCircle, Calendar, MapPin
+} from 'lucide-vue-next';
+
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
 import NeonButton from '@/Components/NeonButton.vue';
 import GlowInput from '@/Components/GlowInput.vue';
 import GpsSearchInput from '@/Components/GpsSearchInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
-import { 
-  Users, Map, Target, TrendingUp, Activity, DollarSign, 
-  Plus, Settings, Building2, Brain, ChevronRight, LayoutDashboard, ShieldCheck, Zap,
-  Share2, Ban, CheckCircle
-} from 'lucide-vue-next';
-import { ref } from 'vue';
 
 const props = defineProps({
-    cities: Array,
-    mairies: Array,
-    players: Array,
-    stats: Object,
+    cities: { type: Array, default: () => [] },
+    mairies: { type: Array, default: () => [] },
+    players: { type: Array, default: () => [] },
+    stats: { type: Object, default: () => ({}) },
 });
 
 const adminStats = [
-  { icon: Users, label: "Utilisateurs", value: props.stats.total_users || "0", delta: "+5.2%", color: "text-electric" },
-  { icon: ShieldCheck, label: "Mairies", value: props.mairies?.length || "0", delta: "Actifs", color: "text-success" },
-  { icon: Target, label: "Sessions", value: props.stats.total_sessions || "0", delta: "+2.1%", color: "text-purple-neon" },
-  { icon: Activity, label: "Joueurs Actifs", value: props.stats.active_players || "0", delta: "Live", color: "text-warning" },
+  { icon: Users, label: "Utilisateurs", value: props.stats.total_users || "0", delta: "+5.2%", color: "text-primary dark:text-cyan-400" },
+  { icon: ShieldCheck, label: "Mairies", value: props.mairies?.length || "0", delta: "Actifs", color: "text-emerald-600 dark:text-emerald-400" },
+  { icon: Target, label: "Sessions", value: props.stats.total_sessions || "0", delta: "+2.1%", color: "text-purple-600 dark:text-purple-400" },
+  { icon: Activity, label: "Joueurs Actifs", value: props.stats.active_players || "0", delta: "Live", color: "text-amber-600 dark:text-amber-400" },
 ];
 
 const showMairieModal = ref(false);
@@ -69,7 +70,7 @@ const copyShareLink = async (city) => {
             await navigator.share(shareData);
         } else {
             await navigator.clipboard.writeText(shareData.url);
-            alert('Lien de jeu copié (votre navigateur ne supporte pas le partage direct).');
+            alert('Lien de jeu copié dans le presse-papiers.');
         }
     } catch (err) {
         console.error('Erreur lors du partage :', err);
@@ -80,7 +81,7 @@ const quickActions = [
   { icon: Building2, label: "Toutes les Villes", to: route('admin.cities') },
   { icon: ShieldCheck, label: "Gestion Mairies", to: route('admin.dashboard') },
   { icon: Users, label: "Gestion Utilisateurs", to: route('admin.dashboard') },
-  { icon: TrendingUp, label: "Analyse Sessions", to: route('admin.dashboard') },
+  { icon: Activity, label: "Analyse Sessions", to: route('admin.dashboard') },
 ];
 </script>
 
@@ -88,74 +89,86 @@ const quickActions = [
   <Head title="Super Admin — CityPlay" />
 
   <SiteLayout>
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-10 pb-28 md:pb-12">
-      <div class="flex items-center justify-between flex-wrap gap-4 mb-8">
+    <div class="mx-auto max-w-7xl px-4 py-10 pb-28 sm:px-6 md:pb-12 text-foreground">
+      
+      <!-- HEADER -->
+      <div class="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div class="text-xs text-electric uppercase tracking-widest font-bold">Quartier Général</div>
-          <h1 class="font-display text-3xl md:text-4xl mt-1">Tableau de Bord <span class="text-electric neon-text">Admin</span></h1>
+          <div class="text-xs font-black uppercase tracking-widest text-primary dark:text-cyan-400">Quartier Général</div>
+          <h1 class="font-display text-3xl md:text-4xl mt-1 uppercase italic font-black">
+            Tableau de Bord <span class="text-primary neon-text dark:text-cyan-400">Admin</span>
+          </h1>
         </div>
         <div class="flex gap-3">
           <NeonButton @click="showMairieModal = true" size="sm">
-            <Plus class="h-4 w-4 mr-2" />Ajouter une Mairie
+            <Plus class="mr-2 h-4 w-4" /> Ajouter une Mairie
           </NeonButton>
         </div>
       </div>
 
-      <!-- STATS -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div v-for="s in adminStats" :key="s.label" class="rounded-2xl glass p-5 hover-lift">
-          <div class="flex justify-between items-start">
-            <component :is="s.icon" :class="`h-6 w-6 ${s.color}`" />
-            <span class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{{ s.delta }}</span>
+      <!-- STATS GRID -->
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div v-for="s in adminStats" :key="s.label" class="glass group relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all hover:translate-y-[-2px] hover:shadow-md">
+          <div class="flex items-start justify-between">
+            <component :is="s.icon" :class="['h-6 w-6', s.color]" />
+            <span class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">{{ s.delta }}</span>
           </div>
-          <div class="mt-3 font-display text-2xl md:text-3xl text-white">{{ s.value }}</div>
-          <div class="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{{ s.label }}</div>
+          <div class="font-display text-2xl font-black mt-3 text-foreground dark:text-white md:text-3xl">{{ s.value }}</div>
+          <div class="mt-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{{ s.label }}</div>
         </div>
       </div>
 
+      <!-- MAIN LAYOUT CONTENT -->
       <div class="mt-8 grid gap-8 lg:grid-cols-12">
-        <!-- CITIES TABLE -->
-        <div class="lg:col-span-8 rounded-[2rem] glass-strong border border-white/5 overflow-hidden">
-          <div class="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
-            <h2 class="font-display text-xl flex items-center gap-3">
-              <Map class="h-6 w-6 text-electric" />Déploiement Global des Villes
+        
+        <!-- CITIES WORKSPACE -->
+        <div class="glass-strong overflow-hidden rounded-[2rem] lg:col-span-8">
+          <div class="flex items-center justify-between border-b border-border bg-muted/30 p-6">
+            <h2 class="font-display text-xl flex items-center gap-3 uppercase italic font-black">
+              <Map class="h-6 w-6 text-primary dark:text-cyan-400" /> Déploiement Global des Villes
             </h2>
-            <Link :href="route('admin.cities')" class="text-xs text-electric hover:underline font-bold">Tout voir</Link>
+            <Link :href="route('admin.cities')" class="text-xs font-black uppercase tracking-wider text-primary hover:underline dark:text-cyan-400">Tout voir</Link>
           </div>
+          
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
-              <thead class="text-[10px] uppercase tracking-[0.2em] text-muted-foreground bg-gaming-darker/50">
-                <tr class="border-b border-white/5">
-                  <th class="text-left p-6">Secteur / Mission</th>
-                  <th class="text-left p-6">Objectifs</th>
-                  <th class="text-left p-6">Statut Tactique</th>
-                  <th class="text-right p-6">Actions</th>
+              <thead class="bg-gaming-darker/60 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                <tr class="border-b border-border">
+                  <th class="p-6 text-left">Secteur / Mission</th>
+                  <th class="p-6 text-left">Objectifs</th>
+                  <th class="p-6 text-left">Statut Tactique</th>
+                  <th class="p-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr v-for="city in cities" :key="city.id" class="border-b border-white/5 hover:bg-electric/5 transition-all group/city">
+              <tbody class="divide-y divide-border">
+                <tr v-for="city in cities" :key="city.id" class="group/city transition-all hover:bg-primary/5">
                   <td class="p-6">
                     <Link :href="route('mairie.cities.show', city.id)" class="block">
-                        <div class="font-display text-base text-white group-hover/city:text-electric transition-colors">{{ city.name }}</div>
-                        <div class="text-xs text-muted-foreground truncate max-w-xs mt-1 italic">{{ city.description || 'Pas de briefing.' }}</div>
+                      <div class="font-display text-base font-black uppercase text-foreground dark:text-white group-hover/city:text-primary dark:group-hover/city:text-cyan-400 transition-colors">{{ city.name }}</div>
+                      <div class="mt-1 max-w-xs truncate text-xs font-medium italic text-muted-foreground">{{ city.description || 'Pas de briefing.' }}</div>
                     </Link>
                   </td>
-                  <td class="p-6 text-muted-foreground font-mono text-xs">{{ city.locations_count || 0 }} secteurs</td>
+                  <td class="p-6 font-mono text-xs text-muted-foreground font-semibold">{{ city.locations_count || 0 }} secteurs</td>
                   <td class="p-6">
                     <div class="flex items-center gap-2">
-                        <div :class="`h-2 w-2 rounded-full ${city.is_active ? 'bg-success shadow-[0_0_10px_oklch(0.74_0.18_155)]' : 'bg-warning'}`"></div>
-                        <span class="text-[10px] uppercase font-black tracking-widest text-white">{{ city.is_active ? 'Actif' : 'En Attente' }}</span>
+                      <div :class="['h-2 w-2 rounded-full', city.is_active ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-amber-500']" />
+                      <span class="text-[10px] font-black uppercase tracking-widest text-foreground dark:text-white">
+                        {{ city.is_active ? 'Actif' : 'En Attente' }}
+                      </span>
                     </div>
                   </td>
                   <td class="p-6 text-right">
                     <div class="flex justify-end gap-2">
-                      <Link :href="route('admin.cities.quizzes', city.id)" class="h-10 w-10 rounded-xl glass border-white/10 grid place-items-center text-purple-neon hover:bg-purple-neon hover:text-white transition-all" title="Gérer les Quiz">
+                      <Link :href="route('mairie.cities.events', city.id)" class="glass flex h-10 w-10 items-center justify-center rounded-xl text-accent hover:bg-accent hover:text-white dark:hover:text-black transition-all" title="Gérer les Événements">
+                        <Calendar class="h-5 w-5" />
+                      </Link>
+                      <Link :href="route('admin.cities.quizzes', city.id)" class="glass flex h-10 w-10 items-center justify-center rounded-xl text-purple-600 dark:text-purple-400 hover:bg-purple-600 dark:hover:bg-purple-400 hover:text-white dark:hover:text-black transition-all" title="Gérer les Quiz">
                         <Brain class="h-5 w-5" />
                       </Link>
-                      <button @click="copyShareLink(city)" class="h-10 w-10 rounded-xl glass border-white/10 grid place-items-center text-cyan-neon hover:bg-cyan-neon hover:text-white transition-all" title="Partager le lien">
+                      <button @click="copyShareLink(city)" class="glass flex h-10 w-10 items-center justify-center rounded-xl text-sky-600 dark:text-sky-400 hover:bg-sky-600 dark:hover:bg-sky-400 hover:text-white dark:hover:text-black transition-all" title="Partager le lien">
                         <Share2 class="h-5 w-5" />
                       </button>
-                      <Link :href="route('mairie.cities.show', city.id)" class="h-10 w-10 rounded-xl glass border-white/10 grid place-items-center text-electric hover:bg-electric hover:text-white transition-all">
+                      <Link :href="route('mairie.cities.show', city.id)" class="glass flex h-10 w-10 items-center justify-center rounded-xl text-primary dark:text-cyan-400 hover:bg-primary dark:hover:bg-cyan-400 hover:text-white dark:hover:text-black transition-all">
                         <ChevronRight class="h-5 w-5" />
                       </Link>
                     </div>
@@ -166,47 +179,54 @@ const quickActions = [
           </div>
         </div>
 
-        <!-- USERS TABLE -->
-        <div class="lg:col-span-8 rounded-[2rem] glass-strong border border-white/5 overflow-hidden mt-8">
-          <div class="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
-            <h2 class="font-display text-xl flex items-center gap-3">
-              <Users class="h-6 w-6 text-electric" />Contrôle des Joueurs
+        <!-- USERS CONTROL WORKSPACE -->
+        <div class="glass-strong overflow-hidden rounded-[2rem] lg:col-span-8 lg:mt-0">
+          <div class="flex items-center justify-between border-b border-border bg-muted/30 p-6">
+            <h2 class="font-display text-xl flex items-center gap-3 uppercase italic font-black">
+              <Users class="h-6 w-6 text-primary dark:text-cyan-400" /> Contrôle des Joueurs
             </h2>
           </div>
+          
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
-              <thead class="text-[10px] uppercase tracking-[0.2em] text-muted-foreground bg-gaming-darker/50">
-                <tr class="border-b border-white/5">
-                  <th class="text-left p-6">Joueur</th>
-                  <th class="text-left p-6">Niveau / XP</th>
-                  <th class="text-left p-6">Statut</th>
-                  <th class="text-right p-6">Actions</th>
+              <thead class="bg-gaming-darker/60 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                <tr class="border-b border-border">
+                  <th class="p-6 text-left">Joueur</th>
+                  <th class="p-6 text-left">Niveau / XP</th>
+                  <th class="p-6 text-left">Statut</th>
+                  <th class="p-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr v-for="player in players" :key="player.id" class="border-b border-white/5 hover:bg-electric/5 transition-all group/player">
+              <tbody class="divide-y divide-border">
+                <tr v-for="player in players" :key="player.id" class="group/player transition-all hover:bg-primary/5">
                   <td class="p-6">
                     <div class="flex items-center gap-3">
-                      <div class="h-10 w-10 rounded-full bg-electric/20 grid place-items-center text-electric font-bold border border-electric/30">
-                        {{ player.name.charAt(0) }}
+                      <div class="glass flex h-10 w-10 items-center justify-center rounded-full border-primary/20 bg-primary/10 font-display font-black text-primary dark:text-cyan-400">
+                        {{ player.name ? player.name.charAt(0).toUpperCase() : 'P' }}
                       </div>
                       <div>
-                        <div class="font-bold text-white">{{ player.name }}</div>
-                        <div class="text-[10px] text-muted-foreground">{{ player.email }}</div>
+                        <div class="font-bold text-foreground dark:text-white">{{ player.name }}</div>
+                        <div class="text-[10px] text-muted-foreground font-medium">{{ player.email }}</div>
                       </div>
                     </div>
                   </td>
                   <td class="p-6">
-                    <div class="text-white font-mono text-xs">LVL {{ player.level }} • {{ player.xp }} XP</div>
+                    <div class="font-mono text-xs font-semibold text-foreground dark:text-white">LVL {{ player.level }} • {{ player.xp }} XP</div>
                   </td>
                   <td class="p-6">
                     <div class="flex items-center gap-2">
-                        <div :class="`h-2 w-2 rounded-full ${player.is_active ? 'bg-success shadow-[0_0_10px_oklch(0.74_0.18_155)]' : 'bg-destructive shadow-[0_0_10px_oklch(0.62_0.24_25)]'}`"></div>
-                        <span class="text-[10px] uppercase font-black tracking-widest text-white">{{ player.is_active ? 'Opérationnel' : 'Désactivé' }}</span>
+                      <div :class="['h-2 w-2 rounded-full', player.is_active ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]']" />
+                      <span class="text-[10px] font-black uppercase tracking-widest text-foreground dark:text-white">
+                        {{ player.is_active ? 'Opérationnel' : 'Désactivé' }}
+                      </span>
                     </div>
                   </td>
                   <td class="p-6 text-right">
-                    <button @click="toggleUser(player.id)" :class="`h-10 px-4 rounded-xl glass border-white/10 inline-flex items-center gap-2 text-xs font-bold transition-all ${player.is_active ? 'text-destructive hover:bg-destructive hover:text-white' : 'text-success hover:bg-success hover:text-white'}`">
+                    <button 
+                      @click="toggleUser(player.id)" 
+                      :class="['inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-xs font-black uppercase tracking-wider transition-all', 
+                               player.is_active ? 'bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white dark:text-rose-400 dark:hover:bg-rose-500' : 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-600 hover:text-white dark:text-emerald-400 dark:hover:bg-emerald-500']"
+                    >
                       <Ban v-if="player.is_active" class="h-4 w-4" />
                       <CheckCircle v-else class="h-4 w-4" />
                       {{ player.is_active ? 'Désactiver' : 'Réactiver' }}
@@ -218,88 +238,105 @@ const quickActions = [
           </div>
         </div>
 
-        <!-- SIDEBAR -->
-        <div class="lg:col-span-4 space-y-8">
-            <!-- MAIRIES -->
-            <div class="glass-strong rounded-[2rem] border border-white/5 overflow-hidden">
-                <div class="p-6 border-b border-white/5 flex items-center justify-between">
-                    <h2 class="font-display text-lg flex items-center gap-3"><ShieldCheck class="h-5 w-5 text-purple-neon" />Commandants</h2>
-                </div>
-                <div class="p-4 space-y-3">
-                    <div v-for="mairie in mairies" :key="mairie.id" class="flex items-center gap-4 p-4 rounded-2xl glass border-white/5 hover:border-purple-neon/40 transition-all">
-                        <div class="h-10 w-10 rounded-xl bg-purple-neon/20 grid place-items-center text-purple-neon font-display font-black">
-                            {{ mairie.name.charAt(0) }}
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="text-sm font-bold text-white truncate">{{ mairie.name }}</div>
-                            <div class="text-[10px] text-muted-foreground uppercase tracking-widest">{{ mairie.email }}</div>
-                        </div>
-                    </div>
-                </div>
+        <!-- RIGHT SIDEBAR (COMMANDANTS & PROTOCOLES) -->
+        <div class="space-y-8 lg:col-span-4">
+          
+          <!-- COMMANDANTS SECTION -->
+          <div class="glass-strong overflow-hidden rounded-[2rem]">
+            <div class="border-b border-border p-6 bg-muted/20">
+              <h2 class="font-display text-lg flex items-center gap-3 uppercase italic font-black">
+                <ShieldCheck class="h-5 w-5 text-purple-600 dark:text-purple-400" /> Commandants
+              </h2>
             </div>
+            <div class="p-4 space-y-3 max-h-[360px] overflow-y-auto custom-scrollbar">
+              <div v-for="mairie in mairies" :key="mairie.id" class="glass flex items-center gap-4 p-4 rounded-2xl border-border transition-all hover:border-purple-500/40">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 font-display font-black text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                  {{ mairie.name ? mairie.name.charAt(0).toUpperCase() : 'M' }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="truncate text-sm font-black text-foreground dark:text-white uppercase tracking-wide">{{ mairie.name }}</div>
+                  <div class="truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{{ mairie.email }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            <!-- QUICK ACTIONS -->
-            <div class="glass-strong rounded-[2rem] border border-white/5 p-6">
-                <h2 class="font-display text-lg mb-6 flex items-center gap-3"><Zap class="h-5 w-5 text-warning" />Protocoles</h2>
-                <div class="space-y-4">
-                    <button v-for="a in quickActions" :key="a.label" class="w-full flex items-center gap-4 p-4 rounded-2xl glass hover:border-electric transition-all group">
-                        <div class="h-10 w-10 rounded-xl bg-gaming-darker border border-white/5 grid place-items-center group-hover:border-electric transition-colors">
-                            <component :is="a.icon" class="h-5 w-5 text-electric" />
-                        </div>
-                        <span class="text-xs font-black uppercase tracking-widest text-white flex-1 text-left">{{ a.label }}</span>
-                        <Plus class="h-4 w-4 text-muted-foreground group-hover:text-electric transition-colors" />
-                    </button>
+          <!-- QUICK PROTOCOLS MODULE -->
+          <div class="glass-strong rounded-[2rem] p-6">
+            <h2 class="font-display text-lg mb-6 flex items-center gap-3 uppercase italic font-black">
+              <Zap class="h-5 w-5 text-amber-500" /> Protocoles
+            </h2>
+            <div class="space-y-4">
+              <Link 
+                v-for="action in quickActions" 
+                :key="action.label" 
+                :href="action.to" 
+                class="glass flex w-full items-center gap-4 p-4 rounded-2xl border-border transition-all hover:border-primary dark:hover:border-cyan-400 group"
+              >
+                <div class="glass flex h-10 w-10 items-center justify-center rounded-xl border-border bg-muted/50 group-hover:border-primary dark:group-hover:border-cyan-400 transition-colors">
+                  <component :is="action.icon" class="h-5 w-5 text-primary dark:text-cyan-400" />
                 </div>
+                <span class="flex-1 text-left text-xs font-black uppercase tracking-widest text-foreground dark:text-white">{{ action.label }}</span>
+                <ChevronRight class="h-4 w-4 text-muted-foreground group-hover:text-primary dark:group-hover:text-cyan-400 transition-colors" />
+              </Link>
             </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ADD MAIRIE MODAL -->
-    <div v-if="showMairieModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gaming-darker/80 backdrop-blur-md">
-        <div class="glass-strong rounded-3xl p-8 w-full max-w-lg border border-electric/20 animate-fade-up overflow-y-auto max-h-[90vh]">
-            <h2 class="font-display text-2xl text-white mb-6">Nouvelle Ville & Mairie</h2>
-            <form @submit.prevent="submitMairie" class="space-y-6">
-                <div class="space-y-4">
-                    <GpsSearchInput 
-                        v-model="mairieForm.city_name" 
-                        label="Nom de la Ville (Recherche GPS)" 
-                        placeholder="Ex: Cotonou, Bénin"
-                        @select="onCitySelect"
-                        required 
-                    />
-                    
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <GlowInput v-model="mairieForm.email" type="email" label="Email Mairie" placeholder="contact@mairie.bj" required />
-                        <GlowInput v-model="mairieForm.radius_meters" type="number" label="Rayon Tactique (mètres)" placeholder="5000" required />
-                    </div>
+    <!-- MODAL LAYOUT: ADD MAIRIE -->
+    <div v-if="showMairieModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md bg-gaming-darker/60 dark:bg-gaming-darker/80">
+      <div class="absolute inset-0" @click="showMairieModal = false" />
+      
+      <div class="glass-strong relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl p-8 border border-border shadow-xl animate-fade-up custom-scrollbar">
+        <h2 class="font-display text-2xl uppercase italic font-black text-foreground dark:text-white mb-6">Nouvelle Ville & Mairie</h2>
+        
+        <form @submit.prevent="submitMairie" class="space-y-6">
+          <div class="space-y-4">
+            <GpsSearchInput 
+              v-model="mairieForm.city_name" 
+              label="Nom de la Ville (Recherche GPS)" 
+              placeholder="Ex: Cotonou, Bénin"
+              required 
+              @select="onCitySelect"
+            />
+            
+            <div class="grid gap-4 md:grid-cols-2">
+              <GlowInput v-model="mairieForm.email" type="email" label="Email Mairie" placeholder="contact@mairie.bj" required />
+              <GlowInput v-model="mairieForm.radius_meters" type="number" label="Rayon Tactique (mètres)" placeholder="5000" required />
+            </div>
 
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <GlowInput v-model="mairieForm.latitude" type="number" step="any" label="Latitude (Manuel)" placeholder="Ex: 6.3654" required />
-                        <GlowInput v-model="mairieForm.longitude" type="number" step="any" label="Longitude (Manuel)" placeholder="Ex: 2.4183" required />
-                    </div>
+            <div class="grid gap-4 md:grid-cols-2">
+              <GlowInput v-model="mairieForm.latitude" type="number" step="any" label="Latitude (Manuel)" placeholder="Ex: 6.3654" required />
+              <GlowInput v-model="mairieForm.longitude" type="number" step="any" label="Longitude (Manuel)" placeholder="Ex: 2.4183" required />
+            </div>
 
-                    <div>
-                        <label class="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1 block">Briefing de la Ville</label>
-                        <textarea v-model="mairieForm.description" class="w-full h-24 rounded-xl bg-gaming-darker border border-white/10 p-4 text-sm text-white placeholder:text-muted-foreground/40 focus:border-electric outline-none resize-none" placeholder="Description stratégique..."></textarea>
-                    </div>
+            <div>
+              <label class="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Briefing de la Ville</label>
+              <textarea 
+                v-model="mairieForm.description" 
+                class="h-24 w-full resize-none rounded-xl border border-border bg-input p-4 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary dark:focus:border-cyan-400" 
+                placeholder="Description stratégique..."
+              />
+            </div>
 
-                    <div v-if="mairieForm.latitude" class="p-3 rounded-xl bg-electric/5 border border-electric/20 flex items-center justify-between animate-fade-up">
-                        <div class="text-[10px] text-electric font-bold uppercase tracking-widest flex items-center gap-2">
-                            <MapPin class="h-3 w-3" /> Coordonnées Verrouillées
-                        </div>
-                        <div class="text-[10px] font-mono text-muted-foreground">
-                            {{ mairieForm.latitude }}, {{ mairieForm.longitude }}
-                        </div>
-                    </div>
-                </div>
+            <div v-if="mairieForm.latitude" class="flex items-center justify-between border border-emerald-500/20 bg-emerald-500/5 p-3 rounded-xl animate-fade-up">
+              <div class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                <MapPin class="h-3 w-3" /> Coordonnées Verrouillées
+              </div>
+              <div class="font-mono text-[10px] font-bold text-muted-foreground">
+                {{ mairieForm.latitude }}, {{ mairieForm.longitude }}
+              </div>
+            </div>
+          </div>
 
-                <div class="pt-4 flex gap-3">
-                    <NeonButton type="button" variant="outline" class="flex-1" @click="showMairieModal = false">Annuler</NeonButton>
-                    <NeonButton type="submit" class="flex-1" :disabled="mairieForm.processing || !mairieForm.latitude">Déployer Mission</NeonButton>
-                </div>
-            </form>
-        </div>
+          <div class="pt-4 flex gap-3">
+            <NeonButton type="button" variant="outline" class="flex-1" @click="showMairieModal = false">Annuler</NeonButton>
+            <NeonButton type="submit" class="flex-1" :disabled="mairieForm.processing || !mairieForm.latitude">Déployer Mission</NeonButton>
+          </div>
+        </form>
+      </div>
     </div>
 
     <MobileTabBar />

@@ -7,7 +7,7 @@ import GpsSearchInput from '@/Components/GpsSearchInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import {
   MapPin, Plus, Target, ChevronLeft, Map, Sparkles, HelpCircle, Save, Trash2,
-  Image as ImageIcon, List, Settings, Info, Navigation
+  Image as ImageIcon, List, Settings, Info, Navigation, Calendar
 } from 'lucide-vue-next';
 import { ref } from 'vue';
 import { cn } from '@/lib/utils';
@@ -199,6 +199,11 @@ const submitEnigma = () => {
             </div>
         </div>
         <div class="flex gap-3">
+            <Link :href="route('mairie.cities.events', city.id)">
+                <NeonButton variant="outline" size="sm">
+                    <Calendar class="h-4 w-4 mr-2" />Événements
+                </NeonButton>
+            </Link>
             <NeonButton variant="outline" size="sm">
                 <Settings class="h-4 w-4 mr-2" />Paramètres Ville
             </NeonButton>

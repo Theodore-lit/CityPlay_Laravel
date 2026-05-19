@@ -70,6 +70,8 @@ class PlayerController extends Controller
                 $query->with(['userProgress' => function ($q) use ($user) {
                     $q->where('user_id', $user->id);
                 }]);
+            }, 'events' => function ($query) {
+                $query->where('is_active', true)->orderBy('event_date', 'asc');
             }])
             ->get()
             ->map(function ($city) {
@@ -215,10 +217,11 @@ class PlayerController extends Controller
         ]);
     }
 
-    public function game(City $city)
+    public function game(Request $request, City $city)
     {
         $user = auth()->user();
         $mode = session('game_mode', 'aventure');
+        $teamId = $request->query('team_id');
 
         if ($mode === 'quiz') {
             // On récupère tous les quiz de la ville
@@ -260,34 +263,33 @@ class PlayerController extends Controller
             ]);
         }
 
-        // Get current session
-        $session = \App\Models\GameSession::where('user_id', $user->id)
-            ->where('city_id', $city->id)
-            ->where('status', 'in_progress')
-            ->first();
+        // Get current session (Solo or Team)
+        $sessionQuery = \App\Models\GameSession::where('city_id', $city->id)
+            ->where('status', 'in_progress');
 
-        $city->load(['locations.enigmas.questions.options']);
+        if ($teamId) {
+            $sessionQuery->where('team_id', $teamId);
+        } else {
+            $sessionQuery->where('user_id', $user->id)->whereNull('team_id');
+        }
 
-        $locations = $city->locations->map(function ($location) use ($user, $session) {
-            $progress = $location->userProgress->where('user_id', $user->id)->first();
+        $session = $sessionQuery->first();
+
+        if (!$session && $mode === 'aventure') {
+            return redirect()->route('player.cities')->with('error', 'Aucune session active pour cette ville.');
+        }
+
+        // Récupérer les lieux avec le progrès du joueur
+        $locations = $city->locations()->with('enigmas')->get()->map(function ($location) use ($user, $session) {
+            $progress = \App\Models\UserLocationProgress::where('user_id', $user->id)
+                ->where('location_id', $location->id)
+                ->first();
 
             $location->is_discovered = $progress ? $progress->is_discovered : false;
             $location->stars = $progress ? $progress->stars : 0;
+            $location->is_current_target = $session ? ($session->current_location_id == $location->id) : false;
 
-            // Determine if this is the current target in the sequence
-            $location->is_current_target = $session && $session->current_location_id == $location->id;
-
-            if (!$location->is_discovered && !$location->is_current_target) {
-                $location->display_name = "???";
-                $location->display_description = "Zone inconnue";
-                $location->status = 'locked'; // Padlock
-            } elseif (!$location->is_discovered && $location->is_current_target) {
-                $location->display_name = "Prochaine destination";
-                $location->display_description = "Résolvez l'énigme pour localiser";
-                $location->status = 'target'; // Question mark
-            } else {
-                $location->display_name = $location->name;
-                $location->display_description = $location->description;
+            if ($location->is_discovered) {
                 $location->status = 'discovered';
             }
 
@@ -299,14 +301,6 @@ class PlayerController extends Controller
             'locations' => $locations,
             'gameMode' => session('game_mode', 'aventure'),
             'currentSession' => $session,
-        ]);
-    }
-
-    public function adventureSetup(City $city)
-    {
-        return Inertia::render('Player/AdventureSetup', [
-            'city' => $city,
-            'teams' => auth()->user()->teams()->withCount('members')->get()
         ]);
     }
 
@@ -351,7 +345,7 @@ class PlayerController extends Controller
                 'current_location_id' => $sequence[0] ?? null,
                 'current_enigma_id' => \App\Models\Enigma::where('location_id', $sequence[0] ?? null)
                     ->where('is_site_specific', false)
-                    ->first()->id ?? null,
+                    ->first()?->id ?? \App\Models\Enigma::where('location_id', $sequence[0] ?? null)->first()?->id,
             ]
         );
 
@@ -443,7 +437,7 @@ class PlayerController extends Controller
 
                 $session->update([
                     'current_location_id' => $nextLocationId,
-                    'current_enigma_id' => $nextEnigma->id ?? \App\Models\Enigma::where('location_id', $nextLocationId)->first()->id ?? null
+                    'current_enigma_id' => $nextEnigma->id ?? \App\Models\Enigma::where('location_id', $nextLocationId)->first()?->id ?? null
                 ]);
             } else {
                 // End of city!
@@ -455,5 +449,56 @@ class PlayerController extends Controller
         $user->save();
 
         return back()->with('success', 'Félicitations ! Lieu découvert.');
+    }
+
+    public function updateLocation(Request $request)
+    {
+        $request->validate([
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
+        ]);
+
+        $user = auth()->user();
+        $user->update([
+            'latitude' => $request->lat,
+            'longitude' => $request->lng,
+            'last_activity_at' => now(),
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function getTeamLocations(Request $request, Team $team)
+    {
+        // On ne récupère que les membres actifs récemment (ex: 5 dernières minutes)
+        $members = $team->members()
+            ->where('user_id', '!=', auth()->id())
+            ->where('last_activity_at', '>=', now()->subMinutes(5))
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->get(['users.id', 'users.name', 'users.latitude', 'users.longitude', 'users.avatar']);
+
+        return response()->json($members);
+    }
+
+    public function getNotifications()
+    {
+        $notifications = \App\Models\Notification::where('user_id', auth()->id())
+            ->whereNull('read_at')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($notifications);
+    }
+
+    public function markNotificationRead(\App\Models\Notification $notification)
+    {
+        if ($notification->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $notification->update(['read_at' => now()]);
+
+        return response()->json(['success' => true]);
     }
 }

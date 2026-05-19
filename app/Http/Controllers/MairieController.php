@@ -188,4 +188,71 @@ class MairieController extends Controller
 
         return redirect()->back()->with('success', 'Image du lieu mise à jour.');
     }
+
+    public function cityEvents(City $city)
+    {
+        // Check if user is creator or super_admin
+        if (auth()->user()->role !== 'super_admin' && $city->creator_id !== auth()->id()) {
+            abort(403);
+        }
+
+        return Inertia::render('Mairie/CityEvents', [
+            'city' => $city->load('events'),
+        ]);
+    }
+
+    public function storeEvent(Request $request, City $city)
+    {
+        // Check if user is creator or super_admin
+        if (auth()->user()->role !== 'super_admin' && $city->creator_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'id' => 'nullable|exists:city_events,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'event_date' => 'required|date',
+            'location_name' => 'nullable|string|max:255',
+            'images' => 'nullable|array',
+            'images.*' => 'nullable|image|max:2048',
+            'existing_images' => 'nullable|array',
+        ]);
+
+        $eventId = $validated['id'] ?? null;
+        $images = $validated['existing_images'] ?? [];
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('events', 'public');
+                $images[] = '/storage/' . $path;
+            }
+        }
+
+        $city->events()->updateOrCreate(
+            ['id' => $eventId],
+            [
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'event_date' => $validated['event_date'],
+                'location_name' => $validated['location_name'],
+                'images' => $images,
+                'is_active' => true,
+            ]
+        );
+
+        return redirect()->back()->with('success', 'Événement enregistré avec succès.');
+    }
+
+    public function deleteEvent(\App\Models\CityEvent $event)
+    {
+        $city = $event->city;
+        // Check if user is creator or super_admin
+        if (auth()->user()->role !== 'super_admin' && $city->creator_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $event->delete();
+        return redirect()->back()->with('success', 'Événement supprimé.');
+    }
 }

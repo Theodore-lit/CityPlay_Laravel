@@ -10,7 +10,6 @@ const currentPath = computed(() => page.url);
 const tabs = [
   { to: 'dashboard', icon: Home, label: 'Accueil' },
   { to: 'player.cities', icon: Map, label: 'Villes' },
-  { to: 'player.modes', icon: Gamepad2, label: 'Jouer' },
   { to: 'player.leaderboard', icon: Trophy, label: 'Rang' },
   { to: 'profile.edit', icon: User, label: 'Profil' },
 ];

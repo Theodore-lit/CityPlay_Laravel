@@ -50,7 +50,6 @@ const links = computed(() => {
     return [
         { to: 'dashboard', label: 'Tableau de bord' },
         { to: 'player.cities', label: 'Villes' },
-        { to: 'player.modes', label: 'Jouer' },
         { to: 'player.leaderboard', label: 'Classement' },
         { to: 'player.rewards', label: 'Récompenses' },
     ];

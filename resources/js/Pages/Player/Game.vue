@@ -10,6 +10,7 @@ import {
   ChevronLeft, Star, Heart, Clock, Play, Info, CheckCircle2, Trophy, Brain
 } from 'lucide-vue-next';
 import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
+import axios from 'axios';
 import { cn } from '@/lib/utils';
 
 const props = defineProps({
@@ -28,6 +29,9 @@ const distanceToClosest = ref(null);
 const closestLocation = ref(null);
 const watchId = ref(null);
 const isNearLocation = ref(false);
+const teamMembers = ref([]);
+const notifications = ref([]);
+const pollingInterval = ref(null);
 
 const nextTarget = computed(() => {
     if (!props.currentSession || !props.currentSession.discovery_sequence) return null;
@@ -273,8 +277,12 @@ const startTracking = () => {
                 userPosition.value = { lat: latitude, lng: longitude };
                 updateDistances(latitude, longitude);
 
-                if (accuracy > 30) {
-                    console.warn(`Précision GPS faible : ${accuracy}m`);
+                // Envoyer la position au serveur (via Axios pour éviter les erreurs Inertia)
+                axios.post(route('player.location.update'), { lat: latitude, lng: longitude })
+                    .catch(err => console.error("Erreur mise à jour position:", err));
+
+                if (accuracy > 150) {
+                    console.warn(`Précision GPS faible : ${accuracy}m. L'expérience de jeu pourrait être dégradée.`);
                 }
             },
             (error) => {
@@ -283,8 +291,8 @@ const startTracking = () => {
             },
             {
                 enableHighAccuracy: true,
-                timeout: 5000,
-                maximumAge: 0,
+                timeout: 27000,
+                maximumAge: 30000,
             }
         );
     } else {
@@ -334,6 +342,15 @@ const showGameToast = (msg, type = 'info') => {
 
 onMounted(() => {
     startTracking();
+
+    // Polling pour les notifications et les positions d'équipe
+    pollingInterval.value = setInterval(() => {
+        fetchNotifications();
+        if (props.currentSession?.team_id) {
+            fetchTeamLocations();
+        }
+    }, 5000);
+
     // Forcer un rafraîchissement initial une fois le layout posé et les animations terminées
     setTimeout(() => {
         if (mapRef.value && typeof mapRef.value.refreshSize === 'function') {
@@ -344,7 +361,38 @@ onMounted(() => {
 
 onUnmounted(() => {
     if (watchId.value) navigator.geolocation.clearWatch(watchId.value);
+    if (pollingInterval.value) clearInterval(pollingInterval.value);
 });
+
+const fetchNotifications = async () => {
+    try {
+        const response = await axios.get(route('player.notifications'));
+        notifications.value = response.data;
+    } catch (e) {
+        console.error("Erreur notifications:", e);
+    }
+};
+
+const fetchTeamLocations = async () => {
+    try {
+        const response = await axios.get(route('player.team.locations', props.currentSession?.team_id));
+        teamMembers.value = response.data;
+    } catch (e) {
+        console.error("Erreur positions équipe:", e);
+    }
+};
+
+const markAsRead = async (notif) => {
+    try {
+        await axios.post(route('player.notifications.read', notif.id));
+        notifications.value = notifications.value.filter(n => n.id !== notif.id);
+        if (notif.data?.action_url) {
+            window.location.href = notif.data.action_url;
+        }
+    } catch (e) {
+        console.error("Erreur lecture notification:", e);
+    }
+};
 </script>
 
 <style scoped>
@@ -384,7 +432,29 @@ onUnmounted(() => {
               :locations="locations"
               :userPosition="userPosition"
               :targetLocation="currentTarget"
+              :team-members="teamMembers"
+              @location-reached="isNearLocation = true"
             />
+          </div>
+
+          <!-- Notifications Overlay -->
+          <div v-if="notifications.length > 0" class="absolute top-4 left-4 right-4 z-50 pointer-events-none">
+            <div v-for="n in notifications" :key="n.id" class="mb-2 pointer-events-auto">
+              <div class="glass-strong border-electric/30 p-4 rounded-2xl flex items-center justify-between shadow-2xl animate-bounce-soft">
+                <div class="flex items-center gap-3">
+                  <div class="h-10 w-10 rounded-xl bg-electric/20 flex items-center justify-center">
+                    <Zap class="h-5 w-5 text-electric" />
+                  </div>
+                  <div>
+                    <div class="text-[10px] font-black uppercase tracking-widest text-electric">ALERTE ESCOUADE</div>
+                    <div class="text-xs font-bold text-white">{{ n.message }}</div>
+                  </div>
+                </div>
+                <button @click="markAsRead(n)" class="h-8 w-8 rounded-lg bg-electric text-black flex items-center justify-center">
+                  <Play class="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- HUD OVERLAY -->
@@ -424,21 +494,21 @@ onUnmounted(() => {
 
             <!-- HUD BOTTOM: Mission Brief -->
             <div class="relative pointer-events-auto w-full max-w-2xl mx-auto">
-              <div class="glass-strong rounded-[1.2rem] md:rounded-[2rem] border border-electric/30 p-3 md:p-5 backdrop-blur-xl shadow-2xl animate-fade-up">
+              <div class="glass-strong rounded-[1.2rem] md:rounded-[2rem] border border-primary/30 p-3 md:p-5 backdrop-blur-xl shadow-2xl animate-fade-up">
                 <div class="flex items-center gap-3 md:gap-4 mb-2 md:mb-3">
-                  <div class="h-8 md:h-10 w-8 md:w-10 rounded-lg md:rounded-xl bg-electric/10 border border-electric/20 grid place-items-center text-electric shrink-0">
+                  <div class="h-8 md:h-10 w-8 md:w-10 rounded-lg md:rounded-xl bg-primary/10 border border-primary/20 grid place-items-center text-primary shrink-0">
                     <Brain class="h-4 md:h-5 w-4 md:w-5 animate-pulse-soft" />
                   </div>
                   <div class="min-w-0 flex-1">
-                    <div class="text-[6px] md:text-[8px] text-electric font-black uppercase tracking-[0.3em]">Mission en cours</div>
-                    <h3 class="font-display text-sm md:text-lg text-foreground uppercase tracking-tight truncate">{{ currentTarget?.display_name }}</h3>
+                    <div class="text-[6px] md:text-[8px] text-primary font-black uppercase tracking-[0.3em]">Mission en cours</div>
+                    <h3 class="font-display text-sm md:text-lg text-white uppercase tracking-tight truncate">{{ currentTarget?.display_name }}</h3>
                   </div>
                   <div class="flex items-center gap-1 md:gap-2 shrink-0">
-                    <div v-for="i in 5" :key="i" :class="cn('h-1 w-2 md:w-4 rounded-full transition-colors', i/5 <= proximityScore/100 ? 'bg-electric shadow-neon' : 'bg-white/10')"></div>
+                    <div v-for="i in 5" :key="i" :class="cn('h-1.5 w-3 md:w-5 rounded-full transition-all duration-500', i/5 <= proximityScore/100 ? 'bg-primary shadow-[0_0_10px_rgba(34,211,238,0.8)]' : 'bg-white/10')"></div>
                   </div>
                 </div>
 
-                <p class="text-[10px] md:text-xs text-muted-foreground italic mb-3 md:mb-4 line-clamp-1 md:line-clamp-2 leading-relaxed">
+                <p class="text-[10px] md:text-xs text-white/60 italic mb-3 md:mb-4 line-clamp-1 md:line-clamp-2 leading-relaxed">
                   "{{ displayEnigma }}"
                 </p>
 
@@ -446,19 +516,19 @@ onUnmounted(() => {
                   <NeonButton
                     variant="outline"
                     size="sm"
-                    class="flex-1 rounded-lg md:rounded-xl text-[9px] md:text-[10px] h-9 md:h-11"
+                    class="flex-1 rounded-lg md:rounded-xl text-[9px] md:text-[10px] h-9 md:h-11 border-primary/20 text-primary"
                     @click="selectLocation(currentTarget)"
                   >
                     VOIR L'ÉNIGME
                   </NeonButton>
                   <NeonButton
                     size="sm"
-                    class="flex-1 rounded-lg md:rounded-xl text-[9px] md:text-[10px] h-9 md:h-11 group relative overflow-hidden"
+                    class="flex-1 rounded-lg md:rounded-xl text-[9px] md:text-[10px] h-9 md:h-11 group relative overflow-hidden bg-gradient-adventure border-none"
                     @click="validatePosition"
                   >
                     <div v-if="isNearLocation" class="absolute inset-0 bg-white/20 animate-shimmer"></div>
                     <div v-if="isNearLocation" class="flex items-center justify-center gap-1">
-                        <CheckCircle2 class="h-3 w-3" /> PRÊT
+                        <CheckCircle2 class="h-3 w-3" /> DÉPLOYER
                     </div>
                     <div v-else class="flex items-center justify-center gap-1">
                         <Navigation class="h-3 w-3 opacity-50" /> VÉRIFIER
@@ -488,53 +558,53 @@ onUnmounted(() => {
 
         <!-- BARRE LATÉRALE -->
         <aside class="lg:col-span-4 space-y-4 overflow-y-auto max-h-[50vh] md:max-h-full custom-scrollbar pb-10 md:pb-0">
-          <div class="rounded-2xl glass-strong p-4 md:p-5">
-            <div class="text-[10px] text-electric font-display tracking-widest uppercase">Quête Actuelle</div>
-            <h2 class="font-display text-lg md:text-xl mt-1">Exploration de {{ cityData?.name }}</h2>
-            <div class="mt-4 h-1.5 md:h-2 rounded-full bg-gaming-darker overflow-hidden">
+          <div class="rounded-2xl glass-strong p-4 md:p-5 border border-primary/20">
+            <div class="text-[10px] text-primary font-display tracking-widest uppercase">Quête Actuelle</div>
+            <h2 class="font-display text-lg md:text-xl mt-1 text-white">Exploration de {{ cityData?.name }}</h2>
+            <div class="mt-4 h-1.5 md:h-2 rounded-full bg-white/5 overflow-hidden p-[1px]">
               <div
-                class="h-full bg-gradient-electric transition-all duration-1000"
+                class="h-full bg-gradient-adventure rounded-full transition-all duration-1000"
                 :style="{ width: `${(locations.filter(l => l.is_discovered).length / locations.length) * 100}%` }"
               />
             </div>
-            <div class="mt-2 flex justify-between text-[10px] md:text-xs">
-              <span class="text-muted-foreground">{{ locations.filter(l => l.is_discovered).length }} sur {{ locations.length }} lieux</span>
-              <span class="text-electric font-bold">+{{ locations.filter(l => l.is_discovered).length * 250 }} XP</span>
+            <div class="mt-2 flex justify-between text-[10px] md:text-xs font-bold uppercase tracking-widest">
+              <span class="text-white/40">{{ locations.filter(l => l.is_discovered).length }} sur {{ locations.length }} missions</span>
+              <span class="text-primary">+{{ locations.filter(l => l.is_discovered).length * 250 }} XP</span>
             </div>
           </div>
 
           <!-- LISTE DES LIEUX -->
-          <div class="rounded-2xl glass p-4 md:p-5 max-h-[30vh] md:max-h-[50vh] overflow-y-auto custom-scrollbar">
-            <div class="flex items-center justify-between mb-3 sticky top-0 bg-inherit z-10">
-              <h3 class="font-display text-xs md:text-sm flex items-center gap-2">
-                <Target class="h-3 md:h-4 w-3 md:w-4 text-electric" />VOTRE PROGRESSION
+          <div class="rounded-2xl glass-strong p-4 md:p-5 max-h-[30vh] md:max-h-[50vh] overflow-y-auto custom-scrollbar border border-white/5">
+            <div class="flex items-center justify-between mb-4 sticky top-0 bg-inherit z-10">
+              <h3 class="font-display text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-white/60">
+                <Target class="h-4 w-4 text-primary" />OBJECTIFS DE ZONE
               </h3>
             </div>
-            <div class="space-y-2 md:space-y-3">
+            <div class="space-y-3">
               <div
                 v-for="loc in locations"
                 :key="loc.id"
-                class="flex items-center gap-2 md:gap-3 p-2 rounded-xl hover:bg-electric/5 transition cursor-pointer group/loc"
+                class="flex items-center gap-3 p-3 rounded-2xl hover:bg-primary/5 transition-all cursor-pointer group/loc border border-transparent hover:border-primary/20"
                 @click="selectLocation(loc)"
               >
                 <div :class="cn(
-                    'h-10 w-10 md:h-12 md:w-12 rounded-lg border flex items-center justify-center shrink-0 transition-colors overflow-hidden',
-                    loc.is_discovered ? 'bg-electric/10 border-electric/20' : (loc.is_current_target ? 'bg-warning/10 border-warning/20' : 'bg-gaming-darker border-white/5')
+                    'h-12 w-12 rounded-xl border flex items-center justify-center shrink-0 transition-all duration-500 overflow-hidden',
+                    loc.is_discovered ? 'bg-primary/10 border-primary/30' : (loc.is_current_target ? 'bg-warning/10 border-warning/30 scale-110 shadow-lg shadow-warning/20' : 'bg-white/5 border-white/10')
                 )">
                   <img v-if="loc.is_discovered && loc.images && loc.images[0]" :src="loc.images[0]" class="h-full w-full object-cover" />
-                  <MapPin v-else-if="loc.is_discovered" class="h-5 md:h-6 w-5 md:w-6 text-electric" />
-                  <Brain v-else-if="loc.is_current_target" class="h-5 md:h-6 w-5 md:w-6 text-warning animate-pulse" />
-                  <Lock v-else class="h-4 md:h-5 w-4 md:w-5 text-muted-foreground/30" />
+                  <MapPin v-else-if="loc.is_discovered" class="h-6 w-6 text-primary" />
+                  <Brain v-else-if="loc.is_current_target" class="h-6 w-6 text-warning animate-pulse-soft" />
+                  <Lock v-else class="h-5 w-5 text-white/10" />
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="text-[12px] md:text-sm font-bold truncate flex items-center gap-2 text-foreground">
+                  <div class="text-sm font-black uppercase tracking-tight truncate flex items-center gap-2 text-white/90">
                     {{ loc.display_name }}
                     <div v-if="loc.is_discovered" class="flex gap-0.5">
-                        <Star v-for="s in 3" :key="s" :class="cn('h-2 md:h-2.5 w-2 md:w-2.5', s <= (loc.stars || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-white/10')" />
+                        <Star v-for="s in 3" :key="s" :class="cn('h-2.5 w-2.5', s <= (loc.stars || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-white/5')" />
                     </div>
                   </div>
-                  <div class="text-[8px] md:text-[10px] text-muted-foreground uppercase tracking-widest">
-                    {{ loc.is_discovered ? loc.category : 'Zone inconnue' }}
+                  <div class="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">
+                    {{ loc.is_discovered ? loc.category : 'Zone Cryptée' }}
                   </div>
                 </div>
               </div>
@@ -542,24 +612,27 @@ onUnmounted(() => {
           </div>
 
           <!-- ÉNIGME ACTIVE -->
-          <div v-if="currentSession?.current_enigma_id" class="rounded-2xl glass-strong p-5 animate-fade-up border border-electric/30 shadow-neon">
-            <div class="text-xs text-electric font-display tracking-widest uppercase">Objectif Actuel</div>
-            <div class="mt-2 text-[10px] text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                <Target class="h-3 w-3" />
+          <div v-if="currentSession?.current_enigma_id" class="rounded-2xl glass-strong p-5 animate-fade-up border border-primary/30 shadow-[0_0_20px_rgba(34,211,238,0.1)]">
+            <div class="text-[10px] text-primary font-black uppercase tracking-[0.2em]">Objectif Actuel</div>
+            <div class="mt-2 text-[10px] text-white/40 uppercase tracking-widest flex items-center gap-1 font-bold">
+                <Target class="h-3.5 w-3.5 text-primary" />
                 {{ locations.find(l => l.id === currentSession.current_location_id)?.display_name }}
             </div>
-            <p class="mt-3 text-xs italic text-foreground/90 line-clamp-3">
+            <p class="mt-4 text-xs italic text-white/80 leading-relaxed line-clamp-3">
               "{{ locations.find(l => l.id === currentSession.current_location_id)?.enigmas?.find(e => e.id === currentSession.current_enigma_id)?.content || 'Résolvez l\'énigme pour avancer.' }}"
             </p>
-            <div class="mt-4">
-                <NeonButton size="sm" class="w-full rounded-xl" @click="selectLocation(locations.find(l => l.id === currentSession.current_location_id))">
-                    VOIR LA MISSION
+            <div class="mt-5">
+                <NeonButton size="sm" class="w-full rounded-xl bg-gradient-adventure border-none text-[10px] font-black uppercase tracking-widest" @click="selectLocation(locations.find(l => l.id === currentSession.current_location_id))">
+                    OUVRIR LE DOSSIER
                 </NeonButton>
             </div>
           </div>
-          <div v-else class="rounded-2xl glass p-5 text-center">
-            <Trophy class="h-8 w-8 text-electric mx-auto mb-2 animate-bounce" />
-            <p class="text-xs text-muted-foreground uppercase font-black tracking-widest">Aventure terminée !</p>
+          <div v-else class="rounded-[2rem] glass-strong p-8 text-center border border-primary/20">
+            <div class="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Trophy class="h-10 w-10 text-primary animate-bounce-soft" />
+            </div>
+            <p class="text-[10px] text-primary font-black uppercase tracking-[0.3em] mb-2">Opération Réussie</p>
+            <h3 class="font-display text-lg text-white uppercase italic font-black">Légende Établie</h3>
           </div>
         </aside>
       </div>
@@ -568,87 +641,87 @@ onUnmounted(() => {
 
     <!-- MODAL ÉNIGME -->
     <Modal :show="showRiddleModal" @close="showRiddleModal = false">
-        <div class="p-8 bg-gaming-darker border border-electric/20 rounded-[2.5rem] overflow-hidden relative max-w-lg mx-auto">
+        <div class="p-8 bg-gaming-darker border border-primary/20 rounded-[2.5rem] overflow-hidden relative max-w-lg mx-auto shadow-[0_0_50px_rgba(34,211,238,0.15)]">
             <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
 
             <div class="relative z-10">
-                <div class="flex justify-between items-start mb-6">
+                <div class="flex justify-between items-start mb-8">
                     <div>
-                        <div class="text-[10px] text-electric font-display tracking-widest uppercase mb-1">
+                        <div class="text-[10px] text-primary font-black uppercase tracking-[0.3em] mb-2">
                             {{ riddleType === 'unlock' ? 'DÉBLOCAGE DE ZONE' : 'MISSION SUR SITE' }}
                         </div>
-                        <h2 class="font-display text-2xl text-foreground">{{ selectedLocation?.display_name }}</h2>
+                        <h2 class="font-display text-3xl text-white uppercase italic font-black leading-none">{{ selectedLocation?.display_name }}</h2>
                     </div>
-                    <div class="h-12 w-12 rounded-2xl bg-electric/10 border border-electric/20 grid place-items-center text-electric">
-                        <Brain v-if="riddleType === 'unlock'" class="h-6 w-6" />
-                        <MapPin v-else class="h-6 w-6" />
+                    <div class="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 grid place-items-center text-primary shadow-2xl shadow-primary/20">
+                        <Brain v-if="riddleType === 'unlock'" class="h-8 w-8" />
+                        <MapPin v-else class="h-8 w-8" />
                     </div>
                 </div>
 
                 <!-- SELECTION DIFFICULTÉ (SEULEMENT POUR DÉBLOCAGE) -->
                 <div v-if="riddleType === 'unlock' && !selectedDifficulty" class="space-y-4">
-                    <p class="text-sm text-muted-foreground mb-6">Choisissez la complexité de l'énigme pour localiser ce lieu sur la carte :</p>
+                    <p class="text-sm text-white/50 mb-6 font-medium">Choisissez la complexité de l'énigme pour localiser ce lieu sur la carte :</p>
                     <button
                         @click="startRiddle('easy')"
-                        class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-success/40 hover:bg-success/5 transition-all text-left group"
+                        class="w-full p-5 rounded-3xl bg-white/5 border border-white/10 hover:border-success/40 hover:bg-success/5 transition-all text-left group flex items-center justify-between"
                     >
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-foreground group-hover:text-success transition-colors">Niveau Facile</span>
-                            <span class="text-[10px] px-2 py-1 rounded bg-success/20 text-success font-black">LÉGER</span>
+                        <div>
+                            <span class="font-black uppercase tracking-tight text-white group-hover:text-success transition-colors">Niveau Facile</span>
+                            <p class="text-[10px] text-white/40 mt-1 uppercase font-bold tracking-widest">+100 XP • Localisation immédiate</p>
                         </div>
-                        <p class="text-[10px] text-muted-foreground mt-1">+100 XP • Localisation immédiate</p>
+                        <span class="text-[10px] px-3 py-1 rounded-full bg-success/20 text-success font-black tracking-widest">LÉGER</span>
                     </button>
                     <button
                         @click="startRiddle('medium')"
-                        class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-warning/40 hover:bg-warning/5 transition-all text-left group"
+                        class="w-full p-5 rounded-3xl bg-white/5 border border-white/10 hover:border-warning/40 hover:bg-warning/5 transition-all text-left group flex items-center justify-between"
                     >
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-foreground group-hover:text-warning transition-colors">Niveau Moyen</span>
-                            <span class="text-[10px] px-2 py-1 rounded bg-warning/20 text-warning font-black">TACTIQUE</span>
+                        <div>
+                            <span class="font-black uppercase tracking-tight text-white group-hover:text-warning transition-colors">Niveau Moyen</span>
+                            <p class="text-[10px] text-white/40 mt-1 uppercase font-bold tracking-widest">+250 XP • Localisation précise</p>
                         </div>
-                        <p class="text-[10px] text-muted-foreground mt-1">+250 XP • Localisation précise</p>
+                        <span class="text-[10px] px-3 py-1 rounded-full bg-warning/20 text-warning font-black tracking-widest">TACTIQUE</span>
                     </button>
                     <button
                         @click="startRiddle('hard')"
-                        class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-destructive/40 hover:bg-destructive/5 transition-all text-left group"
+                        class="w-full p-5 rounded-3xl bg-white/5 border border-white/10 hover:border-primary/40 hover:bg-primary/5 transition-all text-left group flex items-center justify-between"
                     >
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-foreground group-hover:text-destructive transition-colors">Niveau Difficile</span>
-                            <span class="text-[10px] px-2 py-1 rounded bg-destructive/20 text-destructive font-black">LÉGENDAIRE</span>
+                        <div>
+                            <span class="font-black uppercase tracking-tight text-white group-hover:text-primary transition-colors">Niveau Difficile</span>
+                            <p class="text-[10px] text-white/40 mt-1 uppercase font-bold tracking-widest">+500 XP • Bonus d'exploration</p>
                         </div>
-                        <p class="text-[10px] text-muted-foreground mt-1">+500 XP • Bonus d'exploration</p>
+                        <span class="text-[10px] px-3 py-1 rounded-full bg-primary/20 text-primary font-black tracking-widest">LÉGENDAIRE</span>
                     </button>
                 </div>
 
                 <!-- QUESTIONNAIRE ACTIF (SITE) -->
                 <div v-else-if="isQuestionnaireActive && currentRiddle?.questions?.[currentQuestionIndex]" class="space-y-6 animate-fade-up">
                     <div class="flex items-center justify-between mb-4">
-                        <div class="text-[10px] text-electric font-black uppercase tracking-widest">Question {{ currentQuestionIndex + 1 }} / {{ currentRiddle.questions.length }}</div>
-                        <div class="flex gap-1">
-                            <div v-for="i in currentRiddle.questions.length" :key="i" :class="cn('h-1 w-4 rounded-full transition-all', i-1 <= currentQuestionIndex ? 'bg-electric shadow-neon' : 'bg-white/10')"></div>
+                        <div class="text-[10px] text-primary font-black uppercase tracking-[0.2em]">SÉQUENCE {{ currentQuestionIndex + 1 }} / {{ currentRiddle.questions.length }}</div>
+                        <div class="flex gap-1.5">
+                            <div v-for="i in currentRiddle.questions.length" :key="i" :class="cn('h-1.5 w-6 rounded-full transition-all duration-500', i-1 <= currentQuestionIndex ? 'bg-primary shadow-[0_0_10px_rgba(34,211,238,0.5)]' : 'bg-white/10')"></div>
                         </div>
                     </div>
 
-                    <div class="p-6 rounded-3xl bg-white/5 border border-white/10 text-lg text-white font-display leading-relaxed">
+                    <div class="p-8 rounded-[2rem] bg-white/5 border border-white/10 text-xl text-white font-display italic leading-tight shadow-inner">
                         {{ currentRiddle.questions[currentQuestionIndex].question_text }}
                     </div>
 
-                    <div class="grid gap-3">
+                    <div class="grid gap-4">
                         <button
                             v-for="(option, idx) in currentRiddle.questions[currentQuestionIndex].options"
                             :key="idx"
                             @click="selectQuestionOption(option)"
                             :class="cn(
-                                'w-full p-4 rounded-2xl border text-left transition-all duration-300 group flex items-center justify-between',
+                                'w-full p-5 rounded-[1.5rem] border text-left transition-all duration-300 group flex items-center justify-between',
                                 questionnaireAnswers[currentQuestionIndex] === option
-                                    ? (option.is_correct ? 'bg-success/20 border-success shadow-neon-success' : 'bg-destructive/20 border-destructive shadow-neon-error')
-                                    : 'bg-white/5 border-white/10 hover:border-electric hover:bg-electric/5'
+                                    ? (option.is_correct ? 'bg-success/20 border-success shadow-[0_0_20px_rgba(34,197,94,0.3)]' : 'bg-destructive/20 border-destructive shadow-[0_0_20px_rgba(239,68,68,0.3)]')
+                                    : 'bg-white/5 border-white/10 hover:border-primary hover:bg-primary/5'
                             )"
                         >
-                            <span class="text-sm font-medium text-foreground group-hover:text-white">{{ option.option_text }}</span>
-                            <div v-if="questionnaireAnswers[currentQuestionIndex] === option" class="h-5 w-5 rounded-full grid place-items-center">
-                                <CheckCircle2 v-if="option.is_correct" class="h-4 w-4 text-success" />
-                                <XCircle v-else class="h-4 w-4 text-destructive" />
+                            <span class="text-sm font-black uppercase tracking-tight text-white/80 group-hover:text-white">{{ option.option_text }}</span>
+                            <div v-if="questionnaireAnswers[currentQuestionIndex] === option" class="h-6 w-6 rounded-full grid place-items-center">
+                                <CheckCircle2 v-if="option.is_correct" class="h-5 w-5 text-success" />
+                                <XCircle v-else class="h-5 w-5 text-destructive" />
                             </div>
                         </button>
                     </div>
@@ -656,23 +729,26 @@ onUnmounted(() => {
 
                 <!-- L'ÉNIGME CLASSIQUE (UNLOCK) -->
                 <div v-else-if="currentRiddle" class="space-y-6 animate-fade-up">
-                    <div v-if="currentRiddle.image_path" class="rounded-2xl overflow-hidden border border-white/10 mb-4 aspect-video bg-gaming-darker">
+                    <div v-if="currentRiddle.image_path" class="rounded-[2rem] overflow-hidden border border-white/10 mb-6 aspect-video bg-gaming-darker shadow-2xl">
                         <img :src="currentRiddle.image_path" class="w-full h-full object-cover" alt="Indice visuel" />
                     </div>
 
-                    <div class="p-6 rounded-3xl bg-white/5 border border-white/10 italic text-foreground/90 leading-relaxed relative">
-                        <Info class="absolute -top-3 -right-3 h-8 w-8 text-electric/20" />
+                    <div class="p-8 rounded-[2rem] bg-white/5 border border-white/10 italic text-white/90 leading-relaxed relative shadow-inner">
+                        <Info class="absolute -top-4 -right-4 h-12 w-12 text-primary/10" />
                         "{{ currentRiddle.content }}"
                     </div>
 
-                    <div>
-                        <label class="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black mb-2 block">VOTRE RÉPONSE</label>
+                    <div class="relative">
+                        <label class="text-[10px] text-primary font-black uppercase tracking-[0.3em] mb-3 block">RÉPONSE REQUISE</label>
                         <input
                             v-model="riddleAnswer"
                             @keyup.enter="submitRiddle"
-                            placeholder="Saisissez la solution..."
-                            class="w-full h-14 rounded-2xl bg-gaming-darker border border-electric/30 px-6 text-foreground placeholder:text-muted-foreground/40 focus:border-electric focus:ring-4 focus:ring-electric/10 outline-none transition-all font-display"
+                            placeholder="DÉCHIFFRER ICI..."
+                            class="w-full h-16 rounded-2xl bg-gaming-darker border border-primary/30 px-8 text-white placeholder:text-white/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-display uppercase tracking-widest shadow-2xl"
                         />
+                        <button @click="submitRiddle" class="absolute right-3 top-9 h-10 w-10 rounded-xl bg-primary text-black flex items-center justify-center hover:scale-110 transition-transform">
+                            <ArrowRight class="h-5 w-5" />
+                        </button>
                     </div>
 
                     <div class="flex gap-3">

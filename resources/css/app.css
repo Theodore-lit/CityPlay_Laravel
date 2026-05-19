@@ -11,43 +11,50 @@
   --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --font-display: "Space Grotesk", "Plus Jakarta Sans", system-ui, sans-serif;
 
-  --background: oklch(0.96 0.01 240); /* Fond gris perle doux */
-  --foreground: oklch(0.15 0.02 240); /* Texte quasi noir pour lisibilité parfaite */
+  /* Fond très propre, rafraîchissant mais avec une identité tech (teinte légèrement bleutée) */
+  --background: oklch(0.97 0.015 240); 
+  --foreground: oklch(0.15 0.04 240); 
 
-  /* Couleur Primaire basée sur NeonButton */
-  --primary: oklch(0.60 0.20 255);
+  /* Couleur Primaire - Dégradé Électrique Haute Visibilité en Mode Clair */
+  --primary: oklch(0.58 0.23 230); /* Bleu néon profond pour garder du contraste */
+  --primary-gradient: linear-gradient(135deg, oklch(0.55 0.24 240), oklch(0.68 0.22 180));
   --primary-foreground: #ffffff;
 
-  --secondary: oklch(0.85 0.05 200);
+  --secondary: oklch(0.92 0.02 240);
   --secondary-foreground: var(--foreground);
 
-  --accent: oklch(0.65 0.25 350); /* Rose/Violet gaming pour contraste */
+  /* Accent : Rose/Magenta vif pour casser le bleu et marquer les éléments "Hot" ou événements */
+  --accent: oklch(0.62 0.26 350); 
   --accent-foreground: #ffffff;
 
-  --card: #ffffff; /* Cartes blanches sur fond gris */
+  --card: #ffffff; 
   --card-foreground: var(--foreground);
 
-  --muted: oklch(0.90 0.01 240);
-  --muted-foreground: oklch(0.40 0.02 240);
+  --muted: oklch(0.91 0.02 240);
+  --muted-foreground: oklch(0.45 0.03 240);
 
-  --border: oklch(0.20 0.04 240 / 0.15); /* Bordures visibles */
+  /* Bordures plus denses pour détacher les éléments sur fond clair */
+  --border: oklch(0.15 0.04 240 / 0.08); 
   --input: #ffffff;
-  --input-border: oklch(0.20 0.04 240 / 0.2);
+  --input-border: oklch(0.15 0.04 240 / 0.15);
 
-  --shadow-neon: 0 10px 25px -5px oklch(0.60 0.20 255 / 0.3);
-  --shadow-neon-hover: 0 15px 35px -5px oklch(0.60 0.20 255 / 0.5);
+  /* Les ombres remplacent le "neon glow" en mode clair : effet 3D Gaming net */
+  --shadow-neon: 0 12px 30px -4px oklch(0.55 0.24 240 / 0.12), 0 4px 12px -2px oklch(0.55 0.24 240 / 0.05);
+  --shadow-neon-hover: 0 20px 40px -6px oklch(0.55 0.24 240 / 0.25);
 
-  --gaming-darker: oklch(0.94 0.01 240);
-  --gaming-dark: oklch(0.92 0.01 240);
+  /* Structures arrières */
+  --gaming-darker: oklch(0.93 0.02 240);
+  --gaming-dark: oklch(0.90 0.02 240);
   --gaming-panel: #ffffff;
 }
 
 /* STYLE SOMBRE : Futuriste Haute Visibilité */
 html.dark, .dark {
-  --background: oklch(0.10 0.02 240); /* Noir profond */
-  --foreground: oklch(0.98 0.01 240); /* Blanc éclatant */
+  --background: oklch(0.08 0.02 240); 
+  --foreground: oklch(0.99 0.01 240);
 
-  --primary: oklch(0.70 0.18 250); /* Cyan électrique */
+  --primary: oklch(0.75 0.25 190); /* Cyan-Vert ultra électrique */
+  --primary-gradient: linear-gradient(135deg, oklch(0.65 0.30 250), oklch(0.80 0.30 170));
   --primary-foreground: #000000;
 
   --secondary: oklch(0.18 0.03 240);
@@ -72,34 +79,22 @@ html.dark, .dark {
 
 @layer base {
   * { border-color: var(--border); }
+  
   html, body {
     background: var(--background);
     color: var(--foreground);
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Forcer la visibilité des textes d'input */
-  input, textarea, select {
-    color: var(--foreground) !important;
-    background-color: var(--input) !important;
-    border-color: var(--border) !important;
-  }
-
-  /* Fix pour les textes blancs qui devraient être sombres en mode clair */
-  .light .text-white:not(.bg-primary *, .bg-electric *, .bg-gradient-premium *, .bg-gradient-accent *) {
-    color: var(--foreground) !important;
-  }
-
-  input::placeholder {
-    color: var(--muted-foreground) !important;
-    opacity: 0.6;
-  }
-
-  body {
     min-height: 100vh;
     background-attachment: fixed;
+  }
+
+  /* Subtile texture de fond même pour le Light Mode pour briser le côté trop plat */
+  body {
+    background-image: 
+      radial-gradient(circle at 90% 10%, oklch(0.68 0.22 180 / 0.04), transparent 50%),
+      radial-gradient(circle at 10% 80%, oklch(0.62 0.26 350 / 0.03), transparent 50%);
   }
 
   .dark body {
@@ -108,31 +103,64 @@ html.dark, .dark {
       radial-gradient(circle at 80% 80%, oklch(0.72 0.18 300 / 0.12), transparent 45%);
   }
 
-  h1, h2, h3, .font-display { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; }
-  .dark h1, .dark h2, .dark h3, .dark .font-display { letter-spacing: 0.08em; text-transform: uppercase; }
+  /* Inputs stables inter-modes */
+  input, textarea, select {
+    color: var(--foreground) !important;
+    background-color: var(--input) !important;
+    border-color: var(--input-border) !important;
+  }
+
+  input::placeholder {
+    color: var(--muted-foreground) !important;
+    opacity: 0.5;
+  }
+
+  /* --- FIX CORRECTIF POUR TON COMPOSANT ---
+     Évite que le texte passe magiquement au noir si l'élément parent possède l'une de ces classes */
+  .light .text-white:not(.bg-primary *, .bg-accent *, .bg-gradient-adventure *, .bg-gradient-premium *, .bg-gradient-accent *, .btn *, .badge *) {
+    color: var(--foreground) !important;
+  }
+
+  /* Rendu typographique */
+  h1, h2, h3, .font-display { 
+    font-family: var(--font-display); 
+    font-weight: 800; 
+    letter-spacing: -0.02em; 
+    text-transform: uppercase;
+  }
+  
+  /* En mode sombre, on écarte un poil les lettres pour l'effet technologique */
+  .dark h1, .dark h2, .dark h3, .dark .font-display { 
+    letter-spacing: 0.04em; 
+  }
 }
 
 @layer utilities {
-  /* GLASSMORPHISM PREMIUM */
+  /* GLASSMORPHISM AJUSTÉ POUR LE MODE CLAIR */
   .glass {
-    background: var(--card);
-    backdrop-filter: blur(12px) saturate(160%);
-    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
     border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 4px 20px -2px oklch(0.15 0.04 240 / 0.05);
   }
 
   .glass-strong {
-    background: var(--card);
+    background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(24px) saturate(200%);
     -webkit-backdrop-filter: blur(24px) saturate(200%);
     border: 1px solid var(--border);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-neon);
   }
 
+  /* Surcharge Glass sombre pour éviter l'effet blanchâtre */
+  .dark .glass {
+    background: oklch(0.15 0.03 240 / 0.7);
+  }
+  
   .dark .glass-strong {
-    background: oklch(0.16 0.06 255 / 0.6);
-    border: 1px solid oklch(0.78 0.15 232 / 0.25);
+    background: oklch(0.12 0.02 240 / 0.85);
+    border: 1px solid oklch(0.99 0.01 240 / 0.1);
   }
 
   /* GAME UI EFFECTS */
@@ -140,11 +168,12 @@ html.dark, .dark {
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .hover-game:hover {
-    transform: translateY(-5px) scale(1.02);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-5px) scale(1.015);
+    box-shadow: var(--shadow-neon-hover);
     border-color: var(--primary);
   }
 
+  /* Text Glow ajusté */
   .neon-text {
     transition: text-shadow 0.3s ease;
   }
@@ -152,34 +181,40 @@ html.dark, .dark {
     text-shadow: 0 0 15px oklch(var(--primary) / 0.6);
   }
   .light .neon-text {
-    text-shadow: 0 2px 10px oklch(var(--primary) / 0.2);
+    text-shadow: 0 2px 8px oklch(var(--primary) / 0.15);
   }
 
+  /* Grille de fond qui s'adapte parfaitement en mode clair */
   .grid-bg {
-    background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-image: 
+      linear-gradient(var(--border) 1px, transparent 1px), 
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
     background-size: 40px 40px;
-    mask-image: radial-gradient(circle at center, black, transparent 80%);
+    mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
   }
 
+  /* Animations */
   @keyframes pulse-soft {
     0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.8; transform: scale(0.98); }
+    50% { opacity: 0.85; transform: scale(0.98); }
   }
   .animate-pulse-soft { animation: pulse-soft 3s ease-in-out infinite; }
 
   @keyframes float-game {
     0%, 100% { transform: translateY(0) rotate(0); }
-    33% { transform: translateY(-10px) rotate(1deg); }
-    66% { transform: translateY(-5px) rotate(-1deg); }
+    33% { transform: translateY(-6px) rotate(0.5deg); }
+    66% { transform: translateY(-3px) rotate(-0.5deg); }
   }
   .animate-float-game { animation: float-game 6s ease-in-out infinite; }
 
-  /* Gradient Variants */
+  /* Gradients */
+  .bg-gradient-adventure,
   .bg-gradient-premium {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    background: var(--primary-gradient);
   }
   .bg-gradient-accent {
-    background: linear-gradient(135deg, var(--accent), oklch(0.85 0.20 60));
+    background: linear-gradient(135deg, var(--accent), oklch(0.78 0.18 40));
   }
 }
 

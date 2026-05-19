@@ -38,14 +38,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/quiz/{quiz}/submit', [PlayerController::class, 'submitQuiz'])->name('player.quiz.submit');
     Route::get('/quiz/{quiz}/result', [PlayerController::class, 'quizResult'])->name('player.quiz.result');
     Route::get('/player/game/{city}', [PlayerController::class, 'game'])->name('player.game');
-    Route::get('/player/adventure/setup/{city}', [PlayerController::class, 'adventureSetup'])->name('player.adventure.setup');
     Route::post('/player/adventure/solo/{city}', [PlayerController::class, 'startSoloQuest'])->name('player.adventure.solo');
     Route::post('/player/location/{location}/unlock', [PlayerController::class, 'unlockLocation'])->name('player.unlock-location');
     Route::post('/player/location/{location}/complete', [PlayerController::class, 'completeLocation'])->name('player.complete-location');
 
+    Route::post('/player/location/update', [PlayerController::class, 'updateLocation'])->name('player.location.update');
+    Route::get('/player/team/{team}/locations', [PlayerController::class, 'getTeamLocations'])->name('player.team.locations');
+    Route::get('/player/notifications', [PlayerController::class, 'getNotifications'])->name('player.notifications');
+    Route::post('/player/notifications/{notification}/read', [PlayerController::class, 'markNotificationRead'])->name('player.notifications.read');
+
     // Team Routes
     Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
     Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
+    Route::get('/teams/join', [TeamController::class, 'joinWithCode'])->name('teams.join.link');
     Route::post('/teams/join', [TeamController::class, 'join'])->name('teams.join');
     Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
     Route::post('/teams/{team}/start-quest/{city}', [TeamController::class, 'startQuest'])->name('teams.start-quest');
@@ -72,6 +77,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/mairie/location/{location}/enigma', [MairieController::class, 'storeEnigma'])->name('mairie.enigmas.store');
     Route::post('/mairie/location/{location}/image', [MairieController::class, 'storeLocationImage'])->name('mairie.locations.image');
     Route::patch('/mairie/city/{city}/toggle', [MairieController::class, 'toggleStatus'])->name('mairie.city.toggle');
+
+    // Mairie Event Routes
+    Route::get('/mairie/city/{city}/events', [MairieController::class, 'cityEvents'])->name('mairie.cities.events');
+    Route::post('/mairie/city/{city}/events', [MairieController::class, 'storeEvent'])->name('mairie.events.store');
+    Route::delete('/mairie/events/{event}', [MairieController::class, 'deleteEvent'])->name('mairie.events.delete');
 });
 
 Route::middleware('auth')->group(function () {

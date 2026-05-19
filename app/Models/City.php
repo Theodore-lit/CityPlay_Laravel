@@ -67,6 +67,14 @@ class City extends Model
     }
 
     /**
+     * Relation : Une ville contient plusieurs événements.
+     */
+    public function events()
+    {
+        return $this->hasMany(CityEvent::class);
+    }
+
+    /**
      * Relation : Une ville peut avoir plusieurs sessions de jeu actives ou passées.
      */
     public function gameSessions()

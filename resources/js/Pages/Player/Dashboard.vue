@@ -75,7 +75,7 @@ const achievements = [
             </div>
           </div>
           <div class="hidden md:block">
-            <NeonButton :href="route('player.modes')" size="md" class="rounded-xl px-6">
+            <NeonButton :href="route('player.cities')" size="md" class="rounded-xl px-6">
               JOUER <ArrowRight class="h-4 w-4" />
             </NeonButton>
           </div>
