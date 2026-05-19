@@ -2,7 +2,7 @@
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import NeonButton from '@/Components/NeonButton.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Heart, Star, Trophy } from 'lucide-vue-next';
+import { Heart, Star, Trophy, Frown } from 'lucide-vue-next';
 
 const props = defineProps({
     quiz: Object,
@@ -32,15 +32,15 @@ const backUrl = props.city
             </div>
 
             <div class="h-24 w-24 rounded-3xl bg-gradient-electric mx-auto grid place-items-center shadow-neon mb-6 animate-bounce">
-                <Trophy v-if="!result?.failed" class="h-12 w-12 text-white" />
-                <Heart v-else class="h-12 w-12 text-white" />
+                <Trophy v-if="(result?.stars ?? 0) >= 2" class="h-12 w-12 text-white" />
+                <Frown v-else class="h-12 w-12 text-white" />
             </div>
 
             <h2 class="font-display text-4xl text-white mb-2 uppercase">
-                {{ !result?.failed ? 'DÉFI TERMINÉ !' : 'SESSION ÉCHOUÉE' }}
+                {{ (result?.stars ?? 0) >= 2 ? 'FÉLICITATIONS !' : 'COURAGE !' }}
             </h2>
             <p class="text-muted-foreground text-sm mb-10">
-                {{ !result?.failed ? 'Vous avez brillamment surmonté les épreuves.' : 'Vos vies sont épuisées. Entraînez-vous encore !' }}
+                {{ (result?.stars ?? 0) >= 2 ? 'Vous avez brillamment surmonté les épreuves.' : 'Continuez à vous entraîner pour décrocher toutes les étoiles.' }}
             </p>
 
             <div v-if="!result?.failed" class="flex justify-center gap-3 mb-10">
