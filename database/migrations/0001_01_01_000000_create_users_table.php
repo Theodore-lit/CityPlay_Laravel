@@ -23,7 +23,6 @@ return new class extends Migration
             $table->integer('xp')->default(0);
             $table->integer('level')->default(1);
             $table->string('avatar')->nullable();
-            $table->boolean('is_active')->default(true);
             $table->timestamp('last_activity_at')->nullable();
             $table->boolean('deactivate_on_logout')->default(false);
             $table->decimal('latitude', 10, 8)->nullable();
