@@ -142,33 +142,45 @@ html.dark, .dark {
 }
 
 @layer utilities {
+  /* GLASSMORPHISM GLOBAL */
+  .bg-card, .bg-card\/30, .bg-card\/40, .bg-card\/60, .bg-card\/80, .bg-card\/90, .bg-card\/95 {
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .bg-card, .dark .bg-card\/30, .dark .bg-card\/40, .dark .bg-card\/60, .dark .bg-card\/80, .dark .bg-card\/90, .dark .bg-card\/95 {
+    background-color: oklch(0.16 0.06 255 / 0.92) !important;
+    border-color: oklch(0.78 0.15 232 / 0.3) !important;
+  }
+
   /* GLASSMORPHISM PREMIUM */
   .glass {
-    background: color-mix(in srgb, var(--card), transparent 10%); /* Plus solide (90% opaque) */
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    background: color-mix(in srgb, var(--card), transparent 8%) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
     border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   .glass-strong {
-    background: color-mix(in srgb, var(--card), transparent 5%); /* Très solide (95% opaque) */
-    backdrop-filter: blur(40px) saturate(220%);
-    -webkit-backdrop-filter: blur(40px) saturate(220%);
+    background: color-mix(in srgb, var(--card), transparent 4%) !important;
+    backdrop-filter: blur(40px) saturate(220%) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(220%) !important;
     border: 1px solid var(--border);
     box-shadow: var(--shadow-md);
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
   .dark .glass-strong {
-    background: oklch(0.16 0.06 255 / 0.96); /* Augmentation de l'opacité (96%) */
-    border: 1px solid oklch(0.78 0.15 232 / 0.45);
+    background: oklch(0.16 0.06 255 / 0.96) !important;
+    border: 1px solid oklch(0.78 0.15 232 / 0.45) !important;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   }
 
   .dark .glass {
-    background: oklch(0.15 0.03 240 / 0.92); /* Augmentation de l'opacité (92%) */
+    background: oklch(0.15 0.03 240 / 0.92) !important;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   }
 
