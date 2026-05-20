@@ -2,16 +2,18 @@
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import SiteLayout from '@/Layouts/SiteLayout.vue';
+import HUDHeader from '@/Components/HUDHeader.vue';
+import HUDButton from '@/Components/HUDButton.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
-import NeonButton from '@/Components/NeonButton.vue';
 import MapComponent from '@/Components/MapComponent.vue';
 import Modal from '@/Components/Modal.vue';
 import {
   MapPin, QrCode, Navigation, Sparkles, Lock, Target, Zap,
   ChevronLeft, Star, Heart, Clock, Play, Info, CheckCircle2, Trophy, Brain,
-  Pause, HelpCircle, Eye, XCircle, ArrowRight
+  Pause, HelpCircle, Eye, XCircle, ArrowRight, Activity
 } from 'lucide-vue-next';
 import { cn } from '@/lib/utils';
+import gsap from 'gsap';
 
 const props = defineProps({
     city: Object,
@@ -231,157 +233,258 @@ onUnmounted(() => {
 <template>
   <Head :title="`${city?.name || 'Aventure'} — Mode Aventure`" />
 
-  <SiteLayout hideFooter>
-    <div class="mx-auto max-w-7xl px-2 sm:px-6 py-4 md:py-6 pb-28 md:pb-12 h-full flex flex-col bg-gaming-darker">
+  <SiteLayout hideFooter isHUD isMapPage>
+    <HUDHeader />
+
+    <div class="mx-auto max-w-7xl px-4 py-4 md:py-6 pb-28 md:pb-12 h-full flex flex-col relative z-10">
       
       <!-- MODE AVENTURE -->
-      <div v-if="gameMode === 'aventure'" class="flex flex-col gap-4 flex-1">
-          <!-- HUD TOP -->
-          <div class="w-full max-w-3xl mx-auto animate-fade-up z-20">
-              <div class="glass-strong rounded-2xl border border-electric/30 p-4 md:p-5 backdrop-blur-xl shadow-neon-blue relative overflow-hidden">
-                  <div class="flex items-center justify-between gap-4 mb-3">
-                      <div class="flex items-center gap-3">
-                          <div class="h-10 w-10 rounded-xl bg-electric/10 border border-electric/20 flex items-center justify-center text-electric">
-                              <Brain class="h-5 w-5 animate-pulse-soft" />
+      <div v-if="gameMode === 'aventure'" class="flex flex-col gap-6 flex-1">
+          <!-- HUD TOP MISSION CONTROL -->
+          <div class="w-full max-w-4xl mx-auto animate-fade-up z-20">
+              <div class="neon-border-box p-5 md:p-6 overflow-hidden group">
+                  <div class="neon-corner top-0 left-0 border-r-0 border-b-0 scale-75" />
+                  <div class="neon-corner top-0 right-0 border-l-0 border-b-0 scale-75" />
+                  
+                  <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+                      <div class="flex items-center gap-5 flex-1">
+                          <div class="h-16 w-16 rounded-2xl bg-primary/10 border-2 border-primary/40 flex items-center justify-center text-primary relative overflow-hidden shrink-0">
+                              <div class="absolute inset-0 bg-primary/5 animate-pulse" />
+                              <Brain class="h-8 w-8 relative z-10 drop-shadow-[0_0_8px_#06b6d4]" />
                           </div>
                           <div>
-                              <div class="text-[8px] text-electric font-black uppercase tracking-[0.2em]">Mission Active</div>
-                              <h3 class="font-display text-base md:text-lg text-white uppercase tracking-tight">{{ currentTarget?.display_name }}</h3>
+                              <div class="flex items-center gap-2 mb-1">
+                                  <div class="h-1 w-1 rounded-full bg-primary animate-ping" />
+                                  <span class="text-[9px] text-primary font-black uppercase tracking-[0.3em]">MISSION_OBJECTIVE // ACTIVE</span>
+                              </div>
+                              <h3 class="font-display text-xl md:text-2xl text-white uppercase italic font-black tracking-tighter">{{ currentTarget?.display_name }}</h3>
                           </div>
                       </div>
-                      <button @click="handleUseHint" :disabled="showHint || isPaused" class="h-9 px-4 rounded-xl bg-warning text-black flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-warning/80 transition-all shadow-neon-warning shrink-0">
-                          <HelpCircle class="h-3.5 w-3.5" /> Indice -50px
-                      </button>
+
+                      <div class="flex items-center gap-4 w-full md:w-auto">
+                          <HUDButton @click="handleUseHint" :disabled="showHint || isPaused" variant="magenta" class="h-10 px-6 text-[9px] flex-1 md:flex-none">
+                              <HelpCircle class="h-3.5 w-3.5 mr-2" /> DÉCODER_INDICE
+                          </HUDButton>
+                          <div class="h-10 px-6 rounded-xl border border-white/10 bg-white/5 flex items-center gap-3 backdrop-blur-xl shrink-0">
+                              <Clock class="h-4 w-4 text-primary animate-pulse" />
+                              <span class="text-sm font-black text-white italic tracking-tighter">{{ formatTime(gameTime) }}</span>
+                          </div>
+                      </div>
                   </div>
-                  <p class="text-xs md:text-sm text-foreground/90 italic leading-relaxed border-l-2 border-electric/30 pl-3">"{{ displayEnigma }}"</p>
-                  <Transition name="fade">
-                    <div v-if="showHint" class="mt-3 p-3 rounded-xl bg-warning/10 border border-warning/30 text-[10px] text-warning flex gap-2">
-                        <Eye class="h-4 w-4 shrink-0" />
-                        <div>{{ activeEnigma?.indices?.[0] || 'Observez bien les détails environnementaux.' }}</div>
-                    </div>
-                  </Transition>
+
+                  <div class="mt-6 p-5 rounded-[1.5rem] bg-white/[0.02] border border-white/5 relative overflow-hidden">
+                      <div class="absolute top-0 left-0 h-full w-0.5 bg-primary drop-shadow-[0_0_8px_#06b6d4]" />
+                      <p class="text-sm md:text-base text-white/80 italic font-bold uppercase tracking-widest leading-relaxed pl-4">"{{ displayEnigma }}"</p>
+                      
+                      <Transition name="fade">
+                        <div v-if="showHint" class="mt-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 text-[10px] text-amber-500 font-black tracking-widest flex gap-3 animate-fade-up">
+                            <Eye class="h-4 w-4 shrink-0" />
+                            <div class="uppercase leading-relaxed">{{ activeEnigma?.indices?.[0] || 'OBSERVEZ_ATTENTIVEMENT_VOTRE_ENVIRONNEMENT_IMMÉDIAT.' }}</div>
+                        </div>
+                      </Transition>
+                  </div>
               </div>
           </div>
 
-          <!-- RADAR AREA -->
-          <div class="flex-1 relative flex items-center justify-center min-h-[300px]">
-              <div class="w-full aspect-square max-w-[400px] relative">
-                  <div class="absolute inset-0 rounded-full border-2 border-electric/20 overflow-hidden shadow-neon-blue-lg bg-white">
-                      <MapComponent ref="mapRef" :locations="locations" :userPosition="userPosition" :targetLocation="currentTarget" :teamMembers="teamMembers" />
+          <!-- RADAR AREA - ULTRA REALISTIC -->
+          <div class="flex-1 relative flex items-center justify-center min-h-[350px]">
+              <div class="relative w-full aspect-square max-w-[450px] p-8">
+                  <!-- RADAR BACKGROUND EFFECTS -->
+                  <div class="absolute inset-0 rounded-full border border-primary/20 bg-primary/5 backdrop-blur-sm" />
+                  <div class="absolute inset-4 rounded-full border border-primary/10" />
+                  <div class="absolute inset-1/4 rounded-full border border-primary/5" />
+                  
+                  <!-- SWEEP LINE EFFECT -->
+                  <div class="absolute inset-0 rounded-full animate-spin [animation-duration:4s] pointer-events-none z-30">
+                      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-0.5 h-1/2 bg-gradient-to-t from-primary/60 to-transparent" />
                   </div>
-                  <div class="absolute inset-0 pointer-events-none rounded-full border-[8px] border-gaming-darker z-10"></div>
-                  <div class="absolute -top-2 -right-1 z-20 flex items-center gap-2 bg-gaming-dark/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 shadow-lg">
-                      <Clock class="h-3.5 w-3.5 text-electric" />
-                      <span class="text-xs font-mono font-bold text-white">{{ formatTime(gameTime) }}</span>
-                      <button @click="togglePause" class="ml-2 p-1 rounded-md hover:bg-white/10 transition-colors">
-                          <Pause v-if="!isPaused" class="h-3 w-3 text-electric" />
-                          <Play v-else class="h-3 w-3 text-electric" />
+
+                  <div class="absolute inset-0 rounded-full border-4 border-zinc-950 overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] z-20">
+                      <MapComponent ref="mapRef" :locations="locations" :userPosition="userPosition" :targetLocation="currentTarget" :teamMembers="teamMembers" />
+                      <!-- GRID OVERLAY ON MAP -->
+                      <div class="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
+                  </div>
+
+                  <!-- RADAR DECORATIONS -->
+                  <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-zinc-950 border border-primary/40 rounded-full z-40 text-[8px] font-black text-primary tracking-[0.4em] uppercase shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                      SATELLITE_LINK_ESTABLISHED
+                  </div>
+
+                  <!-- CONTROLS -->
+                  <div class="absolute bottom-4 right-4 z-40 flex flex-col gap-2">
+                      <button @click="togglePause" class="h-12 w-12 rounded-xl bg-zinc-950/80 border border-white/10 backdrop-blur-md flex items-center justify-center text-primary hover:border-primary/50 transition-all shadow-xl">
+                          <Pause v-if="!isPaused" class="h-5 w-5" />
+                          <Play v-else class="h-5 w-5" />
                       </button>
                   </div>
               </div>
           </div>
 
           <!-- ACTIONS BOTTOM -->
-          <div class="w-full max-w-3xl mx-auto flex flex-col gap-4 mt-2 animate-fade-up">
-              <div class="flex items-center justify-between gap-4">
-                  <div class="flex-1 bg-white/5 border border-white/10 backdrop-blur-md px-6 py-4 rounded-2xl flex items-center justify-between">
+          <div class="w-full max-w-4xl mx-auto flex flex-col gap-4 mt-auto animate-fade-up">
+              <div class="flex items-center gap-6">
+                  <div class="flex-1 neon-border-box p-5 rounded-[2rem] flex items-center justify-between overflow-hidden">
                       <div class="flex flex-col">
-                          <span class="text-[10px] text-electric font-black uppercase tracking-widest mb-1">Distance Cible</span>
-                          <div class="flex items-center gap-3">
-                              <Navigation class="h-5 w-5 text-electric animate-pulse" />
-                              <span class="text-2xl font-display text-white tracking-wider">{{ distanceToClosest || '---' }}</span>
+                          <span class="text-[9px] text-primary font-black uppercase tracking-[0.4em] mb-2">TARGET_DISTANCE</span>
+                          <div class="flex items-center gap-4">
+                              <div class="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                                  <Navigation :class="cn('h-6 w-6 text-primary transition-all duration-300', isNearLocation ? 'animate-bounce' : 'animate-pulse')" />
+                              </div>
+                              <span class="text-3xl font-display text-white font-black italic tracking-tighter drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+                                  {{ distanceToClosest || '---' }}
+                              </span>
                           </div>
                       </div>
-                      <div class="flex items-center gap-1">
-                          <div v-for="i in 5" :key="i" :class="cn('h-1.5 w-4 rounded-full transition-all duration-500', i/5 <= proximityScore/100 ? (proximityScore > 80 ? 'bg-destructive shadow-neon-error' : 'bg-electric shadow-neon') : 'bg-white/10')"></div>
+                      
+                      <!-- PROXIMITY SIGNAL BARS -->
+                      <div class="flex flex-col items-end gap-2">
+                          <div class="text-[8px] text-white/30 font-black uppercase tracking-widest">SIGNAL_STRENGTH</div>
+                          <div class="flex items-center gap-1.5 h-6">
+                              <div v-for="i in 8" :key="i" 
+                                   :class="cn('w-2 rounded-sm transition-all duration-700', 
+                                   i/8 <= proximityScore/100 ? (proximityScore > 85 ? 'bg-red-500 shadow-[0_0_12px_#ef4444]' : 'bg-primary shadow-[0_0_12px_#06b6d4]') : 'bg-white/5',
+                                   'h-' + (i + 2))"
+                                   :style="{ height: `${(i/8) * 100}%` }">
+                              </div>
+                          </div>
                       </div>
                   </div>
-                  <button @click="verifyPosition" :disabled="isPaused" class="h-24 w-24 rounded-3xl bg-success text-white shadow-neon-success flex flex-col items-center justify-center gap-1 hover:scale-105 active:scale-95 transition-all border-4 border-gaming-darker shrink-0">
-                      <Target :class="['h-8 w-8', isNearLocation ? 'animate-pulse' : 'opacity-80']" />
-                      <span class="text-[10px] font-black uppercase tracking-widest">Vérifier</span>
-                  </button>
+
+                  <HUDButton @click="verifyPosition" :disabled="isPaused" variant="primary" class="h-28 w-28 rounded-[2.5rem] shadow-[0_0_40px_rgba(6,182,212,0.2)] border-4 border-zinc-950 group shrink-0">
+                      <Target :class="cn('h-10 w-10 transition-all duration-500', isNearLocation ? 'scale-125 text-white drop-shadow-[0_0_15px_#06b6d4]' : 'text-primary opacity-60 group-hover:opacity-100')" />
+                      <span class="text-[9px] font-black uppercase tracking-widest mt-2">VÉRIFIER</span>
+                  </HUDButton>
               </div>
           </div>
       </div>
 
       <!-- MODE CLASSIQUE -->
-      <div v-else class="grid gap-4 md:gap-6 lg:grid-cols-12 flex-1 min-h-0">
-        <div class="lg:col-span-8 relative rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-white/20 glass-strong shadow-lg group bg-gaming-dark h-[60vh] md:h-auto min-h-[450px]">
+      <div v-else class="grid gap-6 lg:grid-cols-12 flex-1 min-h-0">
+        <div class="lg:col-span-8 relative rounded-[3rem] overflow-hidden border-2 border-white/5 hud-glass-card shadow-2xl group bg-zinc-950 h-[55vh] md:h-auto min-h-[450px]">
           <div class="absolute inset-0 z-0">
             <MapComponent :locations="locations" :userPosition="userPosition" :teamMembers="teamMembers" />
           </div>
+          <!-- Grid and HUD overlays for the map -->
+          <div class="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
+          <div class="absolute top-6 left-6 flex items-center gap-3 bg-zinc-950/80 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10">
+              <Activity class="h-4 w-4 text-primary animate-pulse" />
+              <span class="text-[10px] font-black text-white uppercase tracking-[0.3em]">MAP_STREAM_ACTIVE</span>
+          </div>
         </div>
-        <aside class="lg:col-span-4 space-y-4 overflow-y-auto max-h-[50vh] md:max-h-full custom-scrollbar pb-10">
-            <div class="rounded-2xl glass-strong p-5 border border-electric/30">
-                <h2 class="font-display text-lg">Exploration de {{ city?.name }}</h2>
-                <p class="text-xs text-muted-foreground mt-2">Activez le mode aventure pour commencer la quête.</p>
+
+        <aside class="lg:col-span-4 flex flex-col gap-6 overflow-hidden">
+            <div class="neon-border-box p-6 rounded-[2rem]">
+                <div class="flex items-center gap-3 mb-4">
+                    <MapPin class="h-5 w-5 text-primary" />
+                    <h2 class="font-display text-xl text-white font-black uppercase italic tracking-tighter">EXPLORATION // {{ city?.name }}</h2>
+                </div>
+                <p class="text-[11px] text-white/40 font-bold uppercase tracking-widest leading-relaxed border-l border-white/10 pl-4">Activez le mode aventure pour commencer la quête de données.</p>
+                <HUDButton :href="route('player.adventure.setup', city?.id)" variant="primary" class="w-full mt-6 h-12 rounded-xl">
+                    INITIER_SEQUENCE_AVENTURE
+                </HUDButton>
             </div>
-            <div class="space-y-2">
-                <div v-for="loc in locations" :key="loc.id" class="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/5">
-                    <div class="h-10 w-10 rounded-lg bg-gaming-darker flex items-center justify-center">
-                        <Lock v-if="!loc.is_discovered" class="h-4 w-4 text-muted-foreground/30" />
-                        <MapPin v-else class="h-4 w-4 text-electric" />
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
+                <div v-for="loc in locations" :key="loc.id" class="flex items-center gap-5 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] hover:border-primary/20 transition-all group">
+                    <div class="h-12 w-12 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center shrink-0 group-hover:border-primary/40 transition-all">
+                        <Lock v-if="!loc.is_discovered" class="h-5 w-5 text-white/20" />
+                        <MapPin v-else class="h-5 w-5 text-primary drop-shadow-[0_0_8px_#06b6d4]" />
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="text-sm font-bold truncate text-foreground">{{ loc.display_name }}</div>
-                        <div class="text-[8px] text-muted-foreground uppercase">{{ loc.is_discovered ? loc.category : 'Zone inconnue' }}</div>
+                        <div class="text-sm font-black text-white uppercase italic tracking-tight truncate group-hover:text-primary transition-colors">{{ loc.display_name }}</div>
+                        <div class="text-[9px] text-white/30 font-black uppercase tracking-widest mt-1">{{ loc.is_discovered ? loc.category : 'ZONE_ENCRYPTÉE' }}</div>
                     </div>
                 </div>
             </div>
         </aside>
       </div>
 
-      <!-- TOAST -->
+      <!-- TOAST - HUD STYLE -->
       <Transition name="toast">
-        <div v-if="toast.show" :class="cn('absolute top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl border backdrop-blur-xl shadow-2xl flex items-center gap-3 min-w-[280px]', toast.type === 'success' ? 'bg-success/10 border-success/30 text-success' : toast.type === 'error' ? 'bg-destructive/10 border-destructive/30 text-destructive' : 'bg-warning/10 border-warning/30 text-warning')">
-            <component :is="toast.type === 'success' ? CheckCircle2 : Info" class="h-5 w-5" />
-            <span class="text-xs font-bold uppercase tracking-widest">{{ toast.message }}</span>
+        <div v-if="toast.show" :class="cn('absolute top-24 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 rounded-2xl border-2 backdrop-blur-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center gap-4 min-w-[320px]', toast.type === 'success' ? 'bg-green-500/10 border-green-500/30 text-green-400' : toast.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400')">
+            <div class="h-8 w-8 rounded-lg bg-current opacity-10 absolute inset-0" />
+            <component :is="toast.type === 'success' ? CheckCircle2 : (toast.type === 'error' ? XCircle : Info)" class="h-6 w-6 relative z-10" />
+            <span class="text-[11px] font-black uppercase tracking-[0.2em] relative z-10">{{ toast.message }}</span>
         </div>
       </Transition>
     </div>
     <MobileTabBar />
 
-    <!-- MODALS -->
+    <!-- MODALS - HUD STYLE -->
     <Modal :show="showRiddleModal" @close="showRiddleModal = false">
-        <div class="p-8 bg-gaming-darker border border-electric/20 rounded-[2.5rem] max-w-lg mx-auto">
-            <div v-if="isQuestionnaireActive" class="space-y-6">
-                <div class="text-[10px] text-electric font-black uppercase tracking-widest">Question {{ currentQuestionIndex + 1 }} / {{ currentRiddle?.questions?.length }}</div>
-                <div class="p-6 rounded-3xl bg-white/5 border border-white/10 text-lg text-white font-display">
-                    {{ currentRiddle?.questions?.[currentQuestionIndex]?.question_text }}
+        <div class="p-1 rounded-[3rem] bg-gradient-to-br from-primary/40 via-white/5 to-purple-500/40">
+            <div class="p-10 bg-zinc-950 rounded-[2.9rem] max-w-lg mx-auto relative overflow-hidden">
+                <div class="absolute inset-0 grid-bg opacity-20" />
+                
+                <div v-if="isQuestionnaireActive" class="space-y-8 relative z-10">
+                    <div class="flex items-center justify-between">
+                        <div class="text-[10px] text-primary font-black uppercase tracking-[0.4em]">DATA_QUERY // {{ currentQuestionIndex + 1 }} / {{ currentRiddle?.questions?.length }}</div>
+                        <Activity class="h-4 w-4 text-primary animate-pulse" />
+                    </div>
+                    <div class="p-8 rounded-[2rem] bg-white/[0.03] border border-white/10 text-xl text-white font-display font-black uppercase italic tracking-tighter leading-tight">
+                        {{ currentRiddle?.questions?.[currentQuestionIndex]?.question_text }}
+                    </div>
+                    <div class="grid gap-4">
+                        <button v-for="(option, idx) in currentRiddle?.questions?.[currentQuestionIndex]?.options" :key="idx" @click="selectQuestionOption(option)" 
+                                class="w-full p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-primary hover:bg-primary/5 transition-all text-left group">
+                            <div class="flex items-center gap-4">
+                                <div class="h-6 w-6 rounded border border-white/20 flex items-center justify-center text-[10px] font-black group-hover:border-primary group-hover:text-primary transition-all">
+                                    {{ String.fromCharCode(65 + idx) }}
+                                </div>
+                                <span class="text-sm font-bold text-white/80 group-hover:text-white transition-colors uppercase tracking-widest">{{ option.option_text }}</span>
+                            </div>
+                        </button>
+                    </div>
                 </div>
-                <div class="grid gap-3">
-                    <button v-for="(option, idx) in currentRiddle?.questions?.[currentQuestionIndex]?.options" :key="idx" @click="selectQuestionOption(option)" class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-electric transition-all text-left">
-                        {{ option.option_text }}
-                    </button>
+                <div v-else class="space-y-8 relative z-10">
+                    <h2 class="font-display text-3xl text-white font-black uppercase italic tracking-tighter">{{ selectedLocation?.display_name }}</h2>
+                    <div class="p-8 rounded-[2rem] bg-white/[0.03] border border-white/10 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 h-full w-1 bg-primary" />
+                        <p class="italic text-white/80 font-bold uppercase tracking-widest leading-relaxed">"{{ currentRiddle?.content }}"</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="text-[9px] text-white/20 font-black uppercase tracking-[0.4em] ml-2">INPUT_DECRYPTION_KEY</div>
+                        <input v-model="riddleAnswer" @keyup.enter="submitRiddle" placeholder="VOTRE_REPONSE..." 
+                               class="w-full h-16 rounded-2xl bg-zinc-900 border-2 border-white/10 px-8 text-white font-black tracking-widest outline-none focus:border-primary transition-all uppercase placeholder:text-white/10" />
+                    </div>
+                    <HUDButton variant="primary" class="w-full h-14 rounded-2xl" @click="submitRiddle">TRANSMETTRE_DONNÉES</HUDButton>
                 </div>
-            </div>
-            <div v-else class="space-y-6">
-                <h2 class="font-display text-2xl">{{ selectedLocation?.display_name }}</h2>
-                <p class="p-6 rounded-3xl bg-white/5 border border-white/10 italic text-foreground/90 leading-relaxed">"{{ currentRiddle?.content }}"</p>
-                <input v-model="riddleAnswer" @keyup.enter="submitRiddle" placeholder="Votre réponse..." class="w-full h-14 rounded-2xl bg-gaming-darker border border-electric/30 px-6 text-white outline-none focus:border-electric transition-all" />
-                <NeonButton class="w-full" @click="submitRiddle">Soumettre</NeonButton>
             </div>
         </div>
     </Modal>
 
     <Modal :show="showSuccessModal" @close="showSuccessModal = false">
-        <div class="p-10 bg-gaming-darker border border-electric/20 rounded-[3rem] text-center max-w-sm mx-auto">
-            <Trophy class="h-16 w-16 text-electric mx-auto mb-6" />
-            <h2 class="font-display text-3xl mb-2 text-white">FÉLICITATIONS !</h2>
-            <div class="flex justify-center gap-2 mb-8">
-                <Star v-for="s in 3" :key="s" class="h-8 w-8 text-yellow-400 fill-yellow-400" />
-            </div>
-            <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-                    <div class="text-[10px] text-muted-foreground uppercase">XP GAGNÉS</div>
-                    <div class="text-xl font-display text-electric">+150 PX</div>
+        <div class="p-1 rounded-[3.5rem] bg-gradient-to-br from-green-500/40 via-white/5 to-primary/40">
+            <div class="p-12 bg-zinc-950 rounded-[3.4rem] text-center max-w-sm mx-auto relative overflow-hidden">
+                <div class="absolute inset-0 grid-bg opacity-20" />
+                
+                <div class="relative z-10">
+                    <div class="h-24 w-24 rounded-full bg-green-500/10 border-2 border-green-500/40 flex items-center justify-center mx-auto mb-8 shadow-[0_0_40px_rgba(34,197,94,0.2)]">
+                        <Trophy class="h-12 w-12 text-green-400 drop-shadow-[0_0_12px_#22c55e] animate-bounce" />
+                    </div>
+                    
+                    <h2 class="font-display text-4xl text-white font-black uppercase italic tracking-tighter mb-4">MISSION_SUCCÈS</h2>
+                    
+                    <div class="flex justify-center gap-4 mb-10">
+                        <Star v-for="s in 3" :key="s" :class="cn('h-10 w-10 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]', s <= earnedStars ? 'text-amber-400 fill-amber-400' : 'text-white/10')" />
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-10">
+                        <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/10">
+                            <div class="text-[9px] text-white/30 font-black uppercase tracking-widest mb-2">XP_COLLECTED</div>
+                            <div class="text-2xl font-display text-primary font-black italic">+{{ earnedXp }}</div>
+                        </div>
+                        <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/10">
+                            <div class="text-[9px] text-white/30 font-black uppercase tracking-widest mb-2">TIME_ELAPSED</div>
+                            <div class="text-2xl font-display text-green-400 font-black italic">{{ formatTime(gameTime) }}</div>
+                        </div>
+                    </div>
+                    
+                    <HUDButton variant="primary" size="xl" class="w-full h-16 rounded-[1.5rem]" @click="showSuccessModal = false">
+                        CONTINUER_SEQUENCE
+                    </HUDButton>
                 </div>
-                <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-                    <div class="text-[10px] text-muted-foreground uppercase">DURÉE</div>
-                    <div class="text-xl font-display text-success">{{ formatTime(gameTime) }}</div>
-                </div>
             </div>
-            <NeonButton size="xl" class="w-full rounded-2xl" @click="showSuccessModal = false">CONTINUER</NeonButton>
         </div>
     </Modal>
   </SiteLayout>

@@ -1,11 +1,13 @@
 <script setup>
 import SiteLayout from '@/Layouts/SiteLayout.vue';
+import HUDHeader from '@/Components/HUDHeader.vue';
+import HUDButton from '@/Components/HUDButton.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
-import NeonButton from '@/Components/NeonButton.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { MapPin, ArrowRight, Star, Clock, Zap, Bike, Car, Filter, RefreshCw } from 'lucide-vue-next';
 import { ref, onMounted } from 'vue';
 import gsap from 'gsap';
+import { cn } from '@/lib/utils';
 
 const props = defineProps({
     city: Object,
@@ -56,99 +58,113 @@ const getDifficultyColor = (diff) => {
 <template>
   <Head title="Lobby Exploration — CityPlay" />
 
-  <SiteLayout>
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-8 pb-28 md:pb-12 min-h-screen">
+  <SiteLayout isHUD>
+    <HUDHeader />
+
+    <div class="mx-auto max-w-7xl px-6 py-8 pb-28 md:pb-12 min-h-screen relative z-10">
       <!-- LOADER GSAP -->
-      <div v-if="isLoading" class="fixed inset-0 z-50 bg-gaming-dark flex flex-col items-center justify-center p-6">
-          <div class="w-64 h-1 bg-white/10 rounded-full overflow-hidden mb-4">
-              <div class="loading-bar h-full bg-electric shadow-neon w-0"></div>
+      <div v-if="isLoading" class="fixed inset-0 z-[100] bg-zinc-950/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6">
+          <div class="w-80 h-1.5 bg-white/5 rounded-full overflow-hidden mb-6 border border-white/10">
+              <div class="loading-bar h-full bg-primary shadow-[0_0_20px_#06b6d4] w-0" />
           </div>
-          <div class="text-[10px] text-electric uppercase tracking-[0.4em] font-black animate-pulse">Scan des fréquences locales...</div>
+          <div class="text-[12px] text-primary font-black uppercase tracking-[0.6em] animate-pulse">SCAN_FREQUENCES_LOCALES...</div>
       </div>
 
       <div v-else>
         <!-- HEADER -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
             <div>
-                <div class="text-[10px] text-electric uppercase tracking-[0.3em] font-black mb-1">Missions Disponibles</div>
-                <h1 class="font-display text-3xl md:text-5xl neon-text uppercase tracking-tight">LOBBY <span class="text-electric">EXPLORER</span></h1>
-                <div class="flex items-center gap-4 mt-2">
-                    <span class="text-xs text-muted-foreground flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full border border-white/10">
-                        <MapPin class="h-3 w-3 text-electric" /> {{ city.name }}
-                    </span>
-                    <span :class="['text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border', getDifficultyColor(config.difficulty)]">
-                        {{ config.difficulty }}
-                    </span>
+                <div class="text-[10px] text-primary font-black uppercase tracking-[0.5em] mb-4">MISSIONS_AVAILABLE // SECTOR_LOBBY</div>
+                <h1 class="font-display text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-white mb-6">
+                    LOBBY <span class="text-primary drop-shadow-[0_0_15px_#06b6d4]">EXPLORER</span>
+                </h1>
+                <div class="flex items-center gap-4">
+                    <div class="px-4 py-1.5 rounded-xl bg-primary/5 border border-primary/20 backdrop-blur-xl flex items-center gap-2">
+                        <MapPin class="h-3.5 w-3.5 text-primary" />
+                        <span class="text-[10px] font-black text-white uppercase tracking-widest">{{ city.name }}</span>
+                    </div>
+                    <div :class="cn('px-4 py-1.5 rounded-xl border-2 text-[10px] font-black uppercase tracking-widest', getDifficultyColor(config.difficulty))">
+                        {{ config.difficulty.toUpperCase() }}
+                    </div>
                 </div>
             </div>
 
-            <div class="flex gap-3">
-                <button @click="goBack" class="px-4 py-2 rounded-xl glass border-white/10 text-xs font-bold flex items-center gap-2 hover:border-electric/50 transition-all">
-                    <RefreshCw class="h-4 w-4" /> REJOUER / PARAMÈTRES
-                </button>
+            <div class="flex gap-4">
+                <HUDButton @click="goBack" variant="primary" class="h-12 px-6">
+                    <div class="flex items-center gap-2">
+                        <RefreshCw class="h-4 w-4" />
+                        <span>REJOUER // PARAMÈTRES</span>
+                    </div>
+                </HUDButton>
             </div>
         </div>
 
         <!-- LISTE DES ENIGMES -->
-        <div v-if="locations.length > 0" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div v-if="locations.length > 0" class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             <div
                 v-for="location in locations"
                 :key="location.id"
-                class="enigma-card group relative overflow-hidden rounded-2xl glass-strong border border-white/10 hover:border-electric/40 transition-all duration-500"
+                class="enigma-card hud-glass-card group relative overflow-hidden rounded-[2.5rem] border-2 border-white/5 hover:border-primary/40 transition-all duration-700 h-[480px] flex flex-col"
             >
                 <!-- Image de fond floue -->
-                <div class="absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity">
-                    <img :src="location.image_path || '/images/placeholders/location.jpg'" class="w-full h-full object-cover" />
+                <div class="absolute inset-0 opacity-20 group-hover:opacity-40 transition-all duration-1000">
+                    <img :src="location.image_path || '/images/placeholders/location.jpg'" class="w-full h-full object-cover city-hud-img" />
                 </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-gaming-dark via-gaming-dark/80 to-transparent" />
+                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
+                <div class="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
 
-                <div class="relative p-6 h-full flex flex-col">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="h-10 w-10 rounded-xl bg-electric/10 border border-electric/20 flex items-center justify-center text-electric shadow-neon-sm">
-                            <Zap v-if="config.transport === 'moto'" class="h-5 w-5" />
-                            <Car v-else-if="config.transport === 'car'" class="h-5 w-5" />
-                            <Bike v-else class="h-5 w-5" />
+                <div class="relative p-8 h-full flex flex-col z-10">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="h-14 w-14 rounded-2xl bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-primary shadow-[0_0_20px_rgba(6,182,212,0.2)] group-hover:scale-110 transition-transform">
+                            <Zap v-if="config.transport === 'moto'" class="h-7 w-7" />
+                            <Car v-else-if="config.transport === 'car'" class="h-7 w-7" />
+                            <Bike v-else class="h-7 w-7" />
                         </div>
-                        <div class="flex items-center gap-1 text-warning">
-                            <Star class="h-4 w-4 fill-current" />
-                            <span class="text-xs font-black">150 PX</span>
+                        <div class="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center gap-2 text-amber-500">
+                            <Star class="h-3.5 w-3.5 fill-current" />
+                            <span class="text-[10px] font-black tracking-widest">150 PX</span>
                         </div>
                     </div>
 
-                    <h3 class="font-display text-xl text-white group-hover:text-electric transition-colors mb-2 uppercase tracking-wide">
-                        Mission : {{ location.enigmas[0]?.title || 'Enigme Mystère' }}
+                    <h3 class="font-display text-2xl text-white group-hover:text-primary transition-colors mb-4 uppercase italic font-black tracking-tighter leading-tight">
+                        {{ location.enigmas[0]?.title || 'MISSION_MYSTERE' }}
                     </h3>
 
-                    <p class="text-xs text-muted-foreground line-clamp-2 mb-6 flex-grow">
-                        {{ location.enigmas[0]?.content.substring(0, 100) }}...
+                    <p class="text-[11px] text-white/40 font-bold uppercase tracking-widest leading-relaxed line-clamp-3 mb-8 flex-grow">
+                        {{ location.enigmas[0]?.content.substring(0, 150) }}...
                     </p>
 
-                    <div class="flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
-                        <div class="flex items-center gap-2 text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
-                            <Clock class="h-3.5 w-3.5" /> 15-30 MIN
+                    <div class="flex items-center justify-between pt-8 border-t border-white/5 mt-auto">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[8px] text-white/20 font-black tracking-[0.3em] uppercase">ESTIMATED_TIME</span>
+                            <div class="flex items-center gap-2 text-[10px] text-white/60 font-black uppercase tracking-widest">
+                                <Clock class="h-3.5 w-3.5 text-primary" /> 15-30 MIN
+                            </div>
                         </div>
-                        <button
+                        <HUDButton
                             @click="selectEnigma(location, location.enigmas[0])"
-                            class="px-5 py-2 rounded-xl bg-electric text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-neon hover:scale-105 active:scale-95 transition-all"
+                            variant="primary"
+                            class="h-11 px-8"
                         >
                             DÉMARRER
-                        </button>
+                        </HUDButton>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div v-else class="flex flex-col items-center justify-center py-20 glass rounded-[2rem] border border-white/5">
-            <div class="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
-                <Filter class="h-10 w-10 text-muted-foreground/30" />
+        <div v-else class="flex flex-col items-center justify-center py-24 hud-glass-card rounded-[3rem] border-2 border-white/5 max-w-4xl mx-auto">
+            <div class="h-24 w-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-8 relative">
+                <div class="absolute inset-0 rounded-full border border-primary/20 animate-ping" />
+                <Filter class="h-10 w-10 text-white/20" />
             </div>
-            <h3 class="font-display text-2xl text-white mb-2 uppercase">Aucune mission trouvée</h3>
-            <p class="text-muted-foreground text-sm max-w-md text-center px-6">
-                Nous n'avons trouvé aucune énigme correspondant à vos critères de distance ({{ config.transport }}) et de difficulté ({{ config.difficulty }}) dans cette ville.
+            <h3 class="font-display text-3xl text-white font-black uppercase italic tracking-tighter mb-4">AUCUNE_MISSION_TROUVÉE</h3>
+            <p class="text-white/40 text-xs font-bold uppercase tracking-[0.2em] max-w-md text-center px-10 leading-loose">
+                Le système n'a trouvé aucune énigme correspondant à vos critères de distance ({{ config.transport.toUpperCase() }}) et de difficulté ({{ config.difficulty.toUpperCase() }}) dans ce secteur.
             </p>
-            <NeonButton @click="goBack" class="mt-8">
+            <HUDButton @click="goBack" variant="primary" class="mt-12 h-14 px-12">
                 MODIFIER LES FILTRES
-            </NeonButton>
+            </HUDButton>
         </div>
       </div>
     </div>

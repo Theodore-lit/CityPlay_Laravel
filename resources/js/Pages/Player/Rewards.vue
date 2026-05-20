@@ -1,5 +1,7 @@
 <script setup>
 import SiteLayout from '@/Layouts/SiteLayout.vue';
+import HUDHeader from '@/Components/HUDHeader.vue';
+import HUDButton from '@/Components/HUDButton.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
 import { Head } from '@inertiajs/vue3';
 import { Crown, Sparkles, Flame, Compass, Shield, Star, Lock, Award, Gem, Skull } from 'lucide-vue-next';
@@ -39,56 +41,76 @@ const rareColors = {
 <template>
   <Head title="Récompenses — CityPlay" />
 
-  <SiteLayout>
-    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-10 pb-28 md:pb-12">
-      <div class="text-center">
-        <Sparkles class="h-10 w-10 mx-auto text-purple-neon animate-pulse-glow rounded-lg p-1" />
-        <h1 class="font-display text-3xl md:text-5xl mt-3 text-foreground">Coffre aux <span class="text-electric neon-text">Trophées</span></h1>
-        <p class="mt-2 text-muted-foreground">12 sur 48 badges débloqués. La légende grandit.</p>
+  <SiteLayout isHUD>
+    <HUDHeader />
+
+    <div class="mx-auto max-w-6xl px-6 py-10 pb-28 md:pb-12 relative z-10">
+      <div class="flex flex-col items-center text-center mb-12">
+        <div class="flex items-center gap-2 mb-4">
+            <div class="h-px w-12 bg-purple-500/30" />
+            <Sparkles class="h-6 w-6 text-purple-500 drop-shadow-[0_0_10px_#d946ef]" />
+            <div class="h-px w-12 bg-purple-500/30" />
+        </div>
+        <h1 class="font-display text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-white mb-2">
+            COFFRE AUX <span class="text-purple-500 drop-shadow-[0_0_15px_#d946ef]">TROPHEES</span>
+        </h1>
+        <div class="text-[10px] font-black tracking-[0.5em] text-white/40 uppercase">DATA_COLLECTION_STATUS // 12 / 48 BADGES</div>
       </div>
 
-      <div class="mt-8 grid grid-cols-3 gap-4 max-w-xl mx-auto">
+      <div class="mt-8 grid grid-cols-3 gap-4 max-w-xl mx-auto mb-16">
         <div v-for="s in [
-          { v: 12, l: 'Débloqués', c: 'text-electric' },
-          { v: 3, l: 'Légendaires', c: 'text-warning' },
-          { v: 36, l: 'Restants', c: 'text-muted-foreground' }
-        ]" :key="s.l" class="rounded-2xl glass p-4 text-center">
-          <div :class="cn('font-display text-2xl md:text-3xl', s.c)">{{ s.v }}</div>
-          <div class="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{{ s.l }}</div>
+          { v: 12, l: 'DÉBLOQUÉS', c: 'text-primary' },
+          { v: 3, l: 'LÉGENDAIRES', c: 'text-amber-500' },
+          { v: 36, l: 'RESTANTS', c: 'text-white/20' }
+        ]" :key="s.l" class="hud-glass-card rounded-2xl p-6 text-center border border-white/5 relative group overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div :class="cn('font-display text-3xl md:text-4xl font-black italic drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]', s.c)">{{ s.v }}</div>
+          <div class="text-[8px] font-black uppercase tracking-[0.3em] text-white/40 mt-2">{{ s.l }}</div>
         </div>
       </div>
 
-      <div class="mt-12 space-y-12">
-        <div v-for="cat in cats" :key="cat.title">
-          <h2 :class="cn('font-display text-xl flex items-center gap-2', cat.color)">
-            <Sparkles class="h-4 w-4" />{{ cat.title }}
-          </h2>
-          <div class="mt-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div class="mt-12 space-y-20">
+        <div v-for="cat in cats" :key="cat.title" class="relative">
+          <div class="flex items-center gap-4 mb-8">
+            <h2 :class="cn('font-display text-2xl font-black uppercase italic tracking-tighter flex items-center gap-3', cat.color === 'text-warning' ? 'text-amber-500' : 'text-primary')">
+              <div class="h-2 w-2 rounded-full bg-current animate-pulse" />
+              {{ cat.title.toUpperCase() }}
+            </h2>
+            <div class="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
             <div v-for="b in cat.badges" :key="b.name" 
                  :class="cn(
-                    'relative glass-strong rounded-[1.5rem] p-4 text-center border-white/20 transition-all duration-500 hover-game overflow-hidden group',
-                    b.unlocked ? 'opacity-100' : 'opacity-40 grayscale'
+                    'relative hud-glass-card rounded-[2.5rem] p-6 text-center border-2 transition-all duration-700 overflow-hidden group',
+                    b.unlocked ? 'border-white/10 hover:border-primary/40' : 'border-white/5 opacity-40 grayscale hover:opacity-60'
                  )">
-                <div v-if="b.unlocked" class="absolute -top-10 -right-10 h-24 w-24 rounded-full bg-primary/10 blur-2xl group-hover:bg-primary/20 transition-colors" />
                 
-                <div class="relative z-10">
+                <!-- Background Glow -->
+                <div v-if="b.unlocked" class="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-primary/10 blur-3xl group-hover:bg-primary/20 transition-all duration-700" />
+                
+                <div class="relative z-10 flex flex-col items-center">
                   <div :class="cn(
-                    'h-12 w-12 mx-auto rounded-xl grid place-items-center border transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm',
-                    b.unlocked ? rareColors[b.rare] : 'border-white/10 bg-white/5',
-                    b.unlocked && b.rare === 'légendaire' ? 'animate-pulse-soft' : ''
+                    'h-16 w-16 rounded-2xl grid place-items-center border-2 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-xl relative',
+                    b.unlocked ? (b.rare === 'légendaire' ? 'border-amber-500 bg-amber-500/10 text-amber-500 shadow-amber-500/20' : 'border-primary bg-primary/10 text-primary shadow-primary/20') : 'border-white/10 bg-white/5 text-white/20'
                   )">
-                    <component :is="b.icon" class="h-6 w-6" />
+                    <div class="absolute inset-0 bg-current opacity-10 rounded-xl" />
+                    <component :is="b.icon" class="h-8 w-8 relative z-10 drop-shadow-[0_0_8px_rgba(0,0,0,0.5)]" />
                   </div>
-                  <div class="mt-3 font-display text-[10px] font-black text-foreground uppercase tracking-tight truncate">{{ b.name }}</div>
-                  <div class="mt-1 text-[8px] uppercase tracking-[0.2em] text-muted-foreground font-black">{{ b.rare }}</div>
                   
-                  <div class="mt-3 pt-3 border-t border-white/5">
-                      <p class="text-[9px] text-muted-foreground leading-tight line-clamp-2 italic font-medium">{{ b.desc }}</p>
+                  <div class="mt-5 font-display text-[11px] font-black text-white uppercase italic tracking-tight leading-tight min-h-[2rem] flex items-center justify-center">{{ b.name }}</div>
+                  <div :class="cn('mt-1 text-[7px] font-black uppercase tracking-[0.4em]', b.unlocked ? 'text-primary' : 'text-white/20')">{{ b.rare }}</div>
+                  
+                  <div class="mt-4 pt-4 border-t border-white/5 w-full">
+                      <p class="text-[9px] text-white/40 leading-relaxed font-bold uppercase tracking-widest line-clamp-2">{{ b.desc }}</p>
                   </div>
                 </div>
 
-                <div v-if="!b.unlocked" class="absolute inset-0 bg-background/60 backdrop-blur-[2px] grid place-items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Lock class="h-6 w-6 text-muted-foreground/40" />
+                <!-- LOCK OVERLAY -->
+                <div v-if="!b.unlocked" class="absolute inset-0 bg-zinc-950/40 backdrop-blur-[1px] grid place-items-center opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <div class="h-10 w-10 rounded-full border border-white/20 flex items-center justify-center bg-black/60">
+                        <Lock class="h-4 w-4 text-white/40" />
+                    </div>
                 </div>
             </div>
           </div>

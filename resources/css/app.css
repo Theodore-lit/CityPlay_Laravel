@@ -181,6 +181,364 @@ html.dark, .dark {
   .bg-gradient-accent {
     background: linear-gradient(135deg, var(--accent), oklch(0.85 0.20 60));
   }
+
+  /* CLIP PATHS */
+  .clip-path-hex {
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  }
+  .clip-path-tech {
+    clip-path: polygon(0% 0%, 90% 0%, 100% 30%, 100% 100%, 10% 100%, 0% 70%);
+  }
+
+  /* HUD SYSTEM - CYBERPUNK EDITION */
+  .hud-container {
+    background-color: #020617 !important;
+    background-image: 
+      radial-gradient(circle at center, transparent 0%, rgba(2, 6, 23, 0.98) 100%),
+      linear-gradient(rgba(6, 182, 212, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(6, 182, 212, 0.05) 1px, transparent 1px),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E") !important;
+    background-size: 100% 100%, 30px 30px, 30px 30px, 150px 150px !important;
+    background-attachment: fixed !important;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Vignetting ultra-profond avec teintes colorées */
+  .hud-vignette {
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(circle at 20% 20%, oklch(0.60 0.20 250 / 0.05), transparent 40%),
+      radial-gradient(circle at 80% 80%, oklch(0.60 0.25 320 / 0.05), transparent 40%),
+      radial-gradient(circle at center, transparent 20%, rgba(0, 0, 0, 0.85) 100%);
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .neon-border-box {
+    position: relative;
+    background: rgba(2, 8, 23, 0.5);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(6, 182, 212, 0.15);
+    box-shadow: 
+      inset 0 0 30px rgba(6, 182, 212, 0.05),
+      0 15px 45px rgba(0, 0, 0, 0.7);
+  }
+
+  /* Bordures Néon comme sources de lumière - Variantes */
+  .neon-border-box::before, .neon-border-box::after {
+    content: '';
+    position: absolute;
+    background: linear-gradient(90deg, transparent, var(--neon-color, #06b6d4), transparent);
+    filter: blur(1px);
+    z-index: 2;
+  }
+
+  .neon-border-box.magenta { --neon-color: #d946ef; }
+  .neon-border-box.orange { --neon-color: #f97316; }
+
+  .neon-border-box::before {
+    top: -1px;
+    left: 15%;
+    right: 15%;
+    height: 1.5px;
+    box-shadow: 0 0 12px var(--neon-color, #06b6d4), 0 0 25px rgba(6, 182, 212, 0.4);
+  }
+
+  .neon-border-box::after {
+    bottom: -1px;
+    left: 15%;
+    right: 15%;
+    height: 1.5px;
+    box-shadow: 0 0 12px var(--neon-color, #06b6d4), 0 0 25px rgba(6, 182, 212, 0.4);
+  }
+
+  /* Coins mécaniques colorés */
+  .neon-corner {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid var(--neon-color, #06b6d4);
+    filter: drop-shadow(0 0 6px var(--neon-color, #06b6d4));
+    z-index: 3;
+    opacity: 0.8;
+  }
+
+  .hud-glass-card {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+    backdrop-filter: blur(40px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 
+      inset 0 0 15px rgba(255, 255, 255, 0.02),
+      0 12px 35px rgba(0, 0, 0, 0.8);
+    transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .hud-glass-card:hover {
+    border-color: rgba(6, 182, 212, 0.5);
+    box-shadow: 
+      inset 0 0 25px rgba(6, 182, 212, 0.1),
+      0 0 40px rgba(6, 182, 212, 0.2);
+    transform: translateY(-6px) scale(1.02);
+  }
+
+  .hud-glass-card.epic:hover {
+    border-color: rgba(217, 70, 239, 0.5);
+    box-shadow: 
+      inset 0 0 25px rgba(217, 70, 239, 0.1),
+      0 0 40px rgba(217, 70, 239, 0.2);
+  }
+
+  /* PROGRESS LED EFFECT - Plus réaliste */
+  .segmented-progress {
+    display: flex;
+    gap: 4px;
+    height: 12px;
+    padding: 2px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .progress-segment {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.02);
+    transform: skewX(-15deg);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .progress-segment.active {
+    background: linear-gradient(to bottom, #22d3ee, #06b6d4);
+    box-shadow: 
+      0 0 10px #06b6d4,
+      0 0 20px rgba(6, 182, 212, 0.5),
+      inset 0 1px 2px rgba(255, 255, 255, 0.8);
+    border: 1px solid #67e8f9;
+  }
+
+  /* TECH HEXAGON - Plus de profondeur */
+  .tech-hexagon-container {
+    position: relative;
+    padding: 10px;
+  }
+
+  .tech-hexagon-outer {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(6, 182, 212, 0.15), transparent 70%);
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    border: 1.5px solid rgba(6, 182, 212, 0.3);
+    transition: all 0.5s ease;
+  }
+
+  .tech-hexagon-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #020817, #0f172a);
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    border: 2px solid rgba(6, 182, 212, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+      inset 0 0 30px rgba(6, 182, 212, 0.5),
+      0 0 20px rgba(6, 182, 212, 0.3);
+  }
+
+  /* AGGRESSIVE PLAY BUTTON - Forme plus complexe et couleurs */
+  .aggressive-play {
+    clip-path: polygon(0% 15%, 10% 0%, 90% 0%, 100% 15%, 100% 85%, 90% 100%, 10% 100%, 0% 85%);
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.2), rgba(6, 182, 212, 0.05), rgba(217, 70, 239, 0.1));
+    border: 1px solid rgba(6, 182, 212, 0.4);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+
+  .aggressive-play:hover {
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.4), rgba(217, 70, 239, 0.3));
+    transform: scale(1.03);
+    box-shadow: 
+      0 0 40px rgba(6, 182, 212, 0.3),
+      0 0 60px rgba(217, 70, 239, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+
+  .aggressive-play::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+    box-shadow: 0 0 20px #fff, 0 0 40px rgba(6, 182, 212, 0.5);
+    animation: scanline 3s linear infinite;
+    z-index: 2;
+  }
+
+  /* MIRROR SWEEP EFFECT */
+  .mirror-sweep {
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0) 30%,
+      rgba(255, 255, 255, 0.8) 50%,
+      rgba(255, 255, 255, 0) 70%,
+      transparent 100%
+    );
+    transform: skewX(-25deg);
+    pointer-events: none;
+    z-index: 20;
+    filter: blur(2px);
+  }
+
+  .hud-btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hud-btn-primary {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(6, 182, 212, 0.05));
+    border: 1px solid rgba(6, 182, 212, 0.4);
+    clip-path: polygon(0% 0%, 90% 0%, 100% 30%, 100% 100%, 10% 100%, 0% 70%);
+  }
+
+  .hud-btn-primary:hover {
+    background: rgba(6, 182, 212, 0.25);
+    border-color: rgba(6, 182, 212, 0.8);
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+    transform: translateY(-2px);
+  }
+
+  .hud-btn-magenta {
+    background: linear-gradient(135deg, rgba(217, 70, 239, 0.2), rgba(217, 70, 239, 0.05));
+    border: 1px solid rgba(217, 70, 239, 0.4);
+    clip-path: polygon(0% 0%, 90% 0%, 100% 30%, 100% 100%, 10% 100%, 0% 70%);
+  }
+
+  .hud-btn-magenta:hover {
+    background: rgba(217, 70, 239, 0.25);
+    border-color: rgba(217, 70, 239, 0.8);
+    box-shadow: 0 0 20px rgba(217, 70, 239, 0.3);
+    transform: translateY(-2px);
+  }
+
+  /* HONEYCOMB SUCCESS - Symétrie et Réalisme */
+  .honeycomb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 10px;
+    padding: 12px;
+    justify-items: center;
+  }
+
+  .badge-hex {
+    width: 70px;
+    height: 80px;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    background: linear-gradient(135deg, rgba(2, 6, 23, 0.8), rgba(15, 23, 42, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s ease;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
+  }
+
+  .badge-hex.epic {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(15, 23, 42, 0.9));
+    border: 1px solid rgba(6, 182, 212, 0.6);
+    box-shadow: 
+      0 0 20px rgba(6, 182, 212, 0.3),
+      inset 0 0 12px rgba(6, 182, 212, 0.2);
+  }
+
+  .badge-hex::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      transparent 0%,
+      transparent 35%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 65%,
+      transparent 100%
+    );
+    background-size: 300% 300%;
+    animation: shimmer-badge 2.5s infinite;
+    pointer-events: none;
+  }
+
+  /* REAL FLAME EFFECT - Plus intense */
+  .real-flame {
+    filter: 
+      drop-shadow(0 0 12px #f97316)
+      drop-shadow(0 0 25px #ea580c)
+      drop-shadow(0 0 40px #c2410c)
+      drop-shadow(0 0 60px rgba(249, 115, 22, 0.5));
+    animation: flicker 1.2s infinite alternate cubic-bezier(0.45, 0.05, 0.55, 0.95);
+  }
+
+  /* HUD DECORATIONS */
+  .hud-data-line {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 8px;
+    color: rgba(6, 182, 212, 0.4);
+    letter-spacing: 1px;
+    pointer-events: none;
+  }
+
+  /* CITY IMAGE FILTER - Plus contrasté */
+  .city-hud-img {
+    filter: sepia(0.3) saturate(1.8) hue-rotate(170deg) brightness(0.5) contrast(1.3);
+    transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+
+  .hud-glass-card:hover .city-hud-img {
+    filter: sepia(0) saturate(1.2) hue-rotate(0deg) brightness(1) contrast(1.1);
+    transform: scale(1.18);
+  }
+
+  /* HUD NAV ITEM */
+  .hud-nav-item {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .hud-nav-item:hover {
+    color: #06b6d4;
+    background: rgba(6, 182, 212, 0.05);
+    border-color: rgba(6, 182, 212, 0.2);
+  }
+
+  .hud-nav-item.active {
+    color: #06b6d4;
+    background: rgba(6, 182, 212, 0.1);
+    border-color: rgba(6, 182, 212, 0.4);
+    box-shadow: inset 0 0 10px rgba(6, 182, 212, 0.1);
+  }
 }
 
 /* Scrollbar Style */

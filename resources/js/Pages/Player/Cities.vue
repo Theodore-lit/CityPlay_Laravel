@@ -1,10 +1,12 @@
 <script setup>
 import SiteLayout from '@/Layouts/SiteLayout.vue';
+import HUDHeader from '@/Components/HUDHeader.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
 import NeonButton from '@/Components/NeonButton.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { Search, Lock, MapPin, Star, Filter, ArrowRight } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
+import { cn } from '@/lib/utils';
 
 const props = defineProps({
     cities: Array,
@@ -34,89 +36,99 @@ const mapPoints = [
 <template>
   <Head title="Villes — CityPlay" />
 
-  <SiteLayout>
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-8 pb-28 md:pb-12">
-      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+  <SiteLayout isHUD>
+    <HUDHeader />
+
+    <div class="mx-auto max-w-7xl px-6 py-6 pb-24 relative z-10">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
         <div>
-          <div class="text-xs text-electric uppercase tracking-widest font-bold">Carte du Monde</div>
-          <h1 class="font-display text-3xl md:text-5xl mt-1">Choisissez votre <span class="text-electric neon-text">Destination</span></h1>
+          <div class="flex items-center gap-2 mb-1.5">
+            <div class="h-0.5 w-8 bg-primary" />
+            <div class="text-[9px] text-primary font-black tracking-[0.3em] uppercase">GEOLOCALISATION_SYSTEM</div>
+          </div>
+          <h1 class="font-display text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white">
+            SECTEUR <span class="text-primary drop-shadow-[0_0_10px_#06b6d4]">EXPLORATION</span>
+          </h1>
         </div>
-        <div class="flex gap-2">
-          <div class="relative flex-1 md:w-72 group">
-            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-electric transition-colors" />
+        <div class="flex gap-3">
+          <div class="relative flex-1 md:w-80 group">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
             <input
               v-model="searchQuery"
-              placeholder="Rechercher une ville ou un secret..."
-              class="w-full h-11 pl-10 pr-3 rounded-xl bg-gaming-darker/80 border border-electric/30 text-sm text-white placeholder:text-muted-foreground/40 focus:border-electric focus:shadow-neon outline-none transition-all"
+              placeholder="RECHERCHE_DONNEES..."
+              class="w-full h-11 pl-10 pr-4 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black tracking-widest text-white placeholder:text-white/20 focus:border-primary focus:bg-white/10 outline-none transition-all"
             />
           </div>
-          <button class="h-11 px-4 rounded-xl glass border-electric/40 text-sm flex items-center gap-2 hover:text-electric transition-colors">
-            <Filter class="h-4 w-4" />Filtrer
-          </button>
         </div>
       </div>
 
-      <!-- MINI MAP -->
-      <div class="mt-6 relative h-44 md:h-56 rounded-2xl glass-strong overflow-hidden border border-electric/10">
+      <!-- MINI MAP HUD -->
+      <div class="mb-10 relative h-48 md:h-64 rounded-[2rem] neon-border-box overflow-hidden">
         <div class="absolute inset-0 grid-bg opacity-30" />
         <div class="absolute inset-0">
           <div v-for="p in mapPoints" :key="p.label" class="absolute" :style="{ top: p.top, left: p.left }">
-            <div class="relative">
-              <div class="absolute inset-0 h-4 w-4 rounded-full bg-electric/40 animate-ping" />
-              <div class="h-4 w-4 rounded-full bg-electric shadow-neon" />
-              <div class="absolute top-5 left-1/2 -translate-x-1/2 text-[10px] font-display text-electric whitespace-nowrap">{{ p.label }}</div>
+            <div class="relative group/point">
+              <div class="absolute inset-0 h-4 w-4 rounded-full bg-primary/40 animate-ping" />
+              <div class="h-4 w-4 rounded-full bg-primary shadow-[0_0_15px_#06b6d4]" />
+              <div class="absolute top-6 left-1/2 -translate-x-1/2 text-[8px] font-black text-primary tracking-widest whitespace-nowrap bg-black/80 px-2 py-0.5 rounded opacity-0 group-hover/point:opacity-100 transition-opacity">
+                {{ p.label.toUpperCase() }}
+              </div>
             </div>
           </div>
         </div>
-        <div class="absolute top-3 left-3 text-xs text-muted-foreground uppercase tracking-widest">RÉPUBLIQUE DU BÉNIN</div>
+        <div class="absolute top-4 left-6 flex items-center gap-3">
+          <div class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+          <span class="text-[9px] text-white/60 font-black tracking-[0.4em] uppercase">RÉPUBLIQUE_DU_BÉNIN // LIVE_FEED</span>
+        </div>
       </div>
 
-      <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           v-for="(c, i) in filteredCities"
           :key="c.id"
           :href="gameMode === 'aventure' ? route('player.adventure.setup', c.id) : route('player.game', c.id)"
-          class="group relative overflow-hidden rounded-2xl glass hover-lift block aspect-[4/5] animate-fade-up"
-          :style="{ animationDelay: `${i * 60}ms` }"
+          class="hud-glass-card group cursor-pointer overflow-hidden rounded-[2.5rem] relative border-2 border-white/5 hover:border-primary/40 transition-all duration-500 block animate-fade-up"
+          :style="{ animationDelay: `${i * 100}ms` }"
         >
-          <img
-            :src="c.image_path || 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?auto=format&fit=crop&q=80&w=800'"
-            :alt="c.name"
-            loading="lazy"
-            class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
-          <div class="absolute inset-0 bg-gradient-to-t from-gaming-darker via-gaming-darker/40 to-transparent" />
+          <div class="relative aspect-[16/9] overflow-hidden">
+            <img
+              :src="c.image_path || 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?auto=format&fit=crop&q=80&w=800'"
+              :alt="c.name"
+              class="w-full h-full object-cover city-hud-img"
+            />
+            <div class="absolute inset-0 bg-primary/20 mix-blend-color opacity-40" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90" />
+            <div class="absolute inset-0 grid-bg opacity-20 group-hover:opacity-40 transition-opacity" />
 
-          <div class="absolute top-4 left-4 right-4 flex justify-between">
-            <span class="px-3 py-1 rounded-full glass text-[10px] text-electric font-bold uppercase tracking-widest">Bénin</span>
-            <span class="px-2 py-1 rounded-full glass text-xs flex items-center gap-1">
-              <Star class="h-3 w-3 fill-electric text-electric" />4.9
-            </span>
+            <div class="absolute top-4 right-4 px-3 py-1 rounded-full glass border-white/10 text-[8px] text-primary font-black uppercase tracking-widest">
+              {{ c.progress_percentage }}% DATA
+            </div>
           </div>
 
-          <div class="absolute bottom-5 left-5 right-5">
-            <h3 class="font-display text-2xl text-white">{{ c.name }}</h3>
+          <div class="p-6">
+            <h3 class="font-display text-2xl text-white font-black uppercase italic tracking-tighter group-hover:text-primary transition-colors">
+              {{ c.name }}
+            </h3>
 
-            <!-- PROGRESS BAR -->
+            <!-- PROGRESS BAR HUD -->
             <div class="mt-4">
-              <div class="flex justify-between items-center mb-1 text-[10px] font-bold uppercase tracking-widest">
-                <span class="text-electric">{{ c.progress_percentage }}% DÉCOUVERT</span>
-                <span class="text-muted-foreground">{{ c.discovered_count }}/{{ c.total_count }} LIEUX</span>
+              <div class="flex justify-between items-center mb-2 text-[8px] font-black uppercase tracking-[0.2em]">
+                <span class="text-white/40">EXPLORATION_STATUS</span>
+                <span class="text-primary">{{ c.discovered_count }} / {{ c.total_count }} LOCS</span>
               </div>
-              <div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden border border-white/5">
-                <div
-                  class="h-full bg-gradient-electric transition-all duration-1000"
-                  :style="{ width: `${c.progress_percentage}%` }"
-                />
+              <div class="segmented-progress">
+                <div v-for="seg in 10" :key="seg" 
+                     :class="cn('progress-segment', (seg * 10) <= c.progress_percentage ? 'active' : '')">
+                </div>
               </div>
             </div>
 
-            <div class="mt-4 flex items-center justify-between">
-              <div class="flex items-center gap-3 text-xs text-muted-foreground">
-                <span class="flex items-center gap-1"><MapPin class="h-3 w-3" />{{ c.total_count || 0 }} missions</span>
+            <div class="mt-5 flex items-center justify-between">
+              <div class="flex items-center gap-4 text-[9px] font-black tracking-widest text-white/40 uppercase">
+                <span class="flex items-center gap-1.5"><MapPin class="h-3 w-3 text-primary" />{{ c.total_count || 0 }} NODES</span>
               </div>
-              <div class="h-8 w-8 rounded-lg glass border-white/10 grid place-items-center text-white group-hover:bg-electric transition-all">
-                <ArrowRight class="h-4 w-4" />
+              <div class="h-9 w-9 rounded-full border border-primary/20 flex items-center justify-center group-hover:border-primary group-hover:bg-primary/10 transition-all">
+                <ArrowRight class="h-4 w-4 text-primary group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </div>
