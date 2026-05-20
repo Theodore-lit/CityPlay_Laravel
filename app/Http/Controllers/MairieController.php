@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Storage;
 
 class MairieController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     */
     public function dashboard()
     {
         // Admin should not access mairie dashboard
@@ -33,6 +36,66 @@ class MairieController extends Controller
                 'active_players' => 0,
             ]
         ]);
+
+
+        $marie = User::create([
+            'name' => $validated['city_name'],
+            'email' => $validated['email'],
+            'password' => Hash::make('password'),
+            'role' => 'mairie',
+        ]);
+
+        $cityDataImage = null;
+        if ($request->hasFile('image')) {
+            $cityDataImage = $request->file('image')->store('cities', 'public');
+        }
+
+        City::create([
+            'name' => $validated['city_name'],
+            'description' => $validated['description'],
+            'latitude' => $validated['latitude'],
+            'longitude' => $validated['longitude'],
+            'radius_meters' => $request->input('radius_meters', 5000),
+            'is_active' => $request->input('is_active', true),
+            'creator_id' => $user->id,
+            'mairie_id' => $marie->id,
+            'image_path' => $cityDataImage,
+            'opening_hours' => $validated['opening_hours'],
+        ]);
+
+        return redirect(route('admin.dashboard', absolute: false));
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        //
     }
 
     public function storeCity(Request $request)

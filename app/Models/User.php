@@ -30,6 +30,9 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'deactivate_on_logout' => 'boolean',
             'password' => 'hashed',
+            'is_active' => 'boolean',
+            'expired_at' => 'datetime',
+            'last_active_at' => 'datetime',
         ];
     }
 
@@ -39,6 +42,10 @@ class User extends Authenticatable
     public function createdCities()
     {
         return $this->hasMany(City::class, 'creator_id');
+    }
+    public function mairie()
+    {
+        return $this->belongsTo(City::class, 'mairie_id');
     }
 
     /**

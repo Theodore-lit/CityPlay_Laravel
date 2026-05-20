@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Enigma;
 use App\Models\Location;
+use App\Models\EnigmaResponse;
 
 class EnigmaSeeder extends Seeder
 {

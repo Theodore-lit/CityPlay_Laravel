@@ -495,7 +495,7 @@ onUnmounted(() => {
                         </div>
                     </Transition>
                 </div>
-            </div>
+            </aside>
 
             <!-- Riddle Mode (Old fallback) -->
             <div v-else class="p-8 space-y-8 relative z-10">
