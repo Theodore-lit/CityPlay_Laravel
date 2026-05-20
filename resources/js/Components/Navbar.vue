@@ -1,6 +1,6 @@
 <script setup>
 import { Link, usePage } from "@inertiajs/vue3";
-import { Compass, Menu, X, User, LogOut } from "lucide-vue-next";
+import { Compass, Menu, X, User, LogOut, Bell } from "lucide-vue-next";
 import { ref, computed } from "vue";
 import NeonButton from "./NeonButton.vue";
 import Modal from "./Modal.vue";
@@ -22,9 +22,21 @@ const showLogoutModal = ref(false);
 const deactivateOnLogout = ref(user.value?.deactivate_on_logout || false);
 
 const confirmLogout = () => {
+    if (user.value?.role !== 'joueur') {
+        router.post(route("logout"));
+        return;
+    }
     router.post(route("logout"), {
         deactivate_on_logout: deactivateOnLogout.value,
     });
+};
+
+const handleLogoutClick = () => {
+    if (user.value?.role !== 'joueur') {
+        confirmLogout();
+    } else {
+        showLogoutModal.value = true;
+    }
 };
 
 const links = computed(() => {
@@ -51,6 +63,20 @@ const links = computed(() => {
 });
 
 const isActive = (routeName) => route().current(routeName);
+
+const notifications = computed(() => page.props.auth.notifications || []);
+const showNotifications = ref(false);
+
+const markAsRead = (id) => {
+    router.post(route('notifications.read', id), {}, {
+        onSuccess: () => {
+            // Optionnel: fermer le menu si plus de notifications
+            if (notifications.value.length === 0) {
+                showNotifications.value = false;
+            }
+        }
+    });
+};
 </script>
 
 <template>
@@ -127,6 +153,64 @@ const isActive = (routeName) => route().current(routeName);
                             </button>
                         </div>
                         <div class="flex items-center gap-3">
+                            <!-- NOTIFICATIONS -->
+                            <div class="relative">
+                                <button
+                                    @click="showNotifications = !showNotifications"
+                                    class="h-10 w-10 rounded-xl bg-white/5 border border-white/10 grid place-items-center text-muted-foreground hover:text-primary hover:border-primary/50 transition-all relative"
+                                >
+                                    <Bell class="h-5 w-5" />
+                                    <span
+                                        v-if="notifications.length > 0"
+                                        class="absolute -top-1 -right-1 h-4 w-4 bg-primary rounded-full border-2 border-gaming-darker text-[10px] font-black text-white grid place-items-center animate-pulse"
+                                    >
+                                        {{ notifications.length }}
+                                    </span>
+                                </button>
+
+                                <!-- Dropdown Notifications -->
+                                <div
+                                    v-if="showNotifications"
+                                    class="absolute right-0 mt-3 w-80 glass-strong border border-white/20 rounded-2xl shadow-2xl overflow-hidden animate-fade-down z-[60]"
+                                >
+                                    <div class="p-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
+                                        <span class="text-xs font-black uppercase tracking-widest text-white">Notifications</span>
+                                        <span v-if="notifications.length > 0" class="text-[10px] text-primary font-bold">{{ notifications.length }} nouvelle(s)</span>
+                                    </div>
+                                    <div class="max-h-[400px] overflow-y-auto custom-scrollbar">
+                                        <template v-if="notifications.length > 0">
+                                            <div
+                                                v-for="n in notifications"
+                                                :key="n.id"
+                                                class="p-4 border-b border-white/5 hover:bg-white/5 transition-colors group"
+                                            >
+                                                <p class="text-xs text-white/90 mb-2 leading-relaxed">{{ n.message }}</p>
+                                                <div class="flex items-center justify-between gap-2">
+                                                    <a
+                                                        v-if="n.link"
+                                                        :href="n.link"
+                                                        @click="markAsRead(n.id)"
+                                                        class="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+                                                    >
+                                                        Rejoindre →
+                                                    </a>
+                                                    <button
+                                                        @click="markAsRead(n.id)"
+                                                        class="text-[10px] font-bold text-muted-foreground hover:text-white uppercase transition-colors"
+                                                    >
+                                                        Marquer comme lu
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <div v-else class="p-8 text-center">
+                                            <Bell class="h-8 w-8 text-muted-foreground/20 mx-auto mb-3" />
+                                            <p class="text-xs text-muted-foreground italic">Aucune nouvelle notification</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <Link
                                 :href="route('profile.edit')"
                                 class="flex items-center gap-2 group p-1 pr-3 rounded-xl bg-white/5 border border-white/10 hover:border-primary/50 transition-all"
@@ -149,7 +233,7 @@ const isActive = (routeName) => route().current(routeName);
                             </Link>
 
                             <button
-                                @click="showLogoutModal = true"
+                                @click="handleLogoutClick"
                                 class="h-10 w-10 rounded-xl bg-destructive/10 border border-destructive/20 grid place-items-center text-destructive hover:bg-destructive hover:text-white transition-all shadow-sm"
                                 title="Déconnexion"
                             >
@@ -259,7 +343,7 @@ const isActive = (routeName) => route().current(routeName);
             <template v-if="user">
                 <button
                     @click="
-                        showLogoutModal = true;
+                        handleLogoutClick();
                         open = false;
                     "
                     class="block w-full text-left px-4 py-2 rounded-lg text-electric font-bold"

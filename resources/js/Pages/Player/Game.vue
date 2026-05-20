@@ -184,21 +184,20 @@ const selectQuestionOption = (option) => {
     questionnaireAnswers.value[currentQuestionIndex.value] = option;
     
     if (option.is_correct) {
-        if (currentQuestionIndex.value < currentRiddle.value.questions.length - 1) {
-            setTimeout(() => { currentQuestionIndex.value++; }, 1000);
-        } else {
-            handleSuccess();
-        }
+        showGameToast("Bonne réponse !", "success");
     } else {
         totalErrors.value++;
         showGameToast("Mauvaise réponse !", "error");
-        // On passe quand même à la suivante pour la logique de quiz
+    }
+
+    // On attend un peu pour laisser l'utilisateur voir le retour visuel
+    setTimeout(() => {
         if (currentQuestionIndex.value < currentRiddle.value.questions.length - 1) {
-            setTimeout(() => { currentQuestionIndex.value++; }, 1000);
+            currentQuestionIndex.value++;
         } else {
             handleSuccess();
         }
-    }
+    }, 1500);
 };
 
 const submitRiddle = () => {
@@ -368,24 +367,117 @@ onUnmounted(() => {
     <MobileTabBar />
 
     <!-- MODALS -->
-    <Modal :show="showRiddleModal" @close="showRiddleModal = false">
-        <div class="p-8 bg-gaming-darker border border-electric/20 rounded-[2.5rem] max-w-lg mx-auto">
-            <div v-if="isQuestionnaireActive" class="space-y-6">
-                <div class="text-[10px] text-electric font-black uppercase tracking-widest">Question {{ currentQuestionIndex + 1 }} / {{ currentRiddle?.questions?.length }}</div>
-                <div class="p-6 rounded-3xl bg-white/5 border border-white/10 text-lg text-white font-display">
-                    {{ currentRiddle?.questions?.[currentQuestionIndex]?.question_text }}
+    <Modal :show="showRiddleModal" @close="showRiddleModal = false" maxWidth="xl">
+        <div class="bg-gaming-darker border border-electric/20 rounded-[2.5rem] overflow-hidden shadow-2xl relative">
+            <!-- Background Decoration -->
+            <div class="absolute inset-0 grid-bg opacity-5 pointer-events-none"></div>
+            
+            <div v-if="isQuestionnaireActive" class="relative z-10">
+                <!-- Header / Progress Bar -->
+                <div class="p-6 pb-0">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 rounded-lg bg-electric/10 text-electric">
+                                <Brain class="h-5 w-5" />
+                            </div>
+                            <h2 class="font-display text-xl text-white uppercase tracking-tight">Questions Mystère</h2>
+                        </div>
+                        <div class="text-[10px] text-muted-foreground font-black uppercase tracking-widest">
+                            {{ currentQuestionIndex + 1 }} / {{ currentRiddle?.questions?.length }}
+                        </div>
+                    </div>
+                    <!-- Progress Bar -->
+                    <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                        <div 
+                            class="h-full bg-gradient-to-r from-electric to-primary transition-all duration-700 ease-out shadow-neon"
+                            :style="{ width: `${((currentQuestionIndex + 1) / currentRiddle?.questions?.length) * 100}%` }"
+                        ></div>
+                    </div>
                 </div>
-                <div class="grid gap-3">
-                    <button v-for="(option, idx) in currentRiddle?.questions?.[currentQuestionIndex]?.options" :key="idx" @click="selectQuestionOption(option)" class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-electric transition-all text-left">
-                        {{ option.option_text }}
-                    </button>
+
+                <div class="p-8 space-y-8">
+                    <!-- Question Card -->
+                    <Transition name="fade-slide" mode="out-in">
+                        <div :key="currentQuestionIndex" class="space-y-8">
+                            <div class="relative">
+                                <div class="absolute -left-4 top-0 bottom-0 w-1 bg-electric rounded-full shadow-neon"></div>
+                                <h3 class="text-xl md:text-2xl text-white font-display leading-tight pl-4">
+                                    {{ currentRiddle?.questions?.[currentQuestionIndex]?.question_text }}
+                                </h3>
+                            </div>
+
+                            <!-- Options Grid -->
+                            <div class="grid gap-4">
+                                <button 
+                                    v-for="(option, idx) in currentRiddle?.questions?.[currentQuestionIndex]?.options" 
+                                    :key="idx" 
+                                    @click="selectQuestionOption(option)"
+                                    :disabled="!!questionnaireAnswers[currentQuestionIndex]"
+                                    :class="cn(
+                                        'group relative w-full p-5 rounded-2xl border transition-all duration-300 text-left overflow-hidden',
+                                        !questionnaireAnswers[currentQuestionIndex] 
+                                            ? 'bg-white/5 border-white/10 hover:border-electric/50 hover:bg-electric/5' 
+                                            : questionnaireAnswers[currentQuestionIndex] === option
+                                                ? option.is_correct 
+                                                    ? 'bg-success/10 border-success shadow-[0_0_20px_rgba(34,197,94,0.2)]'
+                                                    : 'bg-destructive/10 border-destructive shadow-[0_0_20px_rgba(239,68,68,0.2)]'
+                                                : option.is_correct && questionnaireAnswers[currentQuestionIndex]
+                                                    ? 'bg-success/5 border-success/30 opacity-60'
+                                                    : 'bg-white/5 border-white/5 opacity-40'
+                                    )"
+                                >
+                                    <div class="flex items-center justify-between gap-4 relative z-10">
+                                        <span :class="cn(
+                                            'text-base font-medium transition-colors',
+                                            questionnaireAnswers[currentQuestionIndex] === option ? 'text-white' : 'text-foreground/80 group-hover:text-white'
+                                        )">
+                                            {{ option.option_text }}
+                                        </span>
+                                        
+                                        <!-- Status Icon -->
+                                        <div v-if="questionnaireAnswers[currentQuestionIndex] === option" class="shrink-0">
+                                            <CheckCircle2 v-if="option.is_correct" class="h-6 w-6 text-success" />
+                                            <XCircle v-else class="h-6 w-6 text-destructive" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Hover Effect Background -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-electric/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                </button>
+                            </div>
+                        </div>
+                    </Transition>
                 </div>
             </div>
-            <div v-else class="space-y-6">
-                <h2 class="font-display text-2xl">{{ selectedLocation?.display_name }}</h2>
-                <p class="p-6 rounded-3xl bg-white/5 border border-white/10 italic text-foreground/90 leading-relaxed">"{{ currentRiddle?.content }}"</p>
-                <input v-model="riddleAnswer" @keyup.enter="submitRiddle" placeholder="Votre réponse..." class="w-full h-14 rounded-2xl bg-gaming-darker border border-electric/30 px-6 text-white outline-none focus:border-electric transition-all" />
-                <NeonButton class="w-full" @click="submitRiddle">Soumettre</NeonButton>
+
+            <!-- Riddle Mode (Old fallback) -->
+            <div v-else class="p-8 space-y-8 relative z-10">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 rounded-lg bg-electric/10 text-electric">
+                        <MapPin class="h-5 w-5" />
+                    </div>
+                    <h2 class="font-display text-2xl text-white">{{ selectedLocation?.display_name }}</h2>
+                </div>
+                
+                <div class="relative p-8 rounded-[2rem] bg-white/5 border border-white/10">
+                    <div class="absolute -top-3 left-8 px-4 bg-gaming-darker text-[10px] text-electric font-black uppercase tracking-widest">Énigme du lieu</div>
+                    <p class="text-lg italic text-foreground/90 leading-relaxed text-center">"{{ currentRiddle?.content }}"</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="relative">
+                        <input 
+                            v-model="riddleAnswer" 
+                            @keyup.enter="submitRiddle" 
+                            placeholder="Tapez votre réponse ici..." 
+                            class="w-full h-16 rounded-2xl bg-white/5 border border-white/10 px-6 text-white text-lg outline-none focus:border-electric focus:bg-white/10 transition-all placeholder:text-muted-foreground/30" 
+                        />
+                        <ArrowRight class="absolute right-6 top-1/2 -translate-y-1/2 h-6 w-6 text-electric/30" />
+                    </div>
+                    <NeonButton size="xl" class="w-full rounded-2xl h-16" @click="submitRiddle">
+                        VALIDER LA RÉPONSE
+                    </NeonButton>
+                </div>
             </div>
         </div>
     </Modal>
@@ -408,7 +500,7 @@ onUnmounted(() => {
                 </div>
             </div>
             <div class="flex flex-col gap-3">
-                <NeonButton size="xl" class="w-full rounded-2xl" @click="showSuccessModal = false">CONTINUER</NeonButton>
+                <NeonButton size="xl" class="w-full rounded-2xl" @click="goBackToLobby">CONTINUER</NeonButton>
                 <button @click="goBackToLobby" class="text-xs text-electric font-black uppercase tracking-[0.2em] hover:text-white transition-colors">
                     REJOUER / LOBBY
                 </button>
@@ -428,4 +520,16 @@ onUnmounted(() => {
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, -20px); }
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.fade-slide-enter-active, .fade-slide-leave-active {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
 </style>

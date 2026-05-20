@@ -11,7 +11,7 @@
   --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --font-display: "Space Grotesk", "Plus Jakarta Sans", system-ui, sans-serif;
 
-  --background: oklch(0.96 0.01 240); /* Fond gris perle doux */
+  --background: oklch(96.031% 0.01015 238.85 / 0); /* Fond gris perle doux */
   --foreground: oklch(0.15 0.02 240); /* Texte quasi noir pour lisibilité parfaite */
   
   /* Couleur Primaire basée sur NeonButton */
@@ -44,13 +44,13 @@
 
 /* STYLE SOMBRE : Futuriste Haute Visibilité */
 html.dark, .dark {
-  --background: oklch(0.10 0.02 240); /* Noir profond */
+  --background: oklch(42.249% 0.12054 253.227 / 0.116); /* Noir profond */
   --foreground: oklch(0.98 0.01 240); /* Blanc éclatant */
 
   --primary: oklch(0.70 0.18 250); /* Cyan électrique */
   --primary-foreground: #000000;
 
-  --secondary: oklch(0.18 0.03 240);
+  --secondary: oklch(18.371% 0.03381 241.788);
   --secondary-foreground: #ffffff;
 
   --card: oklch(0.15 0.03 240);
@@ -98,6 +98,35 @@ html.dark, .dark {
   }
 
   body {
+    position: relative;
+  }
+
+  /* Image de fond globale au premier plan */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9999; /* Premier plan */
+    pointer-events: none; /* Ne bloque pas les clics */
+    background-image: url('/storage/images/bg.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: opacity 0.5s ease, filter 0.5s ease;
+  }
+
+  /* Filtres adaptatifs selon le mode */
+  .dark body::before {
+    opacity: 0.5; /* Visibilité augmentée */
+    filter: brightness(0.6) saturate(1.2);
+  }
+
+  .light body::before {
+    opacity: 0.12; /* Visibilité augmentée */
+    filter: brightness(1.1) saturate(0.8) blur(1px);
+  }
+
+  body {
     min-height: 100vh;
     background-attachment: fixed;
   }
@@ -116,23 +145,31 @@ html.dark, .dark {
   /* GLASSMORPHISM PREMIUM */
   .glass {
     background: var(--card);
-    backdrop-filter: blur(12px) saturate(160%);
-    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   .glass-strong {
     background: var(--card);
-    backdrop-filter: blur(24px) saturate(200%);
-    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    backdrop-filter: blur(40px) saturate(220%);
+    -webkit-backdrop-filter: blur(40px) saturate(220%);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-md);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
   .dark .glass-strong {
-    background: oklch(0.16 0.06 255 / 0.6);
-    border: 1px solid oklch(0.78 0.15 232 / 0.25);
+    background: oklch(0.16 0.06 255 / 0.88); /* Encore plus opaque */
+    border: 1px solid oklch(0.78 0.15 232 / 0.4);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .dark .glass {
+    background: oklch(0.15 0.03 240 / 0.85); /* Encore plus opaque */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   }
 
   /* GAME UI EFFECTS */

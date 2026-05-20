@@ -317,16 +317,16 @@ class PlayerController extends Controller
         $user = auth()->user();
         $mode = session('game_mode', 'aventure');
 
-        // Vérifier si une session terminée existe déjà pour ce mode
-        $hasCompleted = \App\Models\GameSession::where('city_id', $city->id)
-            ->where('user_id', $user->id)
-            ->where('status', 'completed')
-            ->exists();
+        // On n'empêche plus l'accès si la mission est terminée pour permettre de rejouer
+        // $hasCompleted = \App\Models\GameSession::where('city_id', $city->id)
+        //     ->where('user_id', $user->id)
+        //     ->where('status', 'completed')
+        //     ->exists();
 
-        if ($hasCompleted && $mode === 'aventure') {
-            return redirect()->route('player.adventure.solo', $city->id)
-                ->with('error', 'Cette mission est déjà terminée. Vous pouvez consulter vos statistiques dans le lobby.');
-        }
+        // if ($hasCompleted && $mode === 'aventure') {
+        //     return redirect()->route('player.adventure.solo', $city->id)
+        //         ->with('error', 'Cette mission est déjà terminée. Vous pouvez consulter vos statistiques dans le lobby.');
+        // }
 
         if ($mode === 'quiz') {
             // On récupère tous les quiz de la ville
@@ -484,16 +484,9 @@ class PlayerController extends Controller
         $enigmaId = $request->input('enigma_id');
         $difficulty = $request->input('difficulty', 'medium');
 
-        // Garde de sécurité : Empêcher le lancement si déjà complété
-        $hasCompleted = \App\Models\GameSession::where('city_id', $city->id)
-            ->where('user_id', $user->id)
-            ->where('status', 'completed')
-            ->exists();
-
-        if ($hasCompleted) {
-            return back()->with('error', 'Accès refusé : Mission déjà terminée.');
-        }
-
+        // On autorise le lancement même si déjà complété pour permettre de rejouer
+        // On cherche une session en cours pour la réinitialiser ou on en crée une nouvelle
+        
         $location = \App\Models\Location::findOrFail($locationId);
 
         // Initialiser la session pour cette énigme spécifique choisie par le joueur
@@ -502,10 +495,10 @@ class PlayerController extends Controller
                 'user_id' => $user->id,
                 'city_id' => $city->id,
                 'team_id' => null,
-                'status' => 'in_progress'
             ],
             [
                 'start_time' => now(),
+                'status' => 'in_progress', // On force le statut à 'in_progress' pour rejouer
                 'discovery_sequence' => [$locationId],
                 'current_location_id' => $locationId,
                 'current_enigma_id' => $enigmaId,
@@ -624,18 +617,14 @@ class PlayerController extends Controller
         return back()->with('success', 'Félicitations ! Lieu découvert.');
     }
 
-    public function getMissionDetails(City $city)
+    public function markNotificationRead(\App\Models\Notification $notification)
     {
-        $user = auth()->user();
-        $completedSession = \App\Models\GameSession::where('city_id', $city->id)
-            ->where('user_id', $user->id)
-            ->where('status', 'completed')
-            ->first();
+        if ($notification->user_id !== auth()->id()) {
+            abort(403);
+        }
 
-        return response()->json([
-            'city' => $city,
-            'has_played' => $completedSession !== null,
-            'completed_session' => $completedSession,
-        ]);
+        $notification->update(['read_at' => now()]);
+
+        return back();
     }
 }

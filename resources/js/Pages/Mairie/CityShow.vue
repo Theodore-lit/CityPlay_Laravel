@@ -235,7 +235,7 @@ const removeIndex = (index) => {
             <!-- Header -->
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
                 <div class="flex items-center gap-5">
-                    <Link v-if="props.auth?.user.role === 'super_admin'" :href="route('admin.dashboard')"
+                    <Link :href="route('mairie.city.hub', props.city.id)"
                         class="h-12 w-12 rounded-2xl glass grid place-items-center text-electric hover:scale-110 transition-all shadow-neon border border-electric/20">
                         <ChevronLeft class="h-6 w-6" />
                     </Link>

@@ -11,15 +11,15 @@ let rotationTween = null;
 const setupCompassRotation = () => {
   if (!compassNeedleRef.value) return;
 
+  // Utilisation de svgOrigin pour une rotation parfaite autour du centre (40, 40)
   gsap.set(compassNeedleRef.value, {
-    transformOrigin: '50% 50%',
     svgOrigin: '40 40',
   });
 
   rotationTween = gsap.to(compassNeedleRef.value, {
     rotation: 360,
     repeat: -1,
-    duration: 2.8,
+    duration: 2,
     ease: 'none',
     paused: true,
   });
@@ -130,7 +130,6 @@ onBeforeUnmount(() => {
 }
 
 .compass-needle {
-  transform-box: fill-box;
-  transform-origin: 40px 40px;
+  /* On laisse GSAP gérer la rotation via svgOrigin pour plus de précision */
 }
 </style>

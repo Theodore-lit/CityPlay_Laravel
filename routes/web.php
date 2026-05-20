@@ -69,6 +69,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Mairie Routes
     Route::get('/mairie', [MairieController::class, 'dashboard'])->name('mairie.dashboard');
+    Route::get('/mairie/city/{city}/hub', [MairieController::class, 'cityHub'])->name('mairie.city.hub');
     Route::post('/mairie/cities', [MairieController::class, 'storeCity'])->name('mairie.cities.store');
     Route::post('/mairie/cities/{city}/update', [MairieController::class, 'updateCity'])->name('mairie.cities.update');
     Route::get('/mairie/city/{city}', [MairieController::class, 'showCity'])->name('mairie.cities.show');
@@ -91,6 +92,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/player/buy-heart', [PlayerController::class, 'buyHeart'])->name('player.buy.heart');
     Route::post('/player/use-hint', [PlayerController::class, 'useHint'])->name('player.use-hint');
     Route::post('/player/quiz/{quiz}/retry', [PlayerController::class, 'retryQuiz'])->name('player.quiz.retry');
+    Route::post('/notifications/{notification}/read', [PlayerController::class, 'markNotificationRead'])->name('notifications.read');
 });
 
 require __DIR__.'/auth.php';

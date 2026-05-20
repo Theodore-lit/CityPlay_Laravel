@@ -33,6 +33,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
+                'notifications' => $request->user() ? \App\Models\Notification::where('user_id', $request->user()->id)->whereNull('read_at')->latest()->get() : [],
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

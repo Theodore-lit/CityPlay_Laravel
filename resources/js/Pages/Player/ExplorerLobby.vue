@@ -16,7 +16,7 @@ const props = defineProps({
 });
 
 const isLoading = ref(true);
-const canPlay = computed(() => !props.completedSession);
+const canPlay = ref(true); // Toujours autorisé à rejouer par défaut selon la nouvelle directive
 
 onMounted(() => {
     // Petit effet de chargement GSAP
@@ -96,7 +96,7 @@ const formatTime = (seconds) => {
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
             <div>
                 <div class="text-[10px] text-electric uppercase tracking-[0.3em] font-black mb-1">Missions Disponibles</div>
-                <h1 class="font-display text-3xl md:text-5xl neon-text uppercase tracking-tight">LOBBY <span class="text-electric">EXPLORER</span></h1>
+                <h1 class="font-display text-3xl md:text-5xl neon-text uppercase tracking-tight">{{city.name.split(',')[0]}} <span class="text-electric">EXPLORER</span></h1>
                 <div class="flex items-center gap-4 mt-2">
                     <span class="text-xs text-muted-foreground flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full border border-white/10">
                         <MapPin class="h-3 w-3 text-electric" /> {{ city.name }}
@@ -107,11 +107,16 @@ const formatTime = (seconds) => {
                 </div>
             </div>
 
-            <div class="flex gap-3">
-                <button @click="goBack" class="px-4 py-2 rounded-xl glass border-white/10 text-xs font-bold flex items-center gap-2 hover:border-electric/50 transition-all">
-                    <RefreshCw class="h-4 w-4" /> {{ canPlay ? 'REJOUER / PARAMÈTRES' : 'RETOUR PARAMÈTRES' }}
-                </button>
-            </div>
+                <div v-if="canPlay" class="flex gap-3">
+                    <button @click="goBack" class="px-4 py-2 rounded-xl glass border-white/10 text-xs font-bold flex items-center gap-2 hover:border-electric/50 transition-all">
+                        <RefreshCw class="h-4 w-4" /> REJOUER / PARAMÈTRES
+                    </button>
+                </div>
+                <div v-else class="flex gap-3">
+                    <button @click="goBack" class="px-4 py-2 rounded-xl glass border-white/10 text-xs font-bold flex items-center gap-2 hover:border-electric/50 transition-all">
+                        <RefreshCw class="h-4 w-4" /> RETOUR PARAMÈTRES
+                    </button>
+                </div>
         </div>
 
         <!-- STATS BLOCK (Si session terminée) -->

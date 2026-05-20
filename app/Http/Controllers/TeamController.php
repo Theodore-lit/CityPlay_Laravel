@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Team;
 use App\Models\City;
 use App\Models\GameSession;
+use App\Models\Notification;
+use App\Models\Enigma;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 
@@ -120,11 +122,22 @@ class TeamController extends Controller
                 'start_time' => now(),
                 'discovery_sequence' => $sequence,
                 'current_location_id' => $sequence[0] ?? null,
-                'current_enigma_id' => \App\Models\Enigma::where('location_id', $sequence[0] ?? null)
+                'current_enigma_id' => Enigma::where('location_id', $sequence[0] ?? null)
                     ->where('is_site_specific', false)
                     ->first()->id ?? null,
             ]
         );
+
+        // Notifier les autres membres de l'équipe
+        $membersToNotify = $team->members()->where('users.id', '!=', auth()->id())->get();
+        foreach ($membersToNotify as $member) {
+            Notification::create([
+                'user_id' => $member->id,
+                'type' => 'team_game_start',
+                'message' => "Votre équipe {$team->name} a commencé une partie à {$city->name} !",
+                'link' => route('teams.join-game', ['team' => $team->id, 'city' => $city->id]),
+            ]);
+        }
 
         // Envoyer une notification flash aux autres membres (via Inertia)
         return redirect()->route('player.game', $city->id)->with('success', "L'aventure en équipe a démarré ! Les autres membres ont été notifiés.");

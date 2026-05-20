@@ -99,7 +99,7 @@ const formatDate = (dateString) => {
       <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div class="flex items-center gap-5">
-            <Link :href="route('mairie.cities.show', city.id)" class="h-12 w-12 rounded-2xl glass grid place-items-center text-accent hover:scale-110 transition-all shadow-2xl border border-accent/20">
+            <Link :href="route('mairie.city.hub', city.id)" class="h-12 w-12 rounded-2xl glass grid place-items-center text-accent hover:scale-110 transition-all shadow-2xl border border-accent/20">
                 <ChevronLeft class="h-6 w-6" />
             </Link>
             <div>

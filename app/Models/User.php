@@ -27,7 +27,10 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'otp_expires_at' => 'datetime',
+            'last_activity_at' => 'datetime',
             'is_verified' => 'boolean',
+            'is_active' => 'boolean',
+            'deactivate_on_logout' => 'boolean',
             'password' => 'hashed',
         ];
     }

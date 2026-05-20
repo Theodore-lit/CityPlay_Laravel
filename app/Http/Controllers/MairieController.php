@@ -115,6 +115,18 @@ class MairieController extends Controller
         ]);
     }
 
+    public function cityHub(City $city)
+    {
+        // Check if user is creator or super_admin
+        if (auth()->user()->role !== 'super_admin' && $city->creator_id !== auth()->id()) {
+            abort(403);
+        }
+
+        return Inertia::render('Mairie/CityHub', [
+            'city' => $city->loadCount(['locations', 'events', 'quizzes']),
+        ]);
+    }
+
     public function storeLocation(Request $request, City $city)
     {
         $validated = $request->validate([

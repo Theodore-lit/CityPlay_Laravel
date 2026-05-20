@@ -17,8 +17,8 @@ const props = defineProps({
 });
 
 const page = usePage();
-const dashboardRoute = computed(() => {
-    return page.props.auth.user.role === 'super_admin' ? 'admin.dashboard' : 'mairie.dashboard';
+const backRoute = computed(() => {
+    return route('mairie.city.hub', props.city.id);
 });
 
 // Quiz Form
@@ -116,11 +116,11 @@ const deleteQuestion = (id) => {
   <SiteLayout>
     <div class="mx-auto max-w-7xl px-4 sm:px-6 py-10 pb-28 md:pb-12">
       <!-- Header -->
-      <div class="flex items-center justify-between gap-6 mb-10">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div class="flex items-center gap-5">
-            <Link :href="route(dashboardRoute)" class="h-12 w-12 rounded-2xl glass grid place-items-center text-electric hover:scale-110 transition-all shadow-neon border border-electric/20">
-              <ChevronLeft class="h-6 w-6" />
-            </Link>
+          <Link :href="backRoute" class="h-12 w-12 rounded-2xl glass grid place-items-center text-electric hover:scale-110 transition-all shadow-neon border border-electric/20">
+            <ChevronLeft class="h-6 w-6" />
+          </Link>
             <div>
               <div class="text-xs text-purple-neon uppercase tracking-[0.2em] font-black mb-1">Éditeur de Défis</div>
               <h1 class="font-display text-3xl md:text-5xl text-foreground">{{ city.name }}</h1>

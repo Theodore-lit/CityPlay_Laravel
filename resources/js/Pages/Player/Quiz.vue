@@ -143,10 +143,22 @@ const handleTimeoutSubmit = () => {
 };
 
 const useHint = () => {
-    if (!showHint.value && currentQuestion.value?.hint) {
-        showHint.value = true;
-        usedHintsCount.value++;
+    if (showHint.value || !currentQuestion.value?.hint) return;
+
+    if (page.props.auth.user.xp < 50) {
+        alert("XP insuffisants pour un indice (50 PX requis).");
+        return;
     }
+
+    router.post(route('player.use-hint'), {}, {
+        onSuccess: () => {
+            showHint.value = true;
+            usedHintsCount.value++;
+        },
+        onError: () => {
+            alert("Une erreur est survenue lors de l'utilisation de l'indice.");
+        }
+    });
 };
 
 const calculateStars = () => {
@@ -241,7 +253,7 @@ onUnmounted(() => {
                         @click="useHint"
                         class="h-10 px-4 rounded-xl glass border-warning/40 text-warning text-[10px] font-black uppercase tracking-widest hover:bg-warning/10 transition-all shrink-0"
                     >
-                        Indice
+                        Indice -50px
                     </button>
                 </div>
 

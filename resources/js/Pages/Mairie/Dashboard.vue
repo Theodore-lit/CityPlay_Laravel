@@ -192,6 +192,9 @@ const quickActions = computed(() => [
                 </td>
                 <td class="p-4 text-right">
                   <div class="flex justify-end gap-3">
+                    <Link :href="route('mairie.city.hub', city.id)" class="h-9 w-9 rounded-xl bg-electric/10 border border-electric/30 grid place-items-center text-electric hover:bg-electric hover:text-white transition-all shadow-neon-sm" title="Ouvrir le Hub">
+                      <Plus class="h-5 w-5" />
+                    </Link>
                     <button @click="copyShareLink(city)" class="h-9 w-9 rounded-xl glass border-white/10 grid place-items-center text-purple-neon hover:bg-purple-neon hover:text-white transition-all shadow-sm" title="Partager le lien">
                       <Share2 class="h-5 w-5" />
                     </button>
