@@ -55,6 +55,6 @@ onMounted(() => {
     <main class="flex-1">
       <slot />
     </main>
-    <Footer v-if="!hideFooter" />
+    <!-- <Footer v-if="!hideFooter" /> -->
   </div>
 </template>
