@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\StorageUrl;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -30,6 +32,15 @@ class Enigma extends Model
         'indices' => 'array',
         'is_site_specific' => 'boolean',
     ];
+
+    protected $appends = [
+        'image_url',
+    ];
+
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::get(fn () => StorageUrl::url($this->image_path));
+    }
 
     public function location()
     {

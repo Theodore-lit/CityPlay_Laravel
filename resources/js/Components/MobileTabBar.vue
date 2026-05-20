@@ -1,6 +1,6 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
-import { Home, Map, Gamepad2, Trophy, User } from 'lucide-vue-next';
+import { LayoutDashboard, Map, Gamepad2, Trophy, Gift } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { cn } from '@/lib/utils';
 
@@ -8,11 +8,11 @@ const page = usePage();
 const currentPath = computed(() => page.url);
 
 const tabs = [
-  { to: 'dashboard', icon: Home, label: 'Accueil' },
+  { to: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: 'player.cities', icon: Map, label: 'Villes' },
   { to: 'player.modes', icon: Gamepad2, label: 'Jouer' },
-  { to: 'player.leaderboard', icon: Trophy, label: 'Rang' },
-  { to: 'profile.edit', icon: User, label: 'Profil' },
+  { to: 'player.leaderboard', icon: Trophy, label: 'Classement' },
+  { to: 'player.rewards', icon: Gift, label: 'Récompenses' },
 ];
 
 const isActive = (routeName) => route().current(routeName);

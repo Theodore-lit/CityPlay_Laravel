@@ -28,24 +28,21 @@ const confirmLogout = () => {
 };
 
 const links = computed(() => {
-    const baseLinks = [
-        { to: 'welcome', label: 'Accueil' },
-    ];
-
     if (user.value?.role === 'super_admin') {
         return [
-            ...baseLinks,
-            { to: 'admin.dashboard', label: 'Admin HQ' },
-            { to: 'mairie.dashboard', label: 'Console Maire' },
-        ];
+            ];
+            // { to: 'admin.dashboard', label: 'Admin HQ' }, 
     }
 
     if (user.value?.role === 'mairie') {
         return [
-            ...baseLinks,
-            { to: 'mairie.dashboard', label: 'Console Maire' },
-        ];
+            ];
+            // { to: 'mairie.dashboard', label: 'Commandement' },   
     }
+
+    const baseLinks = [
+        { to: 'welcome', label: 'Accueil' },
+    ];
 
     return [
         { to: 'dashboard', label: 'Tableau de bord' },
@@ -76,10 +73,10 @@ const isActive = (routeName) => route().current(routeName);
           <Link
             :href="route(l.to)"
             :class="cn(
-              'px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all',
+              'px-5 py-2 text-xs font-black uppercase tracking-widest transition-all border-b-2',
               isActive(l.to)
-                ? 'text-primary bg-primary/10 shadow-sm'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                ? 'text-primary border-primary'
+                : 'text-muted-foreground border-transparent hover:text-foreground hover:border-primary/30'
             )"
           >
             {{ l.label }}
@@ -90,7 +87,7 @@ const isActive = (routeName) => route().current(routeName);
       <div class="hidden md:block">
         <div class="flex items-center gap-3">
           <template v-if="user">
-            <div class="flex items-center gap-4 mr-4 bg-muted px-4 py-1.5 rounded-full border border-border">
+            <div v-if="user.role !== 'super_admin' && user.role !== 'mairie'" class="flex items-center gap-4 mr-4 bg-muted px-4 py-1.5 rounded-full border border-border">
               <div class="flex items-center text-accent neon-text-purple">
                   <span class="text-lg mr-1">⚡</span>
                   <span class="font-bold">{{ user.xp || 0 }}</span>

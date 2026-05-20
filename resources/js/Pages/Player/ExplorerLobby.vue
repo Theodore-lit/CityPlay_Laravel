@@ -3,9 +3,10 @@ import SiteLayout from '@/Layouts/SiteLayout.vue';
 import HUDHeader from '@/Components/HUDHeader.vue';
 import HUDButton from '@/Components/HUDButton.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
+import AppImage from '@/Components/AppImage.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { MapPin, ArrowRight, Star, Clock, Zap, Bike, Car, Filter, RefreshCw } from 'lucide-vue-next';
-import { ref, onMounted } from 'vue';
+import { MapPin, ArrowRight, Star, Clock, Zap, Bike, Car, Filter, RefreshCw, Trophy, Medal, CheckCircle2 } from 'lucide-vue-next';
+import { ref, onMounted, computed, nextTick } from 'vue';
 import gsap from 'gsap';
 import { cn } from '@/lib/utils';
 
@@ -13,9 +14,11 @@ const props = defineProps({
     city: Object,
     locations: Array,
     config: Object,
+    completedSession: Object,
 });
 
 const isLoading = ref(true);
+const canPlay = computed(() => !props.completedSession);
 
 onMounted(() => {
     // Petit effet de chargement GSAP
@@ -25,18 +28,33 @@ onMounted(() => {
         ease: "power2.inOut",
         onComplete: () => {
             isLoading.value = false;
-            gsap.from(".enigma-card", {
-                y: 30,
-                opacity: 0,
-                stagger: 0.1,
-                duration: 0.8,
-                ease: "back.out(1.7)"
+            
+            // Animation des cartes et stats
+            nextTick(() => {
+                gsap.from(".enigma-card", {
+                    y: 30,
+                    opacity: 0,
+                    stagger: 0.1,
+                    duration: 0.8,
+                    ease: "back.out(1.7)"
+                });
+
+                if (!canPlay.value) {
+                    gsap.from(".stats-block", {
+                        scale: 0.9,
+                        opacity: 0,
+                        duration: 1,
+                        ease: "power3.out",
+                        delay: 0.5
+                    });
+                }
             });
         }
     });
 });
 
 const selectEnigma = (location, enigma) => {
+    if (!canPlay.value) return;
     router.post(route('player.adventure.launch', props.city.id), {
         location_id: location.id,
         enigma_id: enigma.id,
@@ -52,6 +70,13 @@ const getDifficultyColor = (diff) => {
     if (diff === 'easy') return 'text-success border-success/30 bg-success/10';
     if (diff === 'medium') return 'text-warning border-warning/30 bg-warning/10';
     return 'text-destructive border-destructive/30 bg-destructive/10';
+};
+
+const formatTime = (seconds) => {
+    if (!seconds) return "0m 00s";
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs.toString().padStart(2, '0')}s`;
 };
 </script>
 
@@ -93,9 +118,42 @@ const getDifficultyColor = (diff) => {
                 <HUDButton @click="goBack" variant="primary" class="h-12 px-6">
                     <div class="flex items-center gap-2">
                         <RefreshCw class="h-4 w-4" />
-                        <span>REJOUER // PARAMÈTRES</span>
+                        <span>{{ canPlay ? 'REJOUER // PARAMÈTRES' : 'RETOUR // PARAMÈTRES' }}</span>
                     </div>
                 </HUDButton>
+            </div>
+        </div>
+
+        <!-- STATS BLOCK (Si session terminée) -->
+        <div v-if="!canPlay && completedSession" class="stats-block mb-10 neon-border-box p-8 md:p-12 relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+            
+            <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
+                <div class="text-center md:text-left">
+                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-500/20 border border-green-500/40 text-green-400 text-[10px] font-black uppercase tracking-widest mb-4 backdrop-blur-md">
+                        <CheckCircle2 class="h-3.5 w-3.5" /> MISSION_TERMINÉE
+                    </div>
+                    <h2 class="font-display text-4xl text-white uppercase font-black italic tracking-tighter mb-2">HISTORIQUE_D_EXPLORATION</h2>
+                    <p class="text-white/40 text-xs font-bold uppercase tracking-widest max-w-md italic">"Vous avez percé tous les secrets de {{ city.name }}. Vos exploits sont gravés dans l'histoire de la cité."</p>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full md:w-auto">
+                    <div class="p-6 rounded-3xl bg-white/5 border border-white/10 text-center group hover:border-primary/30 transition-all">
+                        <Trophy class="h-6 w-6 text-amber-500 mx-auto mb-2 drop-shadow-[0_0_8px_#f59e0b]" />
+                        <div class="text-[8px] text-white/30 uppercase font-black mb-1 tracking-widest">Score Final</div>
+                        <div class="text-xl font-display text-white font-black italic group-hover:text-primary">{{ completedSession.final_score }} PX</div>
+                    </div>
+                    <div class="p-6 rounded-3xl bg-white/5 border border-white/10 text-center group hover:border-primary/30 transition-all">
+                        <Clock class="h-6 w-6 text-primary mx-auto mb-2 drop-shadow-[0_0_8px_#06b6d4]" />
+                        <div class="text-[8px] text-white/30 uppercase font-black mb-1 tracking-widest">Temps Passé</div>
+                        <div class="text-xl font-display text-white font-black italic group-hover:text-primary">{{ formatTime(completedSession.total_time) }}</div>
+                    </div>
+                    <div class="p-6 rounded-3xl bg-white/5 border border-white/10 text-center group hover:border-primary/30 transition-all col-span-2 sm:col-span-1">
+                        <Medal class="h-6 w-6 text-green-500 mx-auto mb-2 drop-shadow-[0_0_8px_#22c55e]" />
+                        <div class="text-[8px] text-white/30 uppercase font-black mb-1 tracking-widest">Rang atteint</div>
+                        <div class="text-xl font-display text-white font-black italic group-hover:text-primary">EXPLORATEUR</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -105,10 +163,15 @@ const getDifficultyColor = (diff) => {
                 v-for="location in locations"
                 :key="location.id"
                 class="enigma-card hud-glass-card group relative overflow-hidden rounded-[2.5rem] border-2 border-white/5 hover:border-primary/40 transition-all duration-700 h-[480px] flex flex-col"
+                :class="!canPlay && 'opacity-60 grayscale-[0.5] pointer-events-none'"
             >
                 <!-- Image de fond floue -->
                 <div class="absolute inset-0 opacity-20 group-hover:opacity-40 transition-all duration-1000">
-                    <img :src="location.image_path || '/images/placeholders/location.jpg'" class="w-full h-full object-cover city-hud-img" />
+                    <AppImage
+                      :src="location.cover_image || location.image_urls?.[0] || location.images?.[0] || location.image_path"
+                      fallback="/images/placeholders/location.jpg"
+                      class="w-full h-full object-cover city-hud-img"
+                    />
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
                 <div class="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
@@ -131,7 +194,7 @@ const getDifficultyColor = (diff) => {
                     </h3>
 
                     <p class="text-[11px] text-white/40 font-bold uppercase tracking-widest leading-relaxed line-clamp-3 mb-8 flex-grow">
-                        {{ location.enigmas[0]?.content.substring(0, 150) }}...
+                        {{ location.enigmas[0]?.content?.substring(0, 150) }}...
                     </p>
 
                     <div class="flex items-center justify-between pt-8 border-t border-white/5 mt-auto">
@@ -141,13 +204,18 @@ const getDifficultyColor = (diff) => {
                                 <Clock class="h-3.5 w-3.5 text-primary" /> 15-30 MIN
                             </div>
                         </div>
+                        
                         <HUDButton
+                            v-if="canPlay"
                             @click="selectEnigma(location, location.enigmas[0])"
                             variant="primary"
                             class="h-11 px-8"
                         >
                             DÉMARRER
                         </HUDButton>
+                        <div v-else class="px-5 py-2 rounded-xl bg-green-500/20 border border-green-500/40 text-green-400 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 backdrop-blur-md">
+                            <CheckCircle2 class="h-3.5 w-3.5" /> TERMINÉE
+                        </div>
                     </div>
                 </div>
             </div>
@@ -175,12 +243,5 @@ const getDifficultyColor = (diff) => {
 <style scoped>
 .neon-text {
     text-shadow: 0 0 10px rgba(0, 112, 255, 0.5), 0 0 20px rgba(0, 112, 255, 0.3);
-}
-.shadow-neon-sm {
-    box-shadow: 0 0 15px rgba(0, 112, 255, 0.2);
-}
-.glass-strong {
-    background: rgba(15, 15, 25, 0.8);
-    backdrop-filter: blur(20px);
 }
 </style>

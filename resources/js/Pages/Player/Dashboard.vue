@@ -1,95 +1,71 @@
 <script setup>
-
 import { Head, Link, usePage } from '@inertiajs/vue3';
-
 import {
-
   Trophy, Zap, MapPin, Award, Flame, ArrowRight, Crown, Sparkles, Heart,
-
-  LayoutDashboard, Map, Gamepad2, Gift, Lock, Moon, Star, ShieldCheck
-
+  LayoutDashboard, Map, Gamepad2, Gift, Lock, Moon, Star, ShieldCheck,
+  Network, ChevronRight, Cat, Medal, Activity
 } from 'lucide-vue-next';
-
 import HUDHeader from '@/Components/HUDHeader.vue';
 import HUDButton from '@/Components/HUDButton.vue';
-import { computed } from 'vue';
-
-import { cn } from '@/lib/utils';
-
+import AppImage from '@/Components/AppImage.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
-
-
+import SiteLayout from '@/Layouts/SiteLayout.vue';
+import { computed } from 'vue';
+import { cn } from '@/lib/utils';
 
 const props = defineProps({
     user: Object,
     cities: Array,
+    stats: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
-const user = computed(() => props.user);
-
 const page = usePage();
+const user = computed(() => props.user || page.props.auth.user);
 
+// Logic from style2
+const level = computed(() => user.value?.level || 24);
+const xp = computed(() => props.stats.xp_in_level ?? 2840);
+const xpMax = computed(() => props.stats.xp_per_level ?? 4000);
+const pct = computed(() => Math.min(100, (xp.value / xpMax.value) * 100));
 
+const initials = computed(() =>
+  (user.value?.name || 'CP').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+);
 
-const xp = 2840;
-
-const xpMax = 4000;
-
-const pct = (xp / xpMax) * 100;
-
-const segments = 25;
-
-const activeSegments = Math.floor((pct / 100) * segments);
-
-
-
-const stats = [
-
-  { icon: Trophy, label: 'MISSIONS', value: '47', color: 'text-primary' },
-
-  { icon: Zap, label: 'TOTAL XP', value: '12,840', color: 'text-cyan-400' },
-
-  { icon: Map, label: 'CITIES', value: '4 / 5', color: 'text-purple-400' },
-
-  { icon: Flame, label: 'STREAK', value: '32j', color: 'text-orange-500' },
-
-];
-
-
+const heroStats = computed(() => [
+  { icon: Trophy, value: String(props.stats.missions ?? 47), label: 'MISSIONS', color: 'text-primary' },
+  { icon: Zap, value: (props.stats.total_xp ?? 12840).toLocaleString('fr-FR'), label: 'TOTAL XP', color: 'text-cyan-400' },
+  {
+    icon: Network,
+    value: `${props.stats.cities_unlocked ?? 4} / ${props.stats.cities_total ?? 5}`,
+    label: 'VILLES',
+    color: 'text-purple-400'
+  },
+  { icon: Flame, value: `${props.stats.streak_days ?? 32}j`, label: 'SÉRIE', color: 'text-orange-500' },
+]);
 
 const achievements = [
-
   { icon: Crown, name: 'ROYAL SAVANT', type: 'EPIC', color: 'gold', active: true },
-
   { icon: Moon, name: 'NIGHT HUNTER', type: 'EPIC', color: 'blue', active: true },
-
   { icon: ShieldCheck, name: 'GOHO GUARD', type: 'RARE', color: 'gray', active: false },
-
   { icon: Star, name: 'CITY STAR', type: 'RARE', color: 'gray', active: false },
-
   { icon: Flame, name: 'STREAK MASTER', type: 'EPIC', color: 'gray', active: false },
-
 ];
 
-
+const segments = 25;
+const activeSegments = computed(() => Math.floor((pct.value / 100) * segments));
 
 const navLinks = [
-
   { name: 'DASHBOARD', to: 'dashboard', active: true },
-
   { name: 'CITIES', to: 'player.cities', active: false },
-
   { name: 'PLAY', to: 'player.cities', active: false },
-
   { name: 'LEADERBOARD', to: 'player.leaderboard', active: false },
-
   { name: 'REWARDS', to: 'player.rewards', active: false },
-
 ];
-
 </script>
-
-
 
 <template>
   <Head title="Dashboard — CityPlay" />
@@ -130,11 +106,11 @@ const navLinks = [
                 <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary/60 shadow-[0_0_6px_#06b6d4]" />
                 
                 <span class="text-3xl font-display font-black text-white italic drop-shadow-[0_0_12px_rgba(6,182,212,0.9)]">
-                  {{ user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() }}
+                  {{ initials }}
                 </span>
               </div>
               <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-primary text-black font-black text-[8px] tracking-widest clip-path-tech shadow-[0_0_15px_#06b6d4] z-20">
-                LVL 24
+                LVL {{ level }}
               </div>
             </div>
 
@@ -144,7 +120,7 @@ const navLinks = [
                 <div class="text-[9px] text-primary font-black tracking-[0.3em] uppercase animate-pulse">SYSTEM_ACTIVE // MYTHICAL_EXPLORER</div>
               </div>
               <h1 class="text-4xl lg:text-5xl font-display font-black uppercase italic tracking-tighter mb-6 text-white drop-shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-                {{ user.name }}
+                {{ user?.name }}
               </h1>
               
               <div class="max-w-md">
@@ -165,7 +141,7 @@ const navLinks = [
 
           <!-- AGGRESSIVE PLAY BUTTON -->
           <div class="w-full lg:w-72">
-            <HUDButton :href="route('player.cities')" variant="aggressive">
+            <HUDButton :href="route('player.modes')" variant="aggressive">
               <div class="text-3xl font-display font-black tracking-[0.15em] italic flex items-center gap-3 group-hover/play:text-primary group-hover/play:scale-105 transition-all duration-500">
                 PLAY <ArrowRight class="h-8 w-8 text-primary group-hover/play:translate-x-4 transition-transform" />
               </div>
@@ -178,7 +154,7 @@ const navLinks = [
 
         <!-- STATS BAR -->
         <div class="grid grid-cols-2 md:grid-cols-4 mt-8 border-t border-white/10 pt-6 gap-3">
-          <div v-for="s in stats" :key="s.label" class="hud-stat-box group/stat p-3 border border-white/5 bg-white/[0.02] rounded-xl transition-all hover:bg-white/[0.05]">
+          <div v-for="s in heroStats" :key="s.label" class="hud-stat-box group/stat p-3 border border-white/5 bg-white/[0.02] rounded-xl transition-all hover:bg-white/[0.05]">
             <div class="flex items-center gap-4">
               <div :class="cn('h-10 w-10 rounded-xl glass border-white/10 flex items-center justify-center shadow-xl group-hover/stat:scale-110 transition-all duration-300 relative overflow-hidden', s.color)">
                 <div class="absolute inset-0 bg-current opacity-10" />
@@ -207,26 +183,26 @@ const navLinks = [
           
           <div class="grid sm:grid-cols-2 gap-6">
             <!-- DYNAMIC CITY CARDS -->
-            <div v-for="(city, idx) in cities.slice(0, 3)" :key="city.id" 
-                 :class="cn('hud-glass-card group cursor-pointer overflow-hidden rounded-[2rem] relative border-2', idx === 1 ? 'opacity-60 grayscale cursor-not-allowed border-white/10' : 'border-white/5 hover:border-primary/40')">
+            <div v-for="city in cities" :key="city.id" 
+                 :class="cn('hud-glass-card group cursor-pointer overflow-hidden rounded-[2rem] relative border-2', city.mission_status === 'lock' ? 'opacity-60 grayscale cursor-not-allowed border-white/10' : 'border-white/5 hover:border-primary/40')">
               
               <!-- Neon Corners for Cards -->
               <div class="absolute top-3 left-3 h-3 w-3 border-t-2 border-l-2 border-primary/40 group-hover:border-primary opacity-0 group-hover:opacity-100 transition-all" />
               
-              <Link :href="idx === 1 ? '#' : route('player.game', city.id)" class="block">
+              <Link :href="city.mission_status === 'lock' ? '#' : route('player.game', city.id)" class="block">
                 <div class="relative aspect-[16/9] overflow-hidden">
-                  <img :src="city.image_path || 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?auto=format&fit=crop&q=80&w=800'" 
+                  <AppImage :src="city.image_url || city.image_path || 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?auto=format&fit=crop&q=80&w=800'" 
                        class="w-full h-full object-cover city-hud-img" />
                   
                   <!-- Color Tint Overlays -->
-                  <div :class="cn('absolute inset-0 mix-blend-color opacity-30 transition-opacity', idx === 0 ? 'bg-primary' : (idx === 2 ? 'bg-orange-500' : 'bg-zinc-500'))" />
+                  <div :class="cn('absolute inset-0 mix-blend-color opacity-30 transition-opacity', city.mission_status === 'new' ? 'bg-orange-500' : (city.mission_status === 'lock' ? 'bg-zinc-500' : 'bg-primary'))" />
                   <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90" />
                   
                   <!-- SCANNER EFFECT ON CARD -->
                   <div class="absolute inset-0 grid-bg opacity-20 group-hover:opacity-40 transition-opacity" />
                   
                   <!-- LOCK OVERLAY -->
-                  <div v-if="idx === 1" class="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10">
+                  <div v-if="city.mission_status === 'lock'" class="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10">
                      <div class="h-16 w-16 rounded-2xl glass border-white/10 grid place-items-center text-white/20">
                         <Lock class="h-8 w-8" />
                      </div>
@@ -234,18 +210,18 @@ const navLinks = [
                   </div>
                 </div>
                 <div class="p-6 relative">
-                  <h4 :class="cn('text-2xl font-display font-black uppercase italic tracking-tighter mb-1.5 transition-all group-hover:translate-x-2', idx === 1 ? 'text-white/40' : 'text-white group-hover:text-primary')">
+                  <h4 :class="cn('text-2xl font-display font-black uppercase italic tracking-tighter mb-1.5 transition-all group-hover:translate-x-2', city.mission_status === 'lock' ? 'text-white/40' : 'text-white group-hover:text-primary')">
                     {{ city.name }}
                   </h4>
                   <div class="flex items-center justify-between">
                     <div class="text-[9px] font-black tracking-[0.15em] text-white/40 uppercase flex items-center gap-1.5">
                       STATUS: 
-                      <span v-if="idx === 0" class="text-green-400 drop-shadow-[0_0_8px_#4ade80]">OPERATIONAL</span>
-                      <span v-else-if="idx === 1" class="text-white/20">LOCKED_CORE</span>
+                      <span v-if="city.mission_status === 'ok'" class="text-green-400 drop-shadow-[0_0_8px_#4ade80]">OPERATIONAL</span>
+                      <span v-else-if="city.mission_status === 'lock'" class="text-white/20">LOCKED_CORE</span>
                       <span v-else class="text-orange-400 drop-shadow-[0_0_8px_#fb923c]">SIGNAL_DETECTED</span>
                     </div>
                     <div class="h-8 w-8 rounded-full border border-primary/20 flex items-center justify-center group-hover:border-primary group-hover:bg-primary/10 transition-all">
-                      <ArrowRight :class="cn('h-4 w-4 transition-all', idx === 1 ? 'hidden' : 'text-primary group-hover:translate-x-1')" />
+                      <ArrowRight :class="cn('h-4 w-4 transition-all', city.mission_status === 'lock' ? 'hidden' : 'text-primary group-hover:translate-x-1')" />
                     </div>
                   </div>
                 </div>
@@ -324,7 +300,7 @@ const navLinks = [
                 <div class="absolute inset-0 bg-orange-600/30 blur-[60px] rounded-full scale-[2.5] animate-pulse" />
               </div>
               <div class="mt-8">
-                <div class="text-6xl font-display font-black italic tracking-tighter leading-none text-white drop-shadow-[0_0_25px_rgba(249,115,22,0.6)]">32j</div>
+                <div class="text-6xl font-display font-black italic tracking-tighter leading-none text-white drop-shadow-[0_0_25px_rgba(249,115,22,0.6)]">{{ props.stats.streak_days ?? 32 }}j</div>
                 <div class="text-[10px] font-black tracking-[0.6em] text-orange-500/60 mt-3 uppercase">STREAK_RECORD_DATA</div>
               </div>
             </div>
@@ -333,116 +309,49 @@ const navLinks = [
       </div>
     </main>
 
-
-
-    <!-- MOBILE BOTTOM NAVIGATION (HUD STYLE) -->
-
-    <nav class="md:hidden fixed bottom-0 inset-x-0 z-[60] pb-6 px-4">
-
-      <div class="hud-border h-20 bg-zinc-950/90 backdrop-blur-xl flex items-center justify-between px-6 border-primary/30">
-
-        <div v-for="link in navLinks" :key="link.name"
-
-             :class="cn('flex flex-col items-center gap-1 transition-all', link.active ? 'text-primary' : 'text-white/40')">
-
-          <component :is="link.name === 'DASHBOARD' ? LayoutDashboard : (link.name === 'CITIES' ? Map : (link.name === 'PLAY' ? Gamepad2 : (link.name === 'LEADERBOARD' ? Trophy : Gift)))"
-
-                     :class="cn('h-5 w-5', link.active && 'drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]')" />
-
-          <span class="text-[8px] font-black tracking-widest">{{ link.name }}</span>
-
-        </div>
-
-      </div>
-
-    </nav>
-
-
+    <MobileTabBar />
 
     <!-- FLOATING DECORATIONS -->
-
     <div class="fixed top-1/4 -left-20 h-96 w-96 rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
-
     <div class="fixed bottom-1/4 -right-20 h-96 w-96 rounded-full bg-purple-500/5 blur-[120px] pointer-events-none" />
-
     <div class="fixed bottom-10 right-10 opacity-20 pointer-events-none">
-
        <div class="h-20 w-20 border border-white/10 rounded-full animate-spin [animation-duration:10s]" />
-
        <div class="absolute inset-0 flex items-center justify-center">
-
          <Sparkles class="h-6 w-6 text-white/20" />
-
        </div>
-
     </div>
-</SiteLayout>
-
-
+  </SiteLayout>
 </template>
 
-
-
 <style scoped>
-
 .hud-container {
-
   background-color: #020617;
-
 }
-
-
 
 @keyframes shimmer {
-
   0% { transform: translateX(-100%); }
-
   100% { transform: translateX(100%); }
-
 }
-
-
 
 .animate-shimmer {
-
   animation: shimmer 2s infinite;
-
 }
-
-
 
 /* Custom Scrollbar for HUD */
-
 ::-webkit-scrollbar {
-
   width: 4px;
-
 }
-
-
 
 ::-webkit-scrollbar-track {
-
   background: #020617;
-
 }
-
-
 
 ::-webkit-scrollbar-thumb {
-
   background: rgba(6, 182, 212, 0.2);
-
   border-radius: 10px;
-
 }
-
-
 
 ::-webkit-scrollbar-thumb:hover {
-
   background: rgba(6, 182, 212, 0.4);
-
 }
-
 </style>

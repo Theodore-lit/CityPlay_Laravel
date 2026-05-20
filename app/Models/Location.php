@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\StorageUrl;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -30,6 +32,21 @@ class Location extends Model
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
     ];
+
+    protected $appends = [
+        'cover_image',
+        'image_urls',
+    ];
+
+    protected function coverImage(): Attribute
+    {
+        return Attribute::get(fn () => StorageUrl::url(($this->images ?? [])[0] ?? null));
+    }
+
+    protected function imageUrls(): Attribute
+    {
+        return Attribute::get(fn () => StorageUrl::urls($this->images ?? []));
+    }
 
     public function city()
     {

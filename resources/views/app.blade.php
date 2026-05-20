@@ -19,5 +19,6 @@
     </head>
     <body class="font-sans antialiased">
         @inertia
+        {{-- Loader global monté via Vue (CustomLoader dans app.js) — disponible sur toutes les routes Inertia --}}
     </body>
 </html>

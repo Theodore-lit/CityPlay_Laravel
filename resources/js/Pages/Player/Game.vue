@@ -26,6 +26,7 @@ const props = defineProps({
 const userPosition = ref(null);
 const teamMembers = ref(props.initialTeamPositions || []);
 const isPaused = ref(false);
+const totalErrors = ref(0);
 const showHint = ref(false);
 const usedHints = ref(0);
 const gameTime = ref(0);
@@ -49,6 +50,20 @@ const earnedXp = ref(150);
 
 // Toast
 const toast = ref({ show: false, message: '', type: 'info' });
+
+const updateGPS = () => {
+    if ("geolocation" in navigator) {
+        navigator.geolocation.watchPosition((position) => {
+            userPosition.value = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+        }, (err) => {
+            console.error("Erreur GPS:", err);
+        }, { enableHighAccuracy: true });
+    }
+};
+
 
 // --- COMPUTED ---
 const rawDistance = computed(() => {
@@ -80,8 +95,8 @@ const cityData = computed(() => props.city);
 const gameMode = computed(() => props.currentSession ? 'aventure' : 'classique');
 
 const currentTarget = computed(() => {
-    if (!props.currentSession || !props.locations) return null;
-    return props.locations.find(l => l.id === props.currentSession.current_location_id);
+    if (!props.locations || !props.currentSession) return null;
+    return props.locations.find(l => l.id === props.currentSession.current_location_id) || props.locations[0] || null;
 });
 
 const activeEnigma = computed(() => {
@@ -132,6 +147,7 @@ const handleUseHint = () => {
 
 const verifyPosition = () => {
     if (isNearLocation.value && currentTarget.value) {
+        isPaused.value = true; // Arrête le chrono dès la validation du lieu
         showGameToast("Position confirmée !", "success");
         setTimeout(() => {
             selectedLocation.value = currentTarget.value;
@@ -156,11 +172,15 @@ const startQuestionnaire = () => {
     isQuestionnaireActive.value = true;
     currentQuestionIndex.value = 0;
     questionnaireAnswers.value = [];
+    totalErrors.value = 0;
     showRiddleModal.value = true;
 };
 
 const selectQuestionOption = (option) => {
+    if (questionnaireAnswers.value[currentQuestionIndex.value]) return;
+
     questionnaireAnswers.value[currentQuestionIndex.value] = option;
+    
     if (option.is_correct) {
         if (currentQuestionIndex.value < currentRiddle.value.questions.length - 1) {
             setTimeout(() => { currentQuestionIndex.value++; }, 1000);
@@ -168,7 +188,14 @@ const selectQuestionOption = (option) => {
             handleSuccess();
         }
     } else {
-        showGameToast("Mauvaise réponse, réessayez !", "error");
+        totalErrors.value++;
+        showGameToast("Mauvaise réponse !", "error");
+        // On passe quand même à la suivante pour la logique de quiz
+        if (currentQuestionIndex.value < currentRiddle.value.questions.length - 1) {
+            setTimeout(() => { currentQuestionIndex.value++; }, 1000);
+        } else {
+            handleSuccess();
+        }
     }
 };
 
@@ -176,15 +203,19 @@ const submitRiddle = () => {
     if (riddleAnswer.value.toLowerCase().trim() === currentRiddle.value.answer?.toLowerCase().trim()) {
         handleSuccess();
     } else {
+        totalErrors.value++;
         showGameToast("Réponse incorrecte.", "error");
     }
 };
 
 const handleSuccess = () => {
-    earnedStars.value = Math.max(1, 3 - usedHints.value);
+    // Calcul des étoiles basé sur les erreurs du quiz
+    earnedStars.value = Math.max(1, 3 - totalErrors.value);
+    
     router.post(route('player.complete-location', selectedLocation.value.id), {
         stars: earnedStars.value,
-        xp: 150
+        xp: 150,
+        duration: gameTime.value // Envoyer la durée finale
     }, {
         onSuccess: () => {
             showRiddleModal.value = false;
@@ -194,17 +225,8 @@ const handleSuccess = () => {
     });
 };
 
-const updateGPS = () => {
-    if ("geolocation" in navigator) {
-        navigator.geolocation.watchPosition((position) => {
-            userPosition.value = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude
-            };
-        }, (err) => {
-            console.error("Erreur GPS:", err);
-        }, { enableHighAccuracy: true });
-    }
+const goBackToLobby = () => {
+    router.get(route('player.adventure.solo', props.city.id));
 };
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -480,9 +502,14 @@ onUnmounted(() => {
                         </div>
                     </div>
                     
-                    <HUDButton variant="primary" size="xl" class="w-full h-16 rounded-[1.5rem]" @click="showSuccessModal = false">
-                        CONTINUER_SEQUENCE
-                    </HUDButton>
+                    <div class="flex flex-col gap-4">
+                        <HUDButton variant="primary" size="xl" class="w-full h-16 rounded-[1.5rem]" @click="showSuccessModal = false">
+                            CONTINUER_SEQUENCE
+                        </HUDButton>
+                        <button @click="goBackToLobby" class="text-[10px] text-primary font-black uppercase tracking-[0.4em] hover:text-white transition-colors">
+                            REJOUER // SECTOR_LOBBY
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -491,11 +518,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.glass-strong { background: rgba(15, 15, 25, 0.8); backdrop-filter: blur(20px); }
-.shadow-neon-blue { box-shadow: 0 0 20px rgba(0, 112, 255, 0.2); }
-.shadow-neon-blue-lg { box-shadow: 0 0 40px rgba(0, 112, 255, 0.3); }
-.shadow-neon-success { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
-.shadow-neon-warning { box-shadow: 0 0 20px rgba(234, 179, 8, 0.3); }
+.hud-glass-card { background: rgba(15, 15, 25, 0.8); backdrop-filter: blur(20px); }
 .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, -20px); }
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }

@@ -34,6 +34,12 @@ const navLinks = [
               :class="cn('hud-nav-item text-[10px] px-4 py-1.5 font-black', link.active && 'active')">
           {{ link.name }}
         </Link>
+        <HUDButton :href="route('player.modes')" variant="primary" class="h-8 px-4 ml-4 scale-90">
+            <div class="flex items-center gap-2">
+                <Gamepad2 class="h-3 w-3" />
+                <span>JOUER</span>
+            </div>
+        </HUDButton>
       </nav>
     </div>
 
