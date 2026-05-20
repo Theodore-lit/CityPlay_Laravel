@@ -22,7 +22,8 @@ return new class extends Migration
             $table->decimal('longitude', 11, 8);
             $table->integer('radius_meters')->default(50);
             $table->integer('average_time_minutes')->nullable();
-            $table->integer('order')->default(0);
+            $table->json('images')->nullable();
+            $table->boolean('is_secret')->default(false);
             $table->string('status')->default('active');
             $table->timestamps();
         });
