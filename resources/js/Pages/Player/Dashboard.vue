@@ -57,7 +57,7 @@ const statusLabel = (status) => {
 
 const cityCardClass = (locked) =>
   cn(
-    'group relative flex overflow-hidden rounded-xl border bg-card/80 backdrop-blur-xl transition-all duration-300',
+    'group relative flex overflow-hidden rounded-xl border bg-card/90 backdrop-blur-xl transition-all duration-300',
     locked
       ? 'border-white/10 cursor-not-allowed opacity-75'
       : 'border-primary/20 hover:border-primary/50 hover:shadow-[0_0_24px_oklch(0.70_0.18_250/0.12)]'
@@ -74,7 +74,7 @@ const cityCardClass = (locked) =>
       <div class="relative mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-12 py-6 pb-28 md:pb-10 space-y-8">
 
         <section
-          class="relative overflow-hidden rounded-2xl border border-primary/40 bg-card/80 backdrop-blur-2xl shadow-[0_0_40px_oklch(0.70_0.18_250/0.15)]"
+          class="relative overflow-hidden rounded-2xl border border-primary/40 bg-card/95 backdrop-blur-2xl shadow-[0_0_40px_oklch(0.70_0.18_250/0.15)]"
         >
           <div class="absolute inset-0 grid-bg opacity-[0.06] pointer-events-none" />
           <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/80 to-transparent" />
@@ -232,7 +232,7 @@ const cityCardClass = (locked) =>
               Succès
             </h2>
 
-            <div class="rounded-2xl border border-primary/20 bg-card/80 backdrop-blur-xl p-5 sm:p-6">
+            <div class="rounded-2xl border border-primary/20 bg-card/90 backdrop-blur-xl p-5 sm:p-6">
               <p class="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-5 text-center">
                 Temple des agents
               </p>

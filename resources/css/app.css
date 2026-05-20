@@ -117,13 +117,13 @@ html.dark, .dark {
 
   /* Filtres adaptatifs selon le mode */
   .dark body::before {
-    opacity: 0.5; /* Visibilité augmentée */
-    filter: brightness(0.6) saturate(1.2);
+    opacity: 0.2; /* Légère baisse pour la netteté */
+    filter: brightness(0.7) saturate(1.1); /* Plus net, moins sombre */
   }
 
   .light body::before {
-    opacity: 0.12; /* Visibilité augmentée */
-    filter: brightness(1.1) saturate(0.8) blur(1px);
+    opacity: 0.15;
+    filter: brightness(1) saturate(1); /* Suppression du blur et du blanchiment */
   }
 
   body {
@@ -144,7 +144,7 @@ html.dark, .dark {
 @layer utilities {
   /* GLASSMORPHISM PREMIUM */
   .glass {
-    background: var(--card);
+    background: color-mix(in srgb, var(--card), transparent 10%); /* Plus solide (90% opaque) */
     backdrop-filter: blur(16px) saturate(180%);
     -webkit-backdrop-filter: blur(16px) saturate(180%);
     border: 1px solid var(--border);
@@ -153,7 +153,7 @@ html.dark, .dark {
   }
 
   .glass-strong {
-    background: var(--card);
+    background: color-mix(in srgb, var(--card), transparent 5%); /* Très solide (95% opaque) */
     backdrop-filter: blur(40px) saturate(220%);
     -webkit-backdrop-filter: blur(40px) saturate(220%);
     border: 1px solid var(--border);
@@ -162,14 +162,14 @@ html.dark, .dark {
   }
 
   .dark .glass-strong {
-    background: oklch(0.16 0.06 255 / 0.88); /* Encore plus opaque */
-    border: 1px solid oklch(0.78 0.15 232 / 0.4);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    background: oklch(0.16 0.06 255 / 0.96); /* Augmentation de l'opacité (96%) */
+    border: 1px solid oklch(0.78 0.15 232 / 0.45);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   }
 
   .dark .glass {
-    background: oklch(0.15 0.03 240 / 0.85); /* Encore plus opaque */
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    background: oklch(0.15 0.03 240 / 0.92); /* Augmentation de l'opacité (92%) */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   }
 
   /* GAME UI EFFECTS */

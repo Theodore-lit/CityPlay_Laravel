@@ -237,7 +237,7 @@ const formatTime = (seconds) => {
     box-shadow: 0 0 15px rgba(0, 112, 255, 0.2);
 }
 .glass-strong {
-    background: rgba(15, 15, 25, 0.8);
-    backdrop-filter: blur(20px);
+    background: rgba(15, 15, 25, 0.92);
+    backdrop-filter: blur(40px);
 }
 </style>
