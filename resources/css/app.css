@@ -108,7 +108,7 @@ html.dark, .dark {
     inset: 0;
     z-index: 9999; /* Premier plan */
     pointer-events: none; /* Ne bloque pas les clics */
-    background-image: url('/storage/images/bg.png');
+    background-image: url('../images/bg.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
