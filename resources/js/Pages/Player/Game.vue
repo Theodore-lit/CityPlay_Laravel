@@ -21,39 +21,40 @@ const props = defineProps({
 });
 
 // --- ÉTATS RÉACTIFS ---
-const userPosition = ref(null);
-const teamMembers = ref(props.initialTeamPositions || []);
-const isPaused = ref(false);
-const totalErrors = ref(0);
-const showHint = ref(false);
-const usedHints = ref(0);
-const gameTime = ref(0);
-const timerInterval = ref(null);
-const mapRef = ref(null);
+const userPosition = ref(null); // Coordonnées GPS actuelles du joueur
+const teamMembers = ref(props.initialTeamPositions || []); // Positions des autres membres de l'équipe
+const isPaused = ref(false); // État de pause du chronomètre
+const totalErrors = ref(0); // Compteur d'erreurs pour le calcul des étoiles
+const showHint = ref(false); // Affichage ou non de l'indice
+const usedHints = ref(0); // Nombre d'indices utilisés
+const gameTime = ref(0); // Temps écoulé en secondes
+const timerInterval = ref(null); // Intervalle du chronomètre
+const mapRef = ref(null); // Référence vers le composant carte
 
 // Modal Énigme / Questionnaire
-const showRiddleModal = ref(false);
-const riddleType = ref('site'); // 'unlock' or 'site'
-const selectedLocation = ref(null);
-const currentRiddle = ref(null);
-const riddleAnswer = ref('');
-const isQuestionnaireActive = ref(false);
-const currentQuestionIndex = ref(0);
-const questionnaireAnswers = ref([]);
+const showRiddleModal = ref(false); // Contrôle l'affichage du modal de défi
+const riddleType = ref('site'); // Type de défi : 'unlock' (trouver) ou 'site' (sur place)
+const selectedLocation = ref(null); // Lieu actuellement en interaction
+const currentRiddle = ref(null); // Énigme active
+const riddleAnswer = ref(''); // Réponse saisie par le joueur (mode texte)
+const isQuestionnaireActive = ref(false); // Bascule entre mode texte et mode QCM
+const currentQuestionIndex = ref(0); // Index de la question actuelle dans le QCM
+const questionnaireAnswers = ref([]); // Historique des réponses fournies
 
 // Modal Succès
-const showSuccessModal = ref(false);
-const earnedStars = ref(3);
-const earnedXp = ref(150);
+const showSuccessModal = ref(false); // Modal de fin de quête réussi
+const earnedStars = ref(3); // Nombre d'étoiles gagnées
+const earnedXp = ref(150); // XP gagnés
 
-// Toast
+// Toast (Notifications éphémères)
 const toast = ref({ show: false, message: '', type: 'info' });
 
+/**
+ * Active la surveillance GPS en temps réel.
+ */
 const updateGPS = () => {
     if ("geolocation" in navigator) {
         navigator.geolocation.watchPosition((position) => {
-            console.log(position.coords.latitude)
-            console.log(position.coords.longitude)
             userPosition.value = {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude
@@ -66,6 +67,9 @@ const updateGPS = () => {
 
 
 // --- COMPUTED ---
+/**
+ * Calcule la distance brute en mètres entre le joueur et la cible.
+ */
 const rawDistance = computed(() => {
     if (!userPosition.value || !currentTarget.value) return null;
     return calculateDistance(
@@ -74,18 +78,25 @@ const rawDistance = computed(() => {
     );
 });
 
-console.log(rawDistance.value)
-
+/**
+ * Formate la distance pour l'affichage (m ou km).
+ */
 const distanceToClosest = computed(() => {
     if (rawDistance.value === null) return '---';
     const dist = rawDistance.value;
     return dist > 1000 ? (dist/1000).toFixed(1) + 'km' : Math.round(dist) + 'm';
 });
 
+/**
+ * Vérifie si le joueur est à moins de 50 mètres de la cible.
+ */
 const isNearLocation = computed(() => {
     return rawDistance.value !== null && rawDistance.value < 50;
 });
 
+/**
+ * Calcule un score de proximité pour la jauge radar (0-100%).
+ */
 const proximityScore = computed(() => {
     if (rawDistance.value === null) return 0;
     const dist = rawDistance.value;
@@ -93,24 +104,33 @@ const proximityScore = computed(() => {
     return Math.max(0, 100 - (dist / 10)); // 0m = 100%, 1000m = 0%
 });
 
-const cityData = computed(() => props.city);
-const gameMode = computed(() => props.currentSession ? 'aventure' : 'classique');
-
+/**
+ * Identifie le lieu cible actuel basé sur la session de jeu.
+ */
 const currentTarget = computed(() => {
     if (!props.locations || !props.currentSession) return null;
     return props.locations.find(l => l.id === props.currentSession.current_location_id) || props.locations[0] || null;
 });
 
+/**
+ * Récupère l'énigme active liée au lieu cible.
+ */
 const activeEnigma = computed(() => {
     if (!currentTarget.value) return null;
     return currentTarget.value.enigmas?.find(e => e.id === props.currentSession.current_enigma_id) || currentTarget.value.enigmas?.[0];
 });
 
+/**
+ * Texte de l'énigme à afficher au joueur.
+ */
 const displayEnigma = computed(() => {
     return activeEnigma.value?.content || "Suivez le radar pour découvrir ce lieu mystérieux...";
 });
 
 // --- MÉTHODES ---
+/**
+ * Démarre le chronomètre de jeu.
+ */
 const startTimer = () => {
     if (timerInterval.value) clearInterval(timerInterval.value);
     timerInterval.value = setInterval(() => {
@@ -118,21 +138,33 @@ const startTimer = () => {
     }, 1000);
 };
 
+/**
+ * Formate les secondes en MM:SS.
+ */
 const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
+/**
+ * Affiche un toast d'information.
+ */
 const showGameToast = (message, type = 'info') => {
     toast.value = { show: true, message, type };
     setTimeout(() => { toast.value.show = false; }, 3000);
 };
 
+/**
+ * Bascule l'état de pause.
+ */
 const togglePause = () => {
     isPaused.value = !isPaused.value;
 };
 
+/**
+ * Débloque l'indice de l'énigme en échange de XP.
+ */
 const handleUseHint = () => {
     if (usePage().props.auth.user.xp < 50) {
         showGameToast("XP insuffisants pour un indice.", "error");
@@ -147,6 +179,9 @@ const handleUseHint = () => {
     });
 };
 
+/**
+ * Vérifie si le joueur est sur le lieu cible pour déclencher le défi final.
+ */
 const verifyPosition = () => {
     if (isNearLocation.value && currentTarget.value) {
         isPaused.value = true; // Arrête le chrono dès la validation du lieu
@@ -170,6 +205,9 @@ const verifyPosition = () => {
     }
 };
 
+/**
+ * Initialise le mode QCM pour un lieu.
+ */
 const startQuestionnaire = () => {
     isQuestionnaireActive.value = true;
     currentQuestionIndex.value = 0;
@@ -178,6 +216,9 @@ const startQuestionnaire = () => {
     showRiddleModal.value = true;
 };
 
+/**
+ * Traite la sélection d'une réponse dans un QCM.
+ */
 const selectQuestionOption = (option) => {
     if (questionnaireAnswers.value[currentQuestionIndex.value]) return;
 
@@ -190,7 +231,7 @@ const selectQuestionOption = (option) => {
         showGameToast("Mauvaise réponse !", "error");
     }
 
-    // On attend un peu pour laisser l'utilisateur voir le retour visuel
+    // Délai avant passage à la question suivante pour retour visuel
     setTimeout(() => {
         if (currentQuestionIndex.value < currentRiddle.value.questions.length - 1) {
             currentQuestionIndex.value++;
@@ -200,6 +241,9 @@ const selectQuestionOption = (option) => {
     }, 1500);
 };
 
+/**
+ * Soumet la réponse à une énigme textuelle.
+ */
 const submitRiddle = () => {
     if (riddleAnswer.value.toLowerCase().trim() === currentRiddle.value.answer?.toLowerCase().trim()) {
         handleSuccess();
@@ -209,6 +253,9 @@ const submitRiddle = () => {
     }
 };
 
+/**
+ * Gère la réussite d'un lieu (attribution étoiles, XP et redirection).
+ */
 const handleSuccess = () => {
     // Calcul des étoiles basé sur les erreurs du quiz
     earnedStars.value = Math.max(1, 3 - totalErrors.value);

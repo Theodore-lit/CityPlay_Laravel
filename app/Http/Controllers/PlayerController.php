@@ -8,20 +8,27 @@ use Illuminate\Http\Request;
 
 class PlayerController extends Controller
 {
+    /**
+     * Affiche le tableau de bord principal du joueur.
+     * Calcule les statistiques, les villes débloquées et la progression du niveau.
+     */
     public function dashboard()
     {
         $user = auth()->user();
 
+        // Récupération des villes actives avec leur statut de mission (lock, new, good)
         $cities = City::where('is_active', true)
             ->withCount('locations')
             ->orderBy('name')
             ->get()
             ->map(function ($city, $index) use ($user) {
+                // Compte les lieux découverts par l'utilisateur dans cette ville
                 $discoveredInCity = \App\Models\UserLocationProgress::where('user_id', $user->id)
                     ->whereHas('location', fn ($q) => $q->where('city_id', $city->id))
                     ->where('is_discovered', true)
                     ->count();
 
+                // Détermination du statut visuel de la ville
                 if ($city->locations_count === 0) {
                     $city->mission_status = 'lock';
                 } elseif ($discoveredInCity === 0 && $city->created_at?->gt(now()->subDays(14))) {
@@ -33,6 +40,7 @@ class PlayerController extends Controller
                 return $city;
             });
 
+        // Nombre de villes où l'utilisateur a au moins une découverte
         $citiesUnlocked = \App\Models\UserLocationProgress::where('user_id', $user->id)
             ->where('is_discovered', true)
             ->with('location')
@@ -42,11 +50,13 @@ class PlayerController extends Controller
             ->unique()
             ->count();
 
+        // Total des missions (Lieux + Quiz) terminées
         $missionsCompleted = \App\Models\UserLocationProgress::where('user_id', $user->id)
             ->where('is_discovered', true)
             ->count()
             + \App\Models\QuizResult::where('user_id', $user->id)->count();
 
+        // Logique de progression par niveau (4000 XP par niveau)
         $xpPerLevel = 4000;
         $xpInLevel = $user->xp % $xpPerLevel;
 
@@ -64,6 +74,10 @@ class PlayerController extends Controller
         ]);
     }
 
+    /**
+     * Met à jour la position GPS du joueur en temps réel.
+     * Retourne également la position des membres de l'équipe si applicable.
+     */
     public function updatePosition(Request $request)
     {
         $user = auth()->user();
@@ -80,6 +94,7 @@ class PlayerController extends Controller
         if ($teamId) {
             $team = \App\Models\Team::find($teamId);
             if ($team) {
+                // Récupère les positions des coéquipiers
                 $teamPositions = $team->members()
                     ->where('users.id', '!=', $user->id)
                     ->whereNotNull('latitude')
@@ -91,6 +106,9 @@ class PlayerController extends Controller
         return back()->with('teamPositions', $teamPositions);
     }
 
+    /**
+     * Permet au joueur d'acheter un cœur supplémentaire en échange de 500 XP.
+     */
     public function buyHeart(Request $request)
     {
         $user = auth()->user();
@@ -102,6 +120,9 @@ class PlayerController extends Controller
         return back()->with('error', 'XP insuffisants.');
     }
 
+    /**
+     * Permet au joueur d'utiliser un indice pour 50 XP.
+     */
     public function useHint(Request $request)
     {
         $user = auth()->user();
@@ -113,7 +134,7 @@ class PlayerController extends Controller
     }
 
     /**
-     * Recommencer un quiz en payant 1 cœur
+     * Recommencer un quiz en payant 1 cœur.
      */
     public function retryQuiz(\App\Models\Quiz $quiz)
     {
@@ -131,6 +152,9 @@ class PlayerController extends Controller
             ->with('error', 'Vous n\'avez plus de cœurs pour recommencer.');
     }
 
+    /**
+     * Sélectionne le mode de jeu (Quiz ou Aventure) et le stocke en session.
+     */
     public function selectMode(Request $request)
     {
         $request->validate([
@@ -142,6 +166,9 @@ class PlayerController extends Controller
         return redirect()->route('player.cities');
     }
 
+    /**
+     * Liste les villes disponibles selon le mode de jeu choisi.
+     */
     public function cities()
     {
         $user = auth()->user();
@@ -149,11 +176,10 @@ class PlayerController extends Controller
 
         $query = City::where('is_active', true);
 
+        // Filtrage des villes selon le contenu disponible pour le mode choisi
         if ($mode === 'quiz') {
-            // Uniquement les villes avec au moins un quiz
             $query->whereHas('quizzes');
         } else {
-            // Mode Aventure : Uniquement les villes avec des lieux et énigmes
             $query->whereHas('locations.enigmas');
         }
 
@@ -164,6 +190,7 @@ class PlayerController extends Controller
             }])
             ->get()
             ->map(function ($city) use ($user) {
+                // Calcul de la progression dans la ville (Lieux découverts / Total)
                 $totalLocations = $city->locations->count();
                 $discoveredLocations = $city->locations->filter(function ($location) {
                     return $location->userProgress->where('is_discovered', true)->isNotEmpty();
@@ -175,7 +202,7 @@ class PlayerController extends Controller
                 $city->discovered_count = $discoveredLocations;
                 $city->total_count = $totalLocations;
 
-                // Vérifier si une session terminée existe pour cette ville
+                // Vérifier si une session d'aventure a déjà été complétée
                 $city->has_completed_adventure = \App\Models\GameSession::where('city_id', $city->id)
                     ->where('user_id', $user->id)
                     ->where('status', 'completed')
@@ -190,6 +217,9 @@ class PlayerController extends Controller
         ]);
     }
 
+    /**
+     * Affiche la sélection des modes de jeu avec les quiz disponibles.
+     */
     public function modes()
     {
         return Inertia::render('Player/Modes', [
@@ -197,6 +227,9 @@ class PlayerController extends Controller
         ]);
     }
 
+    /**
+     * Affiche le classement mondial des joueurs par XP.
+     */
     public function leaderboard()
     {
         $topPlayers = \App\Models\User::where('role', 'joueur')
@@ -209,11 +242,17 @@ class PlayerController extends Controller
         ]);
     }
 
+    /**
+     * Affiche la page des récompenses (en cours de développement).
+     */
     public function rewards()
     {
         return Inertia::render('Player/Rewards');
     }
 
+    /**
+     * Initialise et affiche une vue de Quiz.
+     */
     public function quiz(\App\Models\Quiz $quiz = null)
     {
         if (!$quiz) {
@@ -225,6 +264,9 @@ class PlayerController extends Controller
         ]);
     }
 
+    /**
+     * Traite les réponses d'un quiz, calcule le score, les étoiles et attribue les XP.
+     */
     public function submitQuiz(\Illuminate\Http\Request $request, \App\Models\Quiz $quiz)
     {
         $answers = $request->input('answers');
@@ -234,6 +276,7 @@ class PlayerController extends Controller
         $score = 0;
         $total = $quiz->questions->count();
 
+        // Comparaison des réponses envoyées avec les réponses correctes en DB
         foreach ($quiz->questions as $index => $question) {
             $userAnswer = $answers[$index] ?? null;
             if ($userAnswer && (string)$userAnswer === (string)$question->correct_option) {
@@ -241,11 +284,7 @@ class PlayerController extends Controller
             }
         }
 
-        // 1. Règle des étoiles mise à jour :
-        // 5/5 -> 3 étoiles
-        // 4/5 -> 2 étoiles
-        // 3/5 -> 1 étoile
-        // < 3 -> 0 étoile
+        // Calcul des étoiles basé sur la performance (Min 3/5 pour 1 étoile)
         $stars = 0;
         if ($score === 5) {
             $stars = 3;
@@ -255,10 +294,10 @@ class PlayerController extends Controller
             $stars = 1;
         }
 
-        // 2. Calcul des XP : 100 XP par bonne réponse
+        // Attribution de 100 XP par bonne réponse
         $xpEarned = $score * 100;
 
-        // Si c'est un quiz lié à un lieu, on le débloque si le score est suffisant (min 3/5)
+        // Si le quiz est lié à un lieu spécifique, on valide la découverte du lieu
         if ($quiz->location_id && $score >= 3) {
             \App\Models\UserLocationProgress::updateOrCreate(
                 ['user_id' => auth()->id(), 'location_id' => $quiz->location_id],
@@ -266,6 +305,7 @@ class PlayerController extends Controller
             );
         }
 
+        // Enregistrement du résultat du quiz
         \App\Models\QuizResult::create([
             'user_id' => auth()->id(),
             'quiz_id' => $quiz->id,
@@ -274,12 +314,9 @@ class PlayerController extends Controller
             'xp_earned' => $xpEarned,
         ]);
 
-        // 3. Mise à jour de l'utilisateur : on AJOUTE les XP au total existant
+        // Mise à jour des XP globaux du joueur
         $user = auth()->user();
         $user->increment('xp', $xpEarned);
-
-        // Note : On ne touche PAS aux cœurs ici.
-        // Les vies du quiz sont temporaires, les cœurs du compte sont permanents et s'achètent.
 
         return redirect()
             ->route('player.quiz.result', $quiz)
@@ -295,6 +332,9 @@ class PlayerController extends Controller
             ]);
     }
 
+    /**
+     * Affiche l'écran de résultat après la soumission d'un quiz.
+     */
     public function quizResult(\App\Models\Quiz $quiz)
     {
         $result = session('quiz_result');
@@ -312,47 +352,39 @@ class PlayerController extends Controller
         ]);
     }
 
+    /**
+     * Point d'entrée principal du mode de jeu (Aventure ou Quiz dans une ville).
+     */
+    /**
+     * Point d'entrée principal du mode de jeu (Aventure ou Quiz dans une ville).
+     */
     public function game(City $city)
     {
         $user = auth()->user();
         $mode = session('game_mode', 'aventure');
 
-        // On n'empêche plus l'accès si la mission est terminée pour permettre de rejouer
-        // $hasCompleted = \App\Models\GameSession::where('city_id', $city->id)
-        //     ->where('user_id', $user->id)
-        //     ->where('status', 'completed')
-        //     ->exists();
-
-        // if ($hasCompleted && $mode === 'aventure') {
-        //     return redirect()->route('player.adventure.solo', $city->id)
-        //         ->with('error', 'Cette mission est déjà terminée. Vous pouvez consulter vos statistiques dans le lobby.');
-        // }
-
+        // GESTION DU MODE QUIZ DANS UNE VILLE
         if ($mode === 'quiz') {
-            // On récupère tous les quiz de la ville
+            // Récupération de tous les quiz de la ville
             $quizzes = \App\Models\Quiz::where('city_id', $city->id)
                 ->withCount('questions')
                 ->get();
 
-            // On récupère les IDs des quiz déjà réussis par le joueur (score >= 60%)
+            // Quiz déjà réussis (min 60% de bonnes réponses)
             $completedQuizIds = \App\Models\QuizResult::where('user_id', $user->id)
                 ->whereIn('quiz_id', $quizzes->pluck('id'))
                 ->whereRaw('score >= (total_questions * 0.6)')
                 ->pluck('quiz_id')
                 ->toArray();
 
-            // On catégorise les quiz par difficulté
+            // Catégorisation par difficulté pour l'affichage et le déblocage progressif
             $categorizedQuizzes = [
                 'easy' => $quizzes->where('difficulty', 'easy')->values(),
                 'medium' => $quizzes->where('difficulty', 'medium')->values(),
                 'hard' => $quizzes->where('difficulty', 'hard')->values(),
             ];
 
-            // Logique de déblocage :
-            // Facile est toujours ouvert
-            // Moyen s'ouvre si TOUS les quiz Faciles sont réussis
-            // Difficile s'ouvre si TOUS les quiz Moyens sont réussis
-
+            // Logique de déblocage des niveaux : Facile -> Moyen -> Difficile
             $allEasyDone = $categorizedQuizzes['easy']->every(fn($q) => in_array($q->id, $completedQuizIds));
             $allMediumDone = $categorizedQuizzes['medium']->every(fn($q) => in_array($q->id, $completedQuizIds));
 
@@ -368,7 +400,8 @@ class PlayerController extends Controller
             ]);
         }
 
-        // Get current session (Check Solo first, then Teams)
+        // GESTION DU MODE AVENTURE (SOLO OU ÉQUIPE)
+        // Recherche d'une session en cours pour l'utilisateur ou son équipe
         $session = \App\Models\GameSession::where('city_id', $city->id)
             ->where('status', 'in_progress')
             ->where(function ($query) use ($user) {
@@ -377,6 +410,7 @@ class PlayerController extends Controller
             })
             ->first();
 
+        // Position des membres de l'équipe si applicable
         $teamPositions = [];
         if ($session && $session->team_id) {
             $teamPositions = \App\Models\Team::find($session->team_id)
@@ -389,23 +423,25 @@ class PlayerController extends Controller
 
         $city->load(['locations.enigmas.questions.options']);
 
+        // Transformation des lieux pour gérer le statut de découverte (Brouillard de guerre)
         $locations = $city->locations->map(function ($location) use ($user, $session) {
             $progress = $location->userProgress->where('user_id', $user->id)->first();
 
             $location->is_discovered = $progress ? $progress->is_discovered : false;
             $location->stars = $progress ? $progress->stars : 0;
 
-            // Determine if this is the current target in the sequence
+            // Identification de la cible actuelle de la quête
             $location->is_current_target = $session && $session->current_location_id == $location->id;
 
+            // Masquage des infos si le lieu n'est pas encore découvert
             if (!$location->is_discovered && !$location->is_current_target) {
                 $location->display_name = "???";
                 $location->display_description = "Zone inconnue";
-                $location->status = 'locked'; // Padlock
+                $location->status = 'locked'; 
             } elseif (!$location->is_discovered && $location->is_current_target) {
                 $location->display_name = "Prochaine destination";
                 $location->display_description = "Résolvez l'énigme pour localiser";
-                $location->status = 'target'; // Question mark
+                $location->status = 'target';
             } else {
                 $location->display_name = $location->name;
                 $location->display_description = $location->description;
@@ -424,6 +460,9 @@ class PlayerController extends Controller
         ]);
     }
 
+    /**
+     * Affiche la page de configuration d'une nouvelle aventure (Solo vs Équipe).
+     */
     public function adventureSetup(City $city)
     {
         return Inertia::render('Player/AdventureSetup', [
@@ -432,6 +471,9 @@ class PlayerController extends Controller
         ]);
     }
 
+    /**
+     * Initialise le Lobby de l'explorateur en filtrant les énigmes par distance et difficulté.
+     */
     public function startSoloQuest(Request $request, City $city)
     {
         $user = auth()->user();
@@ -440,23 +482,24 @@ class PlayerController extends Controller
         $transport = $request->input('transport', 'bike');
         $difficulty = $request->input('difficulty', 'medium');
 
-        // Vérifier si une session terminée existe déjà
+        // Historique de session pour affichage informatif
         $completedSession = \App\Models\GameSession::where('city_id', $city->id)
             ->where('user_id', $user->id)
             ->where('status', 'completed')
             ->first();
 
+        // Filtrage des lieux ayant des énigmes correspondant à la difficulté
         $availableLocations = $city->locations()->whereHas('enigmas', function($q) use ($difficulty) {
             $q->where('difficulty', $difficulty);
         })->with(['enigmas' => function($q) use ($difficulty) {
             $q->where('difficulty', $difficulty);
         }])->get();
 
+        // Filtrage géographique basé sur le mode de transport
         if ($lat && $lng) {
-            // Filtrage par distance selon le mode de transport (Règles strictes)
             $maxDistance = 8000; // Pied/Vélo : 8 km
             if ($transport === 'moto') $maxDistance = 20000; // Moto : 20 km
-            if ($transport === 'car') $maxDistance = 100000; // Voiture : 100 km (Plafonné)
+            if ($transport === 'car') $maxDistance = 100000; // Voiture : 100 km
 
             $availableLocations = $availableLocations->filter(function ($location) use ($lat, $lng, $maxDistance) {
                 $distance = $this->calculateDistance($lat, $lng, $location->latitude, $location->longitude);
@@ -477,6 +520,9 @@ class PlayerController extends Controller
         ]);
     }
 
+    /**
+     * Lance officiellement l'aventure en créant ou mettant à jour une GameSession.
+     */
     public function launchAdventure(Request $request, City $city)
     {
         $user = auth()->user();
@@ -484,12 +530,9 @@ class PlayerController extends Controller
         $enigmaId = $request->input('enigma_id');
         $difficulty = $request->input('difficulty', 'medium');
 
-        // On autorise le lancement même si déjà complété pour permettre de rejouer
-        // On cherche une session en cours pour la réinitialiser ou on en crée une nouvelle
-        
         $location = \App\Models\Location::findOrFail($locationId);
 
-        // Initialiser la session pour cette énigme spécifique choisie par le joueur
+        // Création de la session de jeu
         $session = \App\Models\GameSession::updateOrCreate(
             [
                 'user_id' => $user->id,
@@ -498,7 +541,7 @@ class PlayerController extends Controller
             ],
             [
                 'start_time' => now(),
-                'status' => 'in_progress', // On force le statut à 'in_progress' pour rejouer
+                'status' => 'in_progress',
                 'discovery_sequence' => [$locationId],
                 'current_location_id' => $locationId,
                 'current_enigma_id' => $enigmaId,
@@ -510,9 +553,12 @@ class PlayerController extends Controller
         return redirect()->route('player.game', $city->id);
     }
 
+    /**
+     * Calcule la distance en mètres entre deux points GPS (Formule Haversine).
+     */
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
-        $earthRadius = 6371000; // meters
+        $earthRadius = 6371000; // mètres
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
         $a = sin($dLat / 2) * sin($dLat / 2) +
@@ -522,6 +568,9 @@ class PlayerController extends Controller
         return $earthRadius * $c;
     }
 
+    /**
+     * Débloque un lieu (lorsque le joueur arrive à destination) et passe à l'énigme du site.
+     */
     public function unlockLocation(Request $request, \App\Models\Location $location)
     {
         $user = auth()->user();
@@ -539,13 +588,13 @@ class PlayerController extends Controller
         $session = $session->first();
 
         if ($session) {
-            // Move to site-specific enigma
+            // Activation de l'énigme spécifique au site (si elle existe)
             $siteEnigma = $location->enigmas()->where('is_site_specific', true)->first();
             $session->update([
                 'current_enigma_id' => $siteEnigma->id ?? $session->current_enigma_id
             ]);
 
-            // Award XP for unlocking
+            // Attribution des XP pour la localisation réussie
             $difficulty = $request->input('difficulty', 'easy');
             $xp = 100;
             if ($difficulty === 'medium') $xp = 250;
@@ -558,6 +607,9 @@ class PlayerController extends Controller
         return back()->with('success', 'Lieu localisé ! Allez-y maintenant.');
     }
 
+    /**
+     * Finalise la découverte d'un lieu après la réussite de tous ses défis.
+     */
     public function completeLocation(Request $request, \App\Models\Location $location)
     {
         $user = auth()->user();

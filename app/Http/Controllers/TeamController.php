@@ -14,6 +14,9 @@ use Illuminate\Support\Str;
 
 class TeamController extends Controller
 {
+    /**
+     * Liste les équipes de l'utilisateur et les équipes publiques.
+     */
     public function index()
     {
         $user = auth()->user();
@@ -26,6 +29,9 @@ class TeamController extends Controller
         ]);
     }
 
+    /**
+     * Crée une nouvelle équipe et définit le créateur comme leader.
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -35,7 +41,7 @@ class TeamController extends Controller
         $team = Team::create([
             'name' => $request->name,
             'creator_id' => auth()->id(),
-            'invite_code' => strtoupper(Str::random(6)),
+            'invite_code' => strtoupper(Str::random(6)), // Génération d'un code court
             'member_limit' => 5,
         ]);
 
@@ -44,6 +50,9 @@ class TeamController extends Controller
         return redirect()->route('teams.index')->with('success', 'Équipe créée avec succès !');
     }
 
+    /**
+     * Permet à un joueur de rejoindre une équipe via un code d'invitation.
+     */
     public function join(Request $request)
     {
         $request->validate([
@@ -69,6 +78,9 @@ class TeamController extends Controller
         return redirect()->route('teams.index')->with('success', "Vous avez rejoint l'équipe {$team->name} !");
     }
 
+    /**
+     * Affiche les détails d'une équipe spécifique.
+     */
     public function show(Team $team)
     {
         return Inertia::render('Player/Teams/Show', [
@@ -77,6 +89,10 @@ class TeamController extends Controller
         ]);
     }
 
+    /**
+     * Lance une quête pour toute l'équipe. 
+     * Calcule une séquence de lieux optimisée par distance.
+     */
     public function startQuest(Request $request, Team $team, City $city)
     {
         // Vérifier si l'utilisateur est membre de l'équipe
@@ -87,12 +103,10 @@ class TeamController extends Controller
         $availableLocations = $city->locations()->get()->collect();
         $sequence = [];
 
-        // Pour l'équipe, on peut utiliser la position du leader ou la position actuelle de celui qui lance
-        // Mais par défaut, on prend l'ordre alphabétique ou un ordre fixe si pas de position GPS
-        // Ou on demande la position dans le request si possible
         $lat = $request->input('lat');
         $lng = $request->input('lng');
 
+        // Logique de calcul du chemin le plus court (Nearest Neighbor)
         if ($lat && $lng && $availableLocations->isNotEmpty()) {
             $currentLat = $lat;
             $currentLng = $lng;
@@ -115,7 +129,7 @@ class TeamController extends Controller
             $sequence = $availableLocations->pluck('id')->toArray();
         }
 
-        // Créer ou mettre à jour la session de jeu pour l'équipe
+        // Création de la session d'équipe
         $session = GameSession::updateOrCreate(
             ['team_id' => $team->id, 'city_id' => $city->id, 'status' => 'in_progress'],
             [
@@ -128,7 +142,7 @@ class TeamController extends Controller
             ]
         );
 
-        // Notifier les autres membres de l'équipe
+        // Notification des coéquipiers avec lien direct vers la partie
         $membersToNotify = $team->members()->where('users.id', '!=', auth()->id())->get();
         foreach ($membersToNotify as $member) {
             Notification::create([
@@ -139,10 +153,12 @@ class TeamController extends Controller
             ]);
         }
 
-        // Envoyer une notification flash aux autres membres (via Inertia)
         return redirect()->route('player.game', $city->id)->with('success', "L'aventure en équipe a démarré ! Les autres membres ont été notifiés.");
     }
 
+    /**
+     * Permet à un membre de rejoindre une partie d'équipe déjà lancée.
+     */
     public function joinGame(Team $team, City $city)
     {
         $user = auth()->user();

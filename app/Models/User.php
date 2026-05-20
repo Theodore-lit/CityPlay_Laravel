@@ -18,9 +18,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Définit les types de données pour les attributs du modèle.
      */
     protected function casts(): array
     {
@@ -35,26 +33,41 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Villes créées par cet utilisateur (si Mairie ou Admin).
+     */
     public function createdCities()
     {
         return $this->hasMany(City::class, 'creator_id');
     }
 
+    /**
+     * Équipes dont l'utilisateur est membre.
+     */
     public function teams()
     {
         return $this->belongsToMany(Team::class)->withPivot('role')->withTimestamps();
     }
 
+    /**
+     * Sessions de jeu actives ou passées de l'utilisateur.
+     */
     public function gameSessions()
     {
         return $this->hasMany(GameSession::class);
     }
 
+    /**
+     * Progression détaillée sur chaque lieu.
+     */
     public function locationProgress()
     {
         return $this->hasMany(UserLocationProgress::class);
     }
 
+    /**
+     * Lieux découverts par l'utilisateur via la relation pivot.
+     */
     public function discoveredLocations()
     {
         return $this->belongsToMany(Location::class, 'user_location_progress')
@@ -62,6 +75,9 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    /**
+     * Résultats des quiz effectués par l'utilisateur.
+     */
     public function quizResults()
     {
         return $this->hasMany(QuizResult::class);

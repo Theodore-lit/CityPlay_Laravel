@@ -3,15 +3,18 @@ import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { gsap } from 'gsap';
 import { isDisplayed } from '@/stores/loader';
 
-const overlayRef = ref(null);
-const compassNeedleRef = ref(null);
+const overlayRef = ref(null); // Référence de l'overlay global
+const compassNeedleRef = ref(null); // Référence de l'aiguille pour l'animation
 
-let rotationTween = null;
+let rotationTween = null; // Instance de l'animation GSAP
 
+/**
+ * Configure l'animation de rotation infinie de l'aiguille.
+ * Utilise svgOrigin pour garantir une rotation centrée.
+ */
 const setupCompassRotation = () => {
   if (!compassNeedleRef.value) return;
 
-  // Utilisation de svgOrigin pour une rotation parfaite autour du centre (40, 40)
   gsap.set(compassNeedleRef.value, {
     svgOrigin: '40 40',
   });
@@ -25,6 +28,9 @@ const setupCompassRotation = () => {
   });
 };
 
+/**
+ * Gère l'apparition/disparition progressive de l'overlay.
+ */
 const fade = (show) => {
   if (!overlayRef.value) return;
 
@@ -36,6 +42,9 @@ const fade = (show) => {
   });
 };
 
+/**
+ * Déclenche ou met en pause l'animation de l'aiguille.
+ */
 const setAnimating = (active) => {
   if (active) {
     rotationTween?.play();
@@ -110,7 +119,7 @@ onBeforeUnmount(() => {
           </svg>
         </div>
 
-        <p class="font-display text-xs font-black uppercase tracking-[0.35em] text-foreground/80">
+        <p class="font-display text-xs font-black uppercase tracking-[0.35em] animate-pulse text-foreground/80">
           City<span class="text-primary">Play</span>
         </p>
       </div>

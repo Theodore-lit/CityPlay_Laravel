@@ -17,10 +17,13 @@ const page = usePage();
 const user = computed(() => page.props.auth.user);
 const currentPath = computed(() => page.url);
 
-const open = ref(false);
-const showLogoutModal = ref(false);
-const deactivateOnLogout = ref(user.value?.deactivate_on_logout || false);
+const open = ref(false); // État du menu mobile
+const showLogoutModal = ref(false); // Contrôle du modal de déconnexion/archivage
+const deactivateOnLogout = ref(user.value?.deactivate_on_logout || false); // Option d'archivage
 
+/**
+ * Exécute la déconnexion avec ou sans archivage selon le rôle.
+ */
 const confirmLogout = () => {
     if (user.value?.role !== 'joueur') {
         router.post(route("logout"));
@@ -31,6 +34,9 @@ const confirmLogout = () => {
     });
 };
 
+/**
+ * Gère le clic sur le bouton déconnexion (affiche le modal ou déconnecte direct).
+ */
 const handleLogoutClick = () => {
     if (user.value?.role !== 'joueur') {
         confirmLogout();
@@ -39,18 +45,18 @@ const handleLogoutClick = () => {
     }
 };
 
+/**
+ * Génère dynamiquement les liens de navigation selon le rôle de l'utilisateur.
+ */
 const links = computed(() => {
     if (user.value?.role === "super_admin") {
         return [];
-        // { to: 'admin.dashboard', label: 'Admin HQ' },
     }
 
     if (user.value?.role === "mairie") {
         return [];
-        // { to: 'mairie.dashboard', label: 'Commandement' },
     }
 
-    const baseLinks = [{ to: "welcome", label: "Accueil" }];
     if (user.value?.role === "joueur") {
         return [
             { to: "dashboard", label: "Tableau de bord" },
@@ -62,15 +68,20 @@ const links = computed(() => {
     }
 });
 
+/**
+ * Vérifie si une route est active pour le style de navigation.
+ */
 const isActive = (routeName) => route().current(routeName);
 
-const notifications = computed(() => page.props.auth.notifications || []);
-const showNotifications = ref(false);
+const notifications = computed(() => page.props.auth.notifications || []); // Liste des notifications non lues
+const showNotifications = ref(false); // Toggle du menu notifications
 
+/**
+ * Marque une notification comme lue via une requête serveur.
+ */
 const markAsRead = (id) => {
     router.post(route('notifications.read', id), {}, {
         onSuccess: () => {
-            // Optionnel: fermer le menu si plus de notifications
             if (notifications.value.length === 0) {
                 showNotifications.value = false;
             }
