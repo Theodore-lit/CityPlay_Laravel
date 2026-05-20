@@ -287,8 +287,8 @@ onUnmounted(() => {
     }
 });
 
-// On expose la fonction pour le parent
-defineExpose({ refreshSize });
+// // On expose la fonction pour le parent
+// defineExpose({ refreshSize });
 </script>
 
 <style>
