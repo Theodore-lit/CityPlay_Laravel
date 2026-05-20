@@ -29,6 +29,7 @@ class User extends Authenticatable
             'otp_expires_at' => 'datetime',
             'is_verified' => 'boolean',
             'password' => 'hashed',
+            'last_activity_at' => 'datetime',
         ];
     }
 

@@ -54,18 +54,18 @@ const rareColors = {
         <h1 class="font-display text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-white mb-2">
             COFFRE AUX <span class="text-purple-500 drop-shadow-[0_0_15px_#d946ef]">TROPHEES</span>
         </h1>
-        <div class="text-[10px] font-black tracking-[0.5em] text-white/40 uppercase">DATA_COLLECTION_STATUS // 12 / 48 BADGES</div>
+        <div class="text-[10px] font-black tracking-[0.5em] text-white/60 uppercase">DATA_COLLECTION_STATUS // 12 / 48 BADGES</div>
       </div>
 
       <div class="mt-8 grid grid-cols-3 gap-4 max-w-xl mx-auto mb-16">
         <div v-for="s in [
           { v: 12, l: 'DÉBLOQUÉS', c: 'text-primary' },
           { v: 3, l: 'LÉGENDAIRES', c: 'text-amber-500' },
-          { v: 36, l: 'RESTANTS', c: 'text-white/20' }
+          { v: 36, l: 'RESTANTS', c: 'text-white/30' }
         ]" :key="s.l" class="hud-glass-card rounded-2xl p-6 text-center border border-white/5 relative group overflow-hidden">
           <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div :class="cn('font-display text-3xl md:text-4xl font-black italic drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]', s.c)">{{ s.v }}</div>
-          <div class="text-[8px] font-black uppercase tracking-[0.3em] text-white/40 mt-2">{{ s.l }}</div>
+          <div class="text-[8px] font-black uppercase tracking-[0.3em] text-white/60 mt-2">{{ s.l }}</div>
         </div>
       </div>
 
@@ -99,10 +99,10 @@ const rareColors = {
                   </div>
                   
                   <div class="mt-5 font-display text-[11px] font-black text-white uppercase italic tracking-tight leading-tight min-h-[2rem] flex items-center justify-center">{{ b.name }}</div>
-                  <div :class="cn('mt-1 text-[7px] font-black uppercase tracking-[0.4em]', b.unlocked ? 'text-primary' : 'text-white/20')">{{ b.rare }}</div>
+                  <div :class="cn('mt-1 text-[7px] font-black uppercase tracking-[0.4em]', b.unlocked ? 'text-primary' : 'text-white/30')">{{ b.rare }}</div>
                   
                   <div class="mt-4 pt-4 border-t border-white/5 w-full">
-                      <p class="text-[9px] text-white/40 leading-relaxed font-bold uppercase tracking-widest line-clamp-2">{{ b.desc }}</p>
+                      <p class="text-[9px] text-white/60 leading-relaxed font-bold uppercase tracking-widest line-clamp-2">{{ b.desc }}</p>
                   </div>
                 </div>
 

@@ -57,7 +57,7 @@ class PlayerController extends Controller
                 'total_xp' => $user->xp,
                 'cities_unlocked' => $citiesUnlocked,
                 'cities_total' => $cities->count(),
-                'streak_days' => $user->last_activity_at?->isToday() ? 1 : 0,
+                'streak_days' => ($user->last_activity_at && \Carbon\Carbon::parse($user->last_activity_at)->isToday()) ? 1 : 0,
                 'xp_in_level' => $xpInLevel,
                 'xp_per_level' => $xpPerLevel,
             ],
@@ -144,50 +144,63 @@ class PlayerController extends Controller
 
     public function cities()
     {
-        $user = auth()->user();
-        $mode = session('game_mode', 'aventure');
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return redirect()->route('login');
+            }
+            
+            $mode = session('game_mode', 'aventure');
 
-        $query = City::where('is_active', true);
+            $query = City::where('is_active', true);
 
-        if ($mode === 'quiz') {
-            // Uniquement les villes avec au moins un quiz
-            $query->whereHas('quizzes');
-        } else {
-            // Mode Aventure : Uniquement les villes avec des lieux et énigmes
-            $query->whereHas('locations.enigmas');
+            if ($mode === 'quiz') {
+                $query->whereHas('quizzes');
+            } else {
+                $query->whereHas('locations.enigmas');
+            }
+
+            $cities = $query->with(['events', 'locations' => function ($q) use ($user) {
+                    $q->with(['userProgress' => function ($up) use ($user) {
+                        $up->where('user_id', $user->id);
+                    }]);
+                }])
+                ->get()
+                ->map(function ($city) use ($user) {
+                    $totalLocations = $city->locations ? $city->locations->count() : 0;
+                    $discoveredLocations = 0;
+                    
+                    if ($city->locations) {
+                        $discoveredLocations = $city->locations->filter(function ($location) {
+                            return $location->userProgress && $location->userProgress->where('is_discovered', true)->isNotEmpty();
+                        })->count();
+                    }
+
+                    $city->progress_percentage = $totalLocations > 0
+                        ? round(($discoveredLocations / $totalLocations) * 100)
+                        : 0;
+                    $city->discovered_count = $discoveredLocations;
+                    $city->total_count = $totalLocations;
+
+                    $city->has_completed_adventure = \App\Models\GameSession::where('city_id', $city->id)
+                        ->where('user_id', $user->id)
+                        ->where('status', 'completed')
+                        ->exists();
+
+                    return $city;
+                });
+
+            return Inertia::render('Player/Cities', [
+                'cities' => $cities,
+                'gameMode' => $mode,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in PlayerController@cities: ' . $e->getMessage());
+            if (config('app.debug')) {
+                return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
+            }
+            return back()->with('error', 'Une erreur est survenue lors du chargement des villes.');
         }
-
-        $cities = $query->with(['events', 'locations' => function ($query) use ($user) {
-                $query->with(['userProgress' => function ($q) use ($user) {
-                    $q->where('user_id', $user->id);
-                }]);
-            }])
-            ->get()
-            ->map(function ($city) use ($user) {
-                $totalLocations = $city->locations->count();
-                $discoveredLocations = $city->locations->filter(function ($location) {
-                    return $location->userProgress->where('is_discovered', true)->isNotEmpty();
-                })->count();
-
-                $city->progress_percentage = $totalLocations > 0
-                    ? round(($discoveredLocations / $totalLocations) * 100)
-                    : 0;
-                $city->discovered_count = $discoveredLocations;
-                $city->total_count = $totalLocations;
-
-                // Vérifier si une session terminée existe pour cette ville
-                $city->has_completed_adventure = \App\Models\GameSession::where('city_id', $city->id)
-                    ->where('user_id', $user->id)
-                    ->where('status', 'completed')
-                    ->exists();
-
-                return $city;
-            });
-
-        return Inertia::render('Player/Cities', [
-            'cities' => $cities,
-            'gameMode' => $mode,
-        ]);
     }
 
     public function modes()

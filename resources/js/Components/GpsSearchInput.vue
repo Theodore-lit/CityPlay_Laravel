@@ -82,41 +82,61 @@ const hideResults = () => {
 
 <template>
     <div class="relative">
-        <label v-if="label" class="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1 block">
+        <label v-if="label" class="text-[9px] uppercase tracking-[0.4em] text-white/40 font-black mb-2 ml-2 block">
             {{ label }}
         </label>
         <div class="relative group">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-electric transition-colors">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20 group-focus-within:text-primary transition-colors">
                 <Search class="h-4 w-4" />
             </div>
+            
+            <!-- Mechanical Corners -->
+            <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/20 group-focus-within:border-primary transition-colors" />
+            <div class="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/20 group-focus-within:border-primary transition-colors" />
+
             <input
                 v-model="query"
                 type="text"
                 :placeholder="placeholder"
-                class="w-full h-11 rounded-xl bg-gaming-darker border border-white/10 pl-10 pr-10 text-sm text-white placeholder:text-muted-foreground/40 focus:border-electric outline-none transition-all"
+                class="w-full h-12 bg-white/[0.02] border-2 border-white/5 pl-12 pr-12 text-sm text-white font-black tracking-widest placeholder:text-white/10 outline-none focus:border-primary/40 focus:bg-primary/5 transition-all duration-500 uppercase"
                 @focus="showResults = results.length > 0"
                 @blur="hideResults"
             />
-            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <Loader2 v-if="loading" class="h-4 w-4 text-electric animate-spin" />
-                <MapPin v-else class="h-4 w-4 text-muted-foreground" />
+            
+            <!-- Focus Glow Line -->
+            <div class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-focus-within:w-full transition-all duration-700 shadow-[0_0_10px_#06b6d4]" />
+
+            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <Loader2 v-if="loading" class="h-4 w-4 animate-spin text-primary" />
+                <MapPin v-else class="h-4 w-4 text-white/10 group-focus-within:text-primary/60 transition-colors" />
             </div>
         </div>
 
-        <!-- RÉSULTATS -->
-        <div v-if="showResults && results.length > 0" class="absolute z-[110] left-0 right-0 mt-2 rounded-2xl glass-strong border border-electric/20 overflow-hidden shadow-neon max-h-60 overflow-y-auto">
-            <button
-                v-for="result in results"
-                :key="result.place_id"
-                type="button"
-                class="w-full text-left p-3 hover:bg-electric/10 border-b border-white/5 last:border-0 transition-colors"
-                @click="selectResult(result)"
-            >
-                <div class="text-sm text-white font-bold truncate">{{ result.display_name }}</div>
-                <div class="text-[10px] text-muted-foreground uppercase tracking-tighter">
-                    LAT: {{ parseFloat(result.lat).toFixed(4) }} • LON: {{ parseFloat(result.lon).toFixed(4) }}
+        <!-- Results Dropdown HUD -->
+        <Transition name="fade">
+            <div v-if="showResults && results.length > 0" class="absolute z-[100] mt-3 w-full bg-zinc-950/95 border-2 border-white/10 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl overflow-hidden animate-fade-up">
+                <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+                <div class="max-h-60 overflow-y-auto custom-scrollbar relative z-10">
+                    <button
+                        v-for="result in results"
+                        :key="result.place_id"
+                        @click="selectResult(result)"
+                        class="w-full px-6 py-4 text-left hover:bg-primary/10 transition-all border-b border-white/5 last:border-0 group/item"
+                    >
+                        <div class="flex items-center gap-4">
+                            <MapPin class="h-4 w-4 text-white/20 group-hover/item:text-primary transition-colors shrink-0" />
+                            <div class="flex flex-col">
+                                <span class="text-[11px] font-black text-white/80 group-hover/item:text-white transition-colors uppercase tracking-widest leading-tight">
+                                    {{ result.display_name }}
+                                </span>
+                                <span v-if="result.address?.city" class="text-[8px] text-white/20 font-black uppercase tracking-[0.2em] mt-1">
+                                    {{ result.address.city }} // {{ result.address.country }}
+                                </span>
+                            </div>
+                        </div>
+                    </button>
                 </div>
-            </button>
-        </div>
+            </div>
+        </Transition>
     </div>
 </template>

@@ -1,9 +1,9 @@
 <script setup>
 import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
+import HUDButton from '@/Components/HUDButton.vue';
+import GlowInput from '@/Components/GlowInput.vue';
 import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { Save, User, Mail, ShieldAlert } from 'lucide-vue-next';
 
 defineProps({
     mustVerifyEmail: {
@@ -25,92 +25,96 @@ const form = useForm({
 
 <template>
     <section>
-        <header>
-            <h2 class="text-lg font-medium text-white">
-                Informations du Profil
+        <header class="mb-10">
+            <h2 class="font-display text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-3">
+                <User class="h-6 w-6 text-primary" />
+                IDENTITÉ TACTIQUE
             </h2>
-
-            <p class="mt-1 text-sm text-muted-foreground">
-                Mettez à jour les informations de votre compte et votre adresse email.
-            </p>
+            <p class="mt-2 text-[10px] font-black tracking-widest text-white/40 uppercase">MISE À JOUR DES PARAMÈTRES D'IDENTIFICATION</p>
         </header>
 
         <form
             @submit.prevent="form.patch(route('profile.update'))"
-            class="mt-6 space-y-6"
+            class="space-y-10"
         >
-            <div>
-                <InputLabel for="name" value="Nom" class="text-white" />
-
-                <TextInput
+            <div class="grid gap-8">
+                <GlowInput
                     id="name"
-                    type="text"
-                    class="mt-1 block w-full bg-gaming-darker border-white/10 text-white focus:border-electric"
+                    label="NOM D'UTILISATEUR"
                     v-model="form.name"
+                    :error="form.errors.name"
                     required
                     autofocus
                     autocomplete="name"
                 />
 
-                <InputError class="mt-2" :message="form.errors.name" />
-            </div>
-
-            <div>
-                <InputLabel for="email" value="Email" class="text-white" />
-
-                <TextInput
+                <GlowInput
                     id="email"
                     type="email"
-                    class="mt-1 block w-full bg-gaming-darker border-white/10 text-white focus:border-electric"
+                    label="ADRESSE_LIAISON_DATA"
                     v-model="form.email"
+                    :error="form.errors.email"
                     required
                     autocomplete="username"
                 />
-
-                <InputError class="mt-2" :message="form.errors.email" />
             </div>
 
-            <div class="space-y-4 border-t border-white/5 pt-6">
-                <h3 class="text-sm font-bold text-electric uppercase tracking-widest">Paramètres de Sécurité Tactique</h3>
-                <div class="flex items-start gap-3">
-                    <div class="flex items-center h-5">
-                        <input
-                            id="deactivate_on_logout"
-                            type="checkbox"
-                            v-model="form.deactivate_on_logout"
-                            class="rounded bg-gaming-darker border-electric/30 text-electric shadow-sm focus:ring-electric"
-                        />
-                    </div>
-                    <div class="text-sm">
-                        <label for="deactivate_on_logout" class="font-medium text-white">Désactiver mon compte lors de la déconnexion</label>
-                        <p class="text-muted-foreground text-xs">Si activé, votre compte sera invisible jusqu'à votre prochaine connexion. Sinon, la règle de désactivation après 12 mois d'inactivité s'appliquera.</p>
+            <div class="space-y-6 border-t border-white/5 pt-10">
+                <h3 class="font-display text-sm font-black text-primary uppercase italic tracking-widest flex items-center gap-2">
+                    <ShieldAlert class="h-4 w-4" />
+                    PROTOCOLES DE SÉCURITÉ
+                </h3>
+                
+                <div class="hud-glass-card p-6 rounded-2xl border border-white/5 group hover:border-primary/20 transition-all">
+                    <div class="flex items-start gap-4">
+                        <div class="flex items-center h-6">
+                            <input
+                                id="deactivate_on_logout"
+                                type="checkbox"
+                                v-model="form.deactivate_on_logout"
+                                class="h-5 w-5 rounded bg-zinc-900 border-white/20 text-primary focus:ring-primary focus:ring-offset-zinc-900 transition-all"
+                            />
+                        </div>
+                        <div class="flex-1">
+                            <label for="deactivate_on_logout" class="block font-black text-[11px] text-white uppercase tracking-widest mb-1 cursor-pointer">
+                                AUTO_DEACTIVATE_MODE
+                            </label>
+                            <p class="text-white/40 text-[9px] font-bold uppercase leading-relaxed tracking-widest">
+                                Si activé, votre compte sera invisible lors de la déconnexion. Protection furtive active.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null">
-                <p class="mt-2 text-sm text-gray-200">
-                    Votre adresse email n'est pas vérifiée.
+                <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[9px] font-black uppercase tracking-widest">
+                    ALERTE : ADRESSE EMAIL NON VÉRIFIÉE.
                     <Link
                         :href="route('verification.send')"
                         method="post"
                         as="button"
-                        class="rounded-md text-sm text-electric underline hover:text-electric/80 focus:outline-none focus:ring-2 focus:ring-electric"
+                        class="ml-2 underline hover:text-amber-400"
                     >
-                        Cliquez ici pour renvoyer l'email de vérification.
+                        RENVOYER_LE_LIEN
                     </Link>
-                </p>
+                </div>
 
                 <div
                     v-show="status === 'verification-link-sent'"
-                    class="mt-2 text-sm font-medium text-success"
+                    class="mt-4 text-xs font-black text-green-500 uppercase tracking-widest"
                 >
-                    Un nouveau lien de vérification a été envoyé à votre adresse email.
+                    LIEN_DE_VÉRIFICATION_EXPÉDIÉ.
                 </div>
             </div>
 
-            <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing" class="bg-electric hover:bg-electric/80 text-black font-bold">Enregistrer</PrimaryButton>
+            <div class="flex items-center gap-6 pt-4">
+                <HUDButton :disabled="form.processing" variant="primary" class="h-12 px-8">
+                    <div class="flex items-center gap-2">
+                        <Save class="h-4 w-4" />
+                        <span>SAUVEGARDER_DATA</span>
+                    </div>
+                </HUDButton>
 
                 <Transition
                     enter-active-class="transition ease-in-out"
@@ -120,9 +124,9 @@ const form = useForm({
                 >
                     <p
                         v-if="form.recentlySuccessful"
-                        class="text-sm text-muted-foreground"
+                        class="text-[10px] font-black text-green-500 uppercase tracking-[0.3em] animate-pulse"
                     >
-                        Enregistré.
+                        TRANSFERT_RÉUSSI
                     </p>
                 </Transition>
             </div>

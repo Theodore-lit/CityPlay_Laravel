@@ -1,11 +1,11 @@
 <script setup>
 import SiteLayout from '@/Layouts/SiteLayout.vue';
+import HUDHeader from '@/Components/HUDHeader.vue';
+import HUDButton from '@/Components/HUDButton.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
-import NeonButton from '@/Components/NeonButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import InputLabel from '@/Components/InputLabel.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { Users, UserPlus, Plus, Shield, ArrowRight, Info } from 'lucide-vue-next';
+import { Users, UserPlus, Plus, Shield, ArrowRight, Info, Activity, Network, Target, Crown } from 'lucide-vue-next';
+import { cn } from '@/lib/utils';
 
 const props = defineProps({
     myTeams: Array,
@@ -34,117 +34,178 @@ const joinTeam = () => {
 </script>
 
 <template>
-    <Head title="Équipes — CityPlay" />
+    <Head title="Unités Tactiques — CityPlay" />
 
-    <SiteLayout>
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 py-12 pb-28 md:pb-12">
-            <div v-if="$page.props.flash?.success" class="mb-8 p-4 rounded-2xl bg-success/20 border border-success/40 text-success text-center font-bold animate-fade-up">
-                {{ $page.props.flash?.success }}
-            </div>
-            <div v-if="$page.props.flash?.error" class="mb-8 p-4 rounded-2xl bg-destructive/20 border border-destructive/40 text-destructive text-center font-bold animate-fade-up">
-                {{ $page.props.flash?.error }}
+    <SiteLayout isHUD>
+        <HUDHeader />
+
+        <div class="mx-auto max-w-7xl px-6 py-10 pb-28 md:pb-12 relative z-10">
+            <!-- Alertes HUD Style -->
+            <Transition name="fade">
+                <div v-if="$page.props.flash?.success" class="mb-10 p-5 rounded-2xl bg-green-500/10 border border-green-500/30 text-green-400 text-center font-black tracking-[0.3em] uppercase text-[10px] animate-fade-up shadow-[0_0_20px_rgba(34,197,94,0.1)]">
+                    {{ $page.props.flash?.success }}
+                </div>
+            </Transition>
+            <Transition name="fade">
+                <div v-if="$page.props.flash?.error" class="mb-10 p-5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-center font-black tracking-[0.3em] uppercase text-[10px] animate-fade-up shadow-[0_0_20px_rgba(239,68,68,0.1)]">
+                    {{ $page.props.flash?.error }}
+                </div>
+            </Transition>
+
+            <!-- Header HUD -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+                <div>
+                    <div class="text-[10px] text-primary font-black uppercase tracking-[0.5em] mb-4">TACTICAL_UNITS_CONTROL // MULTI_LINK</div>
+                    <h1 class="font-display text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-white">
+                        UNITÉS <span class="text-primary drop-shadow-[0_0_15px_#06b6d4]">TACTIQUES</span>
+                    </h1>
+                    <p class="mt-6 text-white/40 text-xs font-bold uppercase tracking-widest max-w-xl leading-relaxed">
+                        Établissez des connexions neurales avec d'autres explorateurs pour synchroniser vos missions et maximiser l'extraction de données.
+                    </p>
+                </div>
+                <div class="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl flex items-center gap-4">
+                    <Network class="h-4 w-4 text-primary animate-pulse" />
+                    <span class="text-[10px] font-black text-white/60 uppercase tracking-widest">{{ allTeams.length }} RÉSEAUX_ACTIFS</span>
+                </div>
             </div>
 
-            <div class="text-center max-w-2xl mx-auto mb-12">
-                <div class="text-xs text-electric uppercase tracking-widest font-bold">L'union fait la force</div>
-                <h1 class="font-display text-3xl md:text-5xl mt-2">Quêtes en <span class="text-electric neon-text">Équipe</span></h1>
-                <p class="mt-3 text-muted-foreground">Collaborez avec d'autres joueurs pour résoudre des énigmes plus complexes et gagner plus de récompenses.</p>
-            </div>
-
-            <div class="grid gap-8 lg:grid-cols-3">
-                <!-- ACTIONS -->
-                <div class="lg:col-span-1 space-y-6">
-                    <div class="glass-strong rounded-3xl p-6 border border-white/10">
-                        <h2 class="font-display text-xl text-white mb-4 flex items-center gap-2">
-                            <Plus class="h-5 w-5 text-electric" /> Créer une équipe
+            <div class="grid gap-10 lg:grid-cols-3">
+                <!-- ACTIONS HUD -->
+                <div class="lg:col-span-1 space-y-8">
+                    <!-- CRÉER ÉQUIPE -->
+                    <div class="neon-border-box p-8 overflow-hidden group">
+                        <div class="neon-corner top-0 left-0 border-r-0 border-b-0 scale-75" />
+                        <div class="neon-corner top-0 right-0 border-l-0 border-b-0 scale-75" />
+                        
+                        <h2 class="font-display text-xl text-white font-black uppercase italic tracking-tighter mb-8 flex items-center gap-3">
+                            <Plus class="h-5 w-5 text-primary" /> CRÉER_RÉSEAU
                         </h2>
-                        <form @submit.prevent="createTeam" class="space-y-4">
-                            <div>
-                                <InputLabel for="team_name" value="Nom de l'équipe" class="text-white/70" />
-                                <TextInput
+                        
+                        <form @submit.prevent="createTeam" class="space-y-6">
+                            <div class="space-y-3">
+                                <label for="team_name" class="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] ml-2">NOM_DE_L_UNITÉ</label>
+                                <input
                                     id="team_name"
                                     v-model="createForm.name"
                                     type="text"
-                                    class="mt-1 block w-full bg-white/5 border-white/10 text-white focus:border-electric focus:ring-electric"
-                                    placeholder="Ex: Les Lions du Dahomey"
+                                    class="w-full h-12 bg-white/5 border-2 border-white/10 rounded-xl px-5 text-white font-black tracking-widest outline-none focus:border-primary transition-all uppercase placeholder:text-white/10 text-[11px]"
+                                    placeholder="IDENTIFIANT_TACTIQUE..."
                                     required
                                 />
                             </div>
-                            <NeonButton type="submit" class="w-full" :disabled="createForm.processing">
-                                Créer l'équipe
-                            </NeonButton>
+                            <HUDButton type="submit" variant="primary" class="w-full h-12 rounded-xl" :disabled="createForm.processing">
+                                INITIALISER_CRÉATION
+                            </HUDButton>
                         </form>
                     </div>
 
-                    <div class="glass-strong rounded-3xl p-6 border border-white/10">
-                        <h2 class="font-display text-xl text-white mb-4 flex items-center gap-2">
-                            <UserPlus class="h-5 w-5 text-purple-neon" /> Rejoindre une équipe
+                    <!-- REJOINDRE ÉQUIPE -->
+                    <div class="neon-border-box magenta p-8 overflow-hidden group">
+                        <div class="neon-corner magenta top-0 left-0 border-r-0 border-b-0 scale-75" />
+                        <div class="neon-corner magenta top-0 right-0 border-l-0 border-b-0 scale-75" />
+                        
+                        <h2 class="font-display text-xl text-white font-black uppercase italic tracking-tighter mb-8 flex items-center gap-3">
+                            <UserPlus class="h-5 w-5 text-magenta-500" /> REJOINDRE_FLUX
                         </h2>
-                        <form @submit.prevent="joinTeam" class="space-y-4">
-                            <div>
-                                <InputLabel for="invite_code" value="Code d'invitation" class="text-white/70" />
-                                <TextInput
+                        
+                        <form @submit.prevent="joinTeam" class="space-y-6">
+                            <div class="space-y-3">
+                                <label for="invite_code" class="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] ml-2">CODE_D_ACCÈS</label>
+                                <input
                                     id="invite_code"
                                     v-model="joinForm.invite_code"
                                     type="text"
-                                    class="mt-1 block w-full bg-white/5 border-white/10 text-white focus:border-purple-neon focus:ring-purple-neon uppercase"
-                                    placeholder="Ex: ABCDEF"
+                                    class="w-full h-12 bg-white/5 border-2 border-white/10 rounded-xl px-5 text-white font-black tracking-widest outline-none focus:border-magenta-500 transition-all uppercase placeholder:text-white/10 text-[11px]"
+                                    placeholder="INVITE_KEY_XXXXXX..."
                                     required
                                 />
                             </div>
-                            <NeonButton type="submit" variant="purple" class="w-full" :disabled="joinForm.processing">
-                                Rejoindre
-                            </NeonButton>
+                            <HUDButton type="submit" variant="magenta" class="w-full h-12 rounded-xl" :disabled="joinForm.processing">
+                                TENTER_SYNCHRONISATION
+                            </HUDButton>
                         </form>
                     </div>
                 </div>
 
-                <!-- MY TEAMS & DISCOVERY -->
-                <div class="lg:col-span-2 space-y-8">
+                <!-- MY TEAMS & DISCOVERY HUD -->
+                <div class="lg:col-span-2 space-y-12">
                     <!-- MES ÉQUIPES -->
                     <section>
-                        <h2 class="font-display text-2xl text-white mb-4 flex items-center gap-2">
-                            <Users class="h-6 w-6 text-electric" /> Mes Équipes
-                        </h2>
-                        <div v-if="myTeams.length > 0" class="grid gap-4 md:grid-cols-2">
-                            <Link v-for="team in myTeams" :key="team.id" :href="route('teams.show', team.id)" class="group block glass-strong rounded-2xl p-5 border border-white/10 hover:border-electric/40 transition-all">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <h3 class="font-bold text-lg text-white group-hover:text-electric transition-colors">{{ team.name }}</h3>
-                                        <div class="text-xs text-muted-foreground mt-1 flex items-center gap-2">
-                                            <Users class="h-3 w-3" /> {{ team.members_count }} / {{ team.member_limit }} membres
+                        <div class="flex items-center gap-4 mb-8">
+                            <Users class="h-5 w-5 text-primary" />
+                            <h2 class="font-display text-2xl font-black uppercase italic tracking-tighter text-white">UNITÉS_DÉPLOYÉES</h2>
+                            <div class="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                        </div>
+                        
+                        <div v-if="myTeams.length > 0" class="grid gap-6 md:grid-cols-2">
+                            <Link v-for="team in myTeams" :key="team.id" :href="route('teams.show', team.id)" 
+                                  class="hud-glass-card group block rounded-[2.5rem] p-8 border-2 border-white/5 hover:border-primary/40 transition-all duration-700 relative overflow-hidden">
+                                <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+                                
+                                <div class="flex justify-between items-start relative z-10">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <div class="h-1 w-1 rounded-full bg-primary animate-ping" />
+                                            <span class="text-[8px] text-primary font-black uppercase tracking-[0.3em]">LINK_ACTIVE</span>
+                                        </div>
+                                        <h3 class="font-display text-2xl text-white group-hover:text-primary transition-colors font-black uppercase italic tracking-tighter leading-tight">{{ team.name }}</h3>
+                                        <div class="text-[10px] text-white/40 mt-4 flex items-center gap-3 font-bold uppercase tracking-widest">
+                                            <div class="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 border border-white/10">
+                                                <Users class="h-3.5 w-3.5" /> {{ team.members_count }} / {{ team.member_limit }}
+                                            </div>
+                                            <span class="text-[9px]">ID: #{{ team.invite_code }}</span>
                                         </div>
                                     </div>
-                                    <div class="h-10 w-10 rounded-xl bg-electric/10 border border-electric/20 grid place-items-center text-electric">
-                                        <ArrowRight class="h-5 w-5" />
+                                    <div class="h-14 w-14 rounded-2xl bg-primary/10 border-2 border-primary/30 grid place-items-center text-primary shadow-[0_0_20px_rgba(6,182,212,0.2)] group-hover:scale-110 transition-transform">
+                                        <ArrowRight class="h-7 w-7 group-hover:translate-x-1 transition-transform" />
                                     </div>
                                 </div>
-                                <div class="mt-4 flex items-center gap-2">
-                                    <span v-if="team.creator_id === $page.props.auth.user.id" class="px-2 py-0.5 rounded-full bg-electric/20 text-electric text-[10px] font-bold border border-electric/30">LEADER</span>
-                                    <span class="text-[10px] text-muted-foreground uppercase tracking-tighter">Code: {{ team.invite_code }}</span>
+                                
+                                <div class="mt-8 flex items-center gap-3 relative z-10">
+                                    <div v-if="team.creator_id === $page.props.auth.user.id" class="flex items-center gap-2 px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[8px] font-black uppercase tracking-[0.2em] shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+                                        <Crown class="h-3 w-3" /> COMMANDANT
+                                    </div>
+                                    <div class="flex -space-x-2">
+                                        <div v-for="i in Math.min(team.members_count, 4)" :key="i" class="h-6 w-6 rounded-full border border-zinc-950 bg-zinc-900 grid place-items-center text-[8px] font-black text-white/40">
+                                            {{ i }}
+                                        </div>
+                                        <div v-if="team.members_count > 4" class="h-6 w-6 rounded-full border border-zinc-950 bg-zinc-800 grid place-items-center text-[8px] font-black text-white/40">
+                                            +{{ team.members_count - 4 }}
+                                        </div>
+                                    </div>
                                 </div>
                             </Link>
                         </div>
-                        <div v-else class="p-8 text-center glass-strong rounded-3xl border border-white/10 text-muted-foreground">
-                            <Info class="h-8 w-8 mx-auto mb-3 opacity-20" />
-                            Vous ne faites partie d'aucune équipe pour le moment.
+                        <div v-else class="p-12 text-center hud-glass-card rounded-[3rem] border-2 border-dashed border-white/5 text-white/20">
+                            <Info class="h-10 w-10 mx-auto mb-4 opacity-40" />
+                            <div class="text-sm font-black uppercase tracking-widest">AUCUNE_UNITÉ_RÉPERTORIÉE</div>
                         </div>
                     </section>
 
                     <!-- DÉCOUVRIR DES ÉQUIPES -->
                     <section>
-                        <h2 class="font-display text-2xl text-white mb-4">Équipes Populaires</h2>
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <div v-for="team in allTeams" :key="team.id" class="glass-strong rounded-2xl p-5 border border-white/10">
-                                <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-4 mb-8">
+                            <Activity class="h-5 w-5 text-magenta-500" />
+                            <h2 class="font-display text-2xl font-black uppercase italic tracking-tighter text-white">UNITÉS_POPULAIRES</h2>
+                            <div class="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                        </div>
+                        
+                        <div class="grid gap-6 md:grid-cols-2">
+                            <div v-for="team in allTeams" :key="team.id" 
+                                 class="hud-glass-card rounded-2xl p-6 border border-white/5 relative overflow-hidden group">
+                                <div class="flex justify-between items-center relative z-10">
                                     <div>
-                                        <h3 class="font-bold text-white">{{ team.name }}</h3>
-                                        <div class="text-xs text-muted-foreground mt-1">
-                                            {{ team.members_count }} membres
+                                        <h3 class="font-display text-lg text-white font-black uppercase italic tracking-tight group-hover:text-primary transition-colors">{{ team.name }}</h3>
+                                        <div class="text-[9px] text-white/40 mt-1 font-bold uppercase tracking-widest flex items-center gap-2">
+                                            <Users class="h-3 w-3" /> {{ team.members_count }} MEMBRES_SYNCHRONISÉS
                                         </div>
                                     </div>
-                                    <div v-if="team.members_count < team.member_limit" class="text-xs text-electric font-bold">Places disponibles</div>
-                                    <div v-else class="text-xs text-muted-foreground">Complet</div>
+                                    <div v-if="team.members_count < team.member_limit" class="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary text-[8px] font-black uppercase tracking-widest animate-pulse">
+                                        ACCÈS_LIBRE
+                                    </div>
+                                    <div v-else class="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-white/20 text-[8px] font-black uppercase tracking-widest">
+                                        RÉSEAU_PLEIN
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -155,3 +216,8 @@ const joinTeam = () => {
         <MobileTabBar />
     </SiteLayout>
 </template>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>

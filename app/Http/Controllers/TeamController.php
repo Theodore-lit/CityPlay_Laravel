@@ -10,6 +10,9 @@ use App\Models\GameSession;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 
+use App\Notifications\TeamGameStarted;
+use Illuminate\Support\Facades\Notification;
+
 class TeamController extends Controller
 {
     public function index()
@@ -126,30 +129,42 @@ class TeamController extends Controller
             ]
         );
 
+        // Notifier les autres membres de l'équipe
+        $membersToNotify = $team->members()->where('users.id', '!=', auth()->id())->get();
+        Notification::send($membersToNotify, new TeamGameStarted($team, $city, $session, auth()->user()));
+
         // Envoyer une notification flash aux autres membres (via Inertia)
         return redirect()->route('player.game', $city->id)->with('success', "L'aventure en équipe a démarré ! Les autres membres ont été notifiés.");
     }
 
-    public function joinGame(Team $team, City $city)
+    public function joinGame(Team $team, City $city, $sessionId = null)
     {
         $user = auth()->user();
 
         // Si l'utilisateur n'est pas dans l'équipe, on l'ajoute d'abord
-        if (!$team->members()->where('user_id', $user->id)->exists()) {
+        if (!$team->members()->where('users.id', $user->id)->exists()) {
             if ($team->members()->count() >= $team->member_limit) {
                 return redirect()->route('teams.index')->with('error', 'Cette équipe est déjà complète.');
             }
             $team->members()->attach($user->id, ['role' => 'member']);
         }
 
-        // Vérifier si une session est en cours
-        $session = GameSession::where('team_id', $team->id)
-            ->where('city_id', $city->id)
-            ->where('status', 'in_progress')
-            ->first();
+        // Vérifier si une session spécifique est demandée et si elle est terminée
+        if ($sessionId) {
+            $session = GameSession::find($sessionId);
+            if (!$session || $session->status !== 'in_progress') {
+                return redirect()->route('player.dashboard')->with('error', 'Cette session de jeu est terminée ou expirée.');
+            }
+        } else {
+            // Vérifier si une session est en cours
+            $session = GameSession::where('team_id', $team->id)
+                ->where('city_id', $city->id)
+                ->where('status', 'in_progress')
+                ->first();
+        }
 
         if (!$session) {
-            // Si pas de session, on en crée une (le membre rejoint et lance la partie)
+            // Si pas de session et pas de sessionId spécifié, on en crée une
             return $this->startQuest(request(), $team, $city);
         }
 

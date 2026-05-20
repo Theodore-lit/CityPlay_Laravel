@@ -1,10 +1,13 @@
-﻿<script setup>
+<script setup>
 import SiteLayout from '@/Layouts/SiteLayout.vue';
-import NeonButton from '@/Components/NeonButton.vue';
+import HUDHeader from '@/Components/HUDHeader.vue';
+import HUDButton from '@/Components/HUDButton.vue';
+import MobileTabBar from '@/Components/MobileTabBar.vue';
 import Modal from '@/Components/Modal.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Brain, Clock, Zap, ArrowRight, CheckCircle2, XCircle, Info, Trophy, Frown } from 'lucide-vue-next';
+import { Brain, Clock, Zap, ArrowRight, CheckCircle2, XCircle, Info, Trophy, Frown, Heart, Eye, Activity, Target } from 'lucide-vue-next';
+import { cn } from '@/lib/utils';
 
 const props = defineProps({
     quiz: Object
@@ -181,252 +184,309 @@ onUnmounted(() => {
 <template>
     <Head :title="`Quiz: ${quiz?.title || 'Chargement...'}`" />
 
-    <SiteLayout hideFooter>
-        <div class="mx-auto max-w-3xl px-4 py-12">
-            <!-- Header -->
-            <div class="flex items-center justify-between mb-8" v-if="quiz">
-                <div class="flex items-center gap-3">
-                    <div class="h-12 w-12 rounded-xl bg-gradient-electric grid place-items-center shadow-neon">
-                        <Brain class="h-6 w-6 text-electric-foreground" />
+    <SiteLayout hideFooter isHUD>
+        <HUDHeader />
+
+        <div class="mx-auto max-w-4xl px-6 py-10 pb-28 md:pb-12 relative z-10">
+            <!-- Header HUD -->
+            <div class="flex items-center justify-between mb-12" v-if="quiz">
+                <div class="flex items-center gap-6">
+                    <div class="h-16 w-16 rounded-2xl bg-primary/10 border-2 border-primary/40 grid place-items-center shadow-[0_0_25px_rgba(6,182,212,0.3)] relative overflow-hidden shrink-0">
+                        <div class="absolute inset-0 bg-primary/5 animate-pulse" />
+                        <Brain class="h-8 w-8 text-primary relative z-10 drop-shadow-[0_0_8px_#06b6d4]" />
                     </div>
                     <div>
-                        <h1 class="font-display text-xl text-white">{{ quiz.title }}</h1>
-                        <p class="text-xs text-muted-foreground uppercase tracking-widest">{{ quiz.category }}</p>
+                        <div class="text-[9px] text-primary font-black uppercase tracking-[0.4em] mb-1.5 flex items-center gap-2">
+                            <Activity class="h-3 w-3 animate-pulse" /> MISSION_ACTIVE // DATA_EXTRACTION
+                        </div>
+                        <h1 class="font-display text-2xl md:text-3xl text-white font-black uppercase italic tracking-tighter">{{ quiz.title }}</h1>
                     </div>
                 </div>
                 
-                <div class="flex items-center gap-4">
-                    <div class="glass px-4 py-2 rounded-xl flex items-center gap-2" :class="timeLeft < 10 ? 'text-destructive border-destructive/50 animate-pulse' : 'text-electric'">
-                        <Clock class="h-4 w-4" />
-                        <span class="font-display font-bold">{{ timeLeft }}s</span>
+                <div class="flex items-center gap-6">
+                    <div class="px-6 py-3 rounded-2xl border-2 backdrop-blur-xl flex items-center gap-4 transition-all duration-500" 
+                         :class="timeLeft < 10 ? 'border-red-500 bg-red-500/10 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.3)] animate-pulse' : 'border-white/10 bg-white/5 text-primary'">
+                        <Clock class="h-5 w-5" />
+                        <span class="font-display font-black italic text-xl tracking-tighter">{{ timeLeft }}S</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Progress Bar -->
-            <div class="mb-10">
-                <div class="flex justify-between text-xs mb-2 text-muted-foreground uppercase tracking-widest font-bold">
-                    <span v-if="totalQuestions > 0">Question {{ currentQuestionIndex + 1 }} sur {{ totalQuestions }}</span>
-                    <div class="flex items-center gap-2 text-electric animate-pulse" v-if="xpGained > 0">
-                        <Zap class="h-3 w-3 fill-current" />
-                        <span>+{{ xpGained }} XP</span>
+            <!-- Progress HUD -->
+            <div class="mb-12">
+                <div class="flex justify-between text-[10px] mb-4 text-white/40 font-black uppercase tracking-[0.3em]">
+                    <span v-if="totalQuestions > 0">QUERY_SEQUENCE: {{ currentQuestionIndex + 1 }} / {{ totalQuestions }}</span>
+                    <div class="flex items-center gap-2 text-primary animate-pulse" v-if="xpGained > 0">
+                        <Zap class="h-3.5 w-3.5" />
+                        <span>+{{ xpGained }} XP_COLLECTED</span>
                     </div>
-                    <span>{{ Math.round(progress) }}%</span>
+                    <span>SYNC_STATUS: {{ Math.round(progress) }}%</span>
                 </div>
-                <div class="h-2 rounded-full bg-gaming-darker overflow-hidden border border-white/5">
-                    <div class="h-full bg-gradient-electric transition-all duration-500" :style="{ width: `${progress}%` }" />
+                <!-- Segmented Progress Bar -->
+                <div class="segmented-progress h-3">
+                    <div v-for="seg in 20" :key="seg" 
+                         :class="cn('progress-segment', (seg * 5) <= progress ? 'active' : '')">
+                    </div>
                 </div>
             </div>
 
-            <!-- No Quiz/Questions Error State -->
-            <div v-if="totalQuestions === 0" class="glass-strong rounded-3xl p-12 text-center border border-destructive/20">
-                <Info class="h-12 w-12 text-destructive mx-auto mb-4" />
-                <h2 class="text-xl font-display text-white mb-2">Aucun contenu disponible</h2>
-                <p class="text-muted-foreground mb-8">DÃ©solÃ©, ce quiz ne contient aucune question pour le moment.</p>
-                <Link :href="route('player.cities')">
-                    <NeonButton>Retour aux villes</NeonButton>
-                </Link>
+            <!-- No Quiz Error State -->
+            <div v-if="totalQuestions === 0" class="hud-glass-card rounded-[3rem] p-16 text-center border-2 border-dashed border-red-500/20 max-w-2xl mx-auto">
+                <Info class="h-16 w-16 text-red-500 mx-auto mb-6 opacity-40" />
+                <h2 class="text-3xl font-display font-black text-white uppercase italic tracking-tighter mb-4">SYSTEM_ERROR: NO_DATA</h2>
+                <p class="text-white/40 text-sm font-bold uppercase tracking-widest mb-10 leading-relaxed">Désolé, ce module de données ne contient aucune séquence valide pour le moment.</p>
+                <HUDButton :href="route('player.cities')" variant="primary" class="h-14 px-10">
+                    RETOUR_SECTEURS
+                </HUDButton>
             </div>
 
-            <!-- Question Card -->
-            <div v-else-if="!isFinished" class="glass-strong rounded-3xl p-8 md:p-10 border border-electric/20 relative overflow-hidden">
+            <!-- Question Card HUD -->
+            <div v-else-if="!isFinished" class="neon-border-box p-8 md:p-12 overflow-hidden group">
+                <div class="neon-corner top-0 left-0 border-r-0 border-b-0" />
+                <div class="neon-corner top-0 right-0 border-l-0 border-b-0" />
+                <div class="neon-corner bottom-0 left-0 border-r-0 border-t-0" />
+                <div class="neon-corner bottom-0 right-0 border-l-0 border-t-0" />
+
                 <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
                 
-                <div class="flex justify-between items-start mb-6">
-                    <h2 class="text-xl md:text-2xl font-display text-white relative z-10 flex-1 pr-4">
-                        {{ currentQuestion?.question_text || 'Chargement...' }}
+                <div class="flex justify-between items-start mb-10 relative z-10">
+                    <h2 class="text-2xl md:text-3xl font-display font-black text-white uppercase italic tracking-tighter leading-tight flex-1 pr-8">
+                        {{ currentQuestion?.question_text || 'INITIALIZING_QUERY...' }}
                     </h2>
-                    <button 
+                    <HUDButton 
                         v-if="!showHint && currentQuestion?.hint"
                         @click="useHint"
-                        class="h-10 px-4 rounded-xl glass border-warning/40 text-warning text-[10px] font-black uppercase tracking-widest hover:bg-warning/10 transition-all shrink-0"
+                        variant="magenta"
+                        class="h-10 px-6 scale-90"
                     >
-                        Indice
-                    </button>
+                        <Eye class="h-4 w-4 mr-2" /> DÉCODER_INDICE
+                    </HUDButton>
                 </div>
 
-                <div v-if="showHint" class="mb-8 p-4 rounded-2xl bg-warning/5 border border-warning/20 text-warning text-xs italic animate-fade-down">
-                    💡 <span class="text-white">{{ currentQuestion?.hint }}</span>
-                </div>
-
-                <div class="grid gap-4 relative z-10 mb-10">
-                    <div v-if="currentQuestion && (!currentQuestion.options || (typeof currentQuestion.options === 'object' && Object.keys(currentQuestion.options).length === 0))" class="text-white text-center p-8 border border-dashed border-white/10 rounded-2xl">
-                        Aucune option de réponse n'a été configurée pour cette question.
+                <Transition name="fade">
+                    <div v-if="showHint" class="mb-10 p-6 rounded-2xl bg-amber-500/5 border border-amber-500/20 text-[10px] text-amber-500 font-black uppercase tracking-widest italic animate-fade-down">
+                        <div class="flex gap-3">
+                            <Info class="h-4 w-4 shrink-0" />
+                            <span>{{ currentQuestion?.hint }}</span>
+                        </div>
                     </div>
+                </Transition>
+
+                <div class="grid gap-6 relative z-10 mb-12">
                     <button 
                         v-for="(text, key) in currentQuestion?.options" 
                         :key="key"
                         @click="selectOption(key)"
                         :disabled="!!answers[currentQuestionIndex]"
-                        class="w-full p-5 rounded-2xl border-2 transition-all duration-300 text-left flex items-center gap-4 group"
+                        class="w-full p-6 rounded-2xl border-2 transition-all duration-500 text-left flex items-center gap-6 group/option overflow-hidden relative"
                         :class="[
                             answers[currentQuestionIndex] === key 
                                 ? (key === currentQuestion.correct_option 
-                                    ? 'bg-green-500/20 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.4)] text-white' 
-                                    : 'bg-red-500/20 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)] text-white')
+                                    ? 'bg-green-500/10 border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.2)] text-white' 
+                                    : 'bg-red-500/10 border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.2)] text-white')
                                 : (answers[currentQuestionIndex] 
-                                    ? 'bg-white/5 border-white/10 opacity-50 cursor-not-allowed' 
-                                    : 'bg-white/5 border-white/10 text-muted-foreground hover:bg-white/10 hover:border-white/20')
+                                    ? 'bg-white/5 border-white/5 opacity-30 cursor-not-allowed' 
+                                    : 'bg-white/[0.02] border-white/10 text-white/60 hover:border-primary/40 hover:bg-primary/5 hover:text-white')
                         ]"
                     >
-                        <div class="h-8 w-8 rounded-lg border-2 border-current grid place-items-center font-display font-bold text-sm shrink-0 transition-colors"
+                        <div class="absolute inset-0 grid-bg opacity-0 group-hover/option:opacity-10 transition-opacity" />
+                        
+                        <div class="h-10 w-10 rounded-xl border-2 grid place-items-center font-display font-black italic text-lg shrink-0 transition-all duration-500"
                              :class="[
                                  answers[currentQuestionIndex] === key 
-                                    ? (key === currentQuestion.correct_option ? 'bg-green-500 text-white border-green-500' : 'bg-red-500 text-white border-red-500')
-                                    : ''
+                                    ? (key === currentQuestion.correct_option ? 'bg-green-500 text-black border-green-500 shadow-[0_0_15px_#22c55e]' : 'bg-red-500 text-black border-red-500 shadow-[0_0_15px_#ef4444]')
+                                    : 'border-white/20 bg-white/5 group-hover/option:border-primary group-hover/option:text-primary group-hover/option:shadow-[0_0_10px_rgba(6,182,212,0.3)]'
                              ]">
                             {{ key }}
                         </div>
-                        <span class="font-bold text-white">{{ text }}</span>
+                        <span class="font-black uppercase tracking-widest text-sm relative z-10">{{ text }}</span>
                         
-                        <CheckCircle2 v-if="answers[currentQuestionIndex] === key && key === currentQuestion.correct_option" class="h-6 w-6 text-green-500 ml-auto" />
-                        <XCircle v-if="answers[currentQuestionIndex] === key && key !== currentQuestion.correct_option" class="h-6 w-6 text-red-500 ml-auto" />
+                        <div class="ml-auto flex items-center gap-3 relative z-10">
+                            <CheckCircle2 v-if="answers[currentQuestionIndex] === key && key === currentQuestion.correct_option" class="h-7 w-7 text-green-500 drop-shadow-[0_0_8px_#22c55e]" />
+                            <XCircle v-if="answers[currentQuestionIndex] === key && key !== currentQuestion.correct_option" class="h-7 w-7 text-red-500 drop-shadow-[0_0_8px_#ef4444]" />
+                        </div>
                     </button>
                 </div>
 
-                <!-- Navigation Buttons -->
-                <div class="flex items-center justify-end gap-4 pt-6 border-t border-white/5 relative z-10">
-                    <button 
-                        v-if="currentQuestionIndex < totalQuestions - 1"
-                        @click="nextQuestion"
-                        :disabled="!answers[currentQuestionIndex]"
-                        class="px-8 py-3 rounded-xl bg-electric text-white font-bold hover:shadow-neon disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-                    >
-                        Suivant <ArrowRight class="h-4 w-4" />
-                    </button>
+                <!-- Navigation HUD -->
+                <div class="flex items-center justify-between pt-8 border-t border-white/5 relative z-10">
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-1.5">
+                            <Heart v-for="h in 5" :key="h" 
+                                   :class="cn('h-5 w-5 transition-all duration-700', 
+                                   h <= hearts ? 'text-red-500 fill-red-500 drop-shadow-[0_0_8px_#ef4444]' : 'text-white/5')" />
+                        </div>
+                        <span class="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">INTEGRITY_SHIELD</span>
+                    </div>
 
-                    <button 
-                        v-else
-                        @click="submitResults"
-                        :disabled="!answers[currentQuestionIndex] || isSubmitting"
-                        class="px-8 py-3 rounded-xl bg-success text-white font-bold shadow-[0_0_15px_rgba(34,197,94,0.3)] hover:shadow-[0_0_25px_rgba(34,197,94,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-                    >
-                        <Trophy class="h-4 w-4" /> Terminer le Quiz
-                    </button>
+                    <div class="flex gap-4">
+                        <HUDButton 
+                            v-if="currentQuestionIndex < totalQuestions - 1"
+                            @click="nextQuestion"
+                            :disabled="!answers[currentQuestionIndex]"
+                            variant="primary"
+                            class="h-12 px-10"
+                        >
+                            <div class="flex items-center gap-2">
+                                <span>SUIVANT</span>
+                                <ArrowRight class="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </HUDButton>
+
+                        <HUDButton 
+                            v-else
+                            @click="submitResults"
+                            :disabled="!answers[currentQuestionIndex] || isSubmitting"
+                            variant="primary"
+                            class="h-12 px-10"
+                        >
+                            <div class="flex items-center gap-2">
+                                <Target class="h-4 w-4" />
+                                <span>TERMINER_SEQUENCE</span>
+                            </div>
+                        </HUDButton>
+                    </div>
                 </div>
             </div>
 
-            <!-- Results View -->
+            <!-- Results View HUD -->
             <div v-else class="text-center animate-fade-up">
-                <div v-if="isTimeOut" class="mb-8">
-                    <div class="h-24 w-24 rounded-3xl bg-destructive mx-auto grid place-items-center shadow-[0_0_30px_rgba(239,68,68,0.5)] mb-6 animate-pulse">
-                        <Clock class="h-12 w-12 text-white" />
+                <div v-if="isTimeOut" class="max-w-2xl mx-auto">
+                    <div class="h-32 w-32 rounded-[2.5rem] bg-red-500/10 border-2 border-red-500/40 mx-auto grid place-items-center shadow-[0_0_40px_rgba(239,68,68,0.2)] mb-8 animate-pulse relative">
+                        <div class="absolute inset-0 bg-red-500/5 animate-ping rounded-[2.5rem]" />
+                        <Clock class="h-14 w-14 text-red-500 relative z-10" />
                     </div>
-                    <h2 class="font-display text-4xl text-white mb-2 uppercase">TEMPS ÉCOULÉ !</h2>
-                    <p class="text-muted-foreground text-sm mb-10">
-                        Le chronomètre s'est arrêté avant que vous ne terminiez.
+                    <h2 class="font-display text-5xl md:text-6xl font-black text-white mb-4 uppercase italic tracking-tighter">TEMPS_ÉCOULÉ !</h2>
+                    <p class="text-white/40 text-sm font-bold uppercase tracking-[0.4em] mb-12">
+                        DÉFAILLANCE_TEMPORELLE : LE CHRONOMÈTRE S'EST ARRÊTÉ AVANT LA SYNCHRONISATION.
                     </p>
                     
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <button 
+                    <div class="flex flex-col sm:flex-row gap-6 justify-center">
+                        <HUDButton 
                             @click="continueWithHeart"
                             :disabled="isSubmitting"
-                            class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-premium text-white font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center justify-center gap-3 shadow-neon"
+                            variant="magenta"
+                            class="h-16 px-10 rounded-2xl flex-1 max-w-xs"
                         >
-                            <Heart class="h-5 w-5 fill-current animate-pulse" />
-                            Continuer la partie (-1 ❤️)
-                        </button>
+                            <div class="flex items-center gap-3">
+                                <Heart class="h-5 w-5 fill-current animate-pulse" />
+                                <span>CONTINUER_MISSION (-1 ❤️)</span>
+                            </div>
+                        </HUDButton>
                         <button 
                             @click="handleRetry"
-                            class="w-full sm:w-auto px-8 py-4 rounded-2xl border-2 border-white/10 text-white font-black uppercase tracking-widest hover:bg-white/5 transition-all"
+                            class="flex-1 max-w-xs h-16 rounded-2xl border-2 border-white/10 text-white font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white/5 transition-all"
                         >
-                            Réessayer
+                            RÉINITIALISER_SEQUENCE
                         </button>
                     </div>
                 </div>
 
-                <div v-else>
-                    <div class="h-24 w-24 rounded-3xl bg-gradient-electric mx-auto grid place-items-center shadow-neon mb-6 animate-bounce">
-                        <Trophy v-if="calculateStars() >= 2" class="h-12 w-12 text-white" />
-                        <Frown v-else class="h-12 w-12 text-white" />
+                <div v-else class="max-w-3xl mx-auto">
+                    <div class="h-32 w-32 rounded-[2.5rem] bg-primary/10 border-2 border-primary/40 mx-auto grid place-items-center shadow-[0_0_40px_rgba(6,182,212,0.2)] mb-8 animate-bounce relative">
+                        <div class="absolute inset-0 bg-primary/5 animate-ping rounded-[2.5rem]" />
+                        <Trophy v-if="calculateStars() >= 2" class="h-14 w-14 text-primary relative z-10 drop-shadow-[0_0_12px_#06b6d4]" />
+                        <Frown v-else class="h-14 w-14 text-white/40 relative z-10" />
                     </div>
                     
-                    <h2 class="font-display text-4xl text-white mb-2 uppercase">
-                        {{ calculateStars() >= 2 ? 'FÉLICITATIONS !' : 'COURAGE !' }}
+                    <h2 class="font-display text-5xl md:text-6xl text-white font-black uppercase italic tracking-tighter mb-4">
+                        {{ calculateStars() >= 2 ? 'MISSION_SUCCÈS' : 'SEQUENCE_INCOMPLETE' }}
                     </h2>
-                    <p class="text-muted-foreground text-sm mb-10">
-                        {{ calculateStars() >= 2 ? 'Vous avez brillamment surmonté les épreuves.' : 'Continuez à vous entraîner pour décrocher toutes les étoiles.' }}
+                    <p class="text-white/40 text-sm font-bold uppercase tracking-[0.4em] mb-12">
+                        {{ calculateStars() >= 2 ? 'VOUS AVEZ BRILLAMMENT EXTRAIT LES DONNÉES DU SECTEUR.' : 'EXTRACTION PARTIELLE : CONTINUEZ L\'ENTRAÎNEMENT POUR UNE SYNC TOTALE.' }}
                     </p>
 
-                    <div v-if="hearts > 0" class="flex justify-center gap-3 mb-10">
+                    <div v-if="hearts > 0" class="flex justify-center gap-6 mb-16">
                         <Star 
                             v-for="s in 3" 
                             :key="s" 
                             :class="[
-                                'h-12 w-12 transition-all duration-700',
-                                s <= calculateStars() ? 'text-yellow-400 fill-yellow-400 scale-110' : 'text-white/5'
+                                'h-16 w-16 transition-all duration-1000 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]',
+                                s <= calculateStars() ? 'text-amber-400 fill-amber-400 scale-110' : 'text-white/5'
                             ]"
-                            :style="{ transitionDelay: `${s * 200}ms` }"
+                            :style="{ transitionDelay: `${s * 300}ms` }"
                         />
                     </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
-                        <div class="p-5 rounded-3xl bg-white/5 border border-white/10">
-                            <div class="text-[10px] text-muted-foreground uppercase mb-1">XP GAGNÉS</div>
-                            <div class="text-2xl font-display text-electric">+{{ xpGained }}</div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-6 mb-16">
+                        <div class="p-8 rounded-[2rem] bg-white/[0.02] border border-white/10 group hover:border-primary/40 transition-all">
+                            <div class="text-[9px] text-white/20 font-black uppercase tracking-[0.3em] mb-3">XP_EXTRACTION</div>
+                            <div class="text-3xl font-display text-primary font-black italic tracking-tighter">+{{ xpGained }}</div>
                         </div>
-                        <div class="p-5 rounded-3xl bg-white/5 border border-white/10">
-                            <div class="text-[10px] text-muted-foreground uppercase mb-1">INDICES UTILISÉS</div>
-                            <div class="text-2xl font-display text-warning">{{ usedHintsCount }}</div>
+                        <div class="p-8 rounded-[2rem] bg-white/[0.02] border border-white/10 group hover:border-magenta-500/40 transition-all">
+                            <div class="text-[9px] text-white/20 font-black uppercase tracking-[0.3em] mb-3">HINTS_DECRYPTED</div>
+                            <div class="text-3xl font-display text-magenta-500 font-black italic tracking-tighter">{{ usedHintsCount }}</div>
                         </div>
-                        <div class="p-5 rounded-3xl bg-white/5 border border-white/10">
-                            <div class="text-[10px] text-muted-foreground uppercase mb-1">TEMPS RESTANT</div>
-                            <div class="text-2xl font-display text-cyan-neon">{{ timeLeft }}s</div>
+                        <div class="p-8 rounded-[2rem] bg-white/[0.02] border border-white/10 group hover:border-cyan-400/40 transition-all">
+                            <div class="text-[9px] text-white/20 font-black uppercase tracking-[0.3em] mb-3">TIME_ELAPSED</div>
+                            <div class="text-3xl font-display text-cyan-400 font-black italic tracking-tighter">{{ timeLeft }}S</div>
                         </div>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <div class="flex flex-col sm:flex-row gap-6 justify-center">
                         <button 
                             @click="handleRetry"
-                            class="w-full sm:w-auto px-8 py-3 rounded-xl border-2 border-white/10 text-white font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
+                            class="flex-1 max-w-xs h-16 rounded-2xl border-2 border-white/10 text-white font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white/5 transition-all"
                         >
-                            Réessayer
+                            RÉINITIALISER_SEQUENCE
                         </button>
-                        <Link :href="route('player.cities')">
-                            <NeonButton variant="outline" class="w-full sm:w-auto">
-                                Revenir aux Quiz
-                            </NeonButton>
-                        </Link>
+                        <HUDButton :href="route('player.cities')" variant="primary" class="h-16 px-10 rounded-2xl flex-1 max-w-xs">
+                            <div class="flex items-center gap-3">
+                                <span>RETOUR_SECTEURS</span>
+                                <ArrowRight class="h-5 w-5" />
+                            </div>
+                        </HUDButton>
                     </div>
                 </div>
                 <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
             </div>
 
-            <!-- MODAL TEMPS ÉCOULÉ -->
+            <!-- MODAL TEMPS ÉCOULÉ HUD -->
             <Modal :show="showTimeoutModal" @close="handleTimeoutSubmit">
-                <div class="p-8 bg-gaming-darker border border-destructive/30 rounded-3xl overflow-hidden relative text-center">
-                    <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-                    
-                    <div class="relative z-10">
-                        <div class="h-20 w-20 rounded-2xl bg-destructive/20 border border-destructive/50 grid place-items-center mx-auto mb-6 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
-                            <Clock class="h-10 w-10 text-destructive animate-pulse" />
-                        </div>
+                <div class="p-1 rounded-[3rem] bg-gradient-to-br from-red-500/40 via-white/5 to-primary/40">
+                    <div class="p-12 bg-zinc-950 rounded-[2.9rem] overflow-hidden relative text-center max-w-lg mx-auto">
+                        <div class="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
                         
-                        <h2 class="font-display text-3xl text-white mb-2 uppercase tracking-tight">Temps Écoulé !</h2>
-                        <p class="text-muted-foreground text-sm mb-8 px-4">
-                            Le chronomètre s'est arrêté. Voulez-vous utiliser un cœur pour continuer la partie et obtenir 30 secondes supplémentaires ?
-                        </p>
-
-                        <div class="flex flex-col gap-3">
-                            <button 
-                                @click="continueWithHeart"
-                                :disabled="isSubmitting"
-                                class="w-full py-4 rounded-2xl bg-gradient-premium text-white font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 shadow-neon"
-                            >
-                                <Heart class="h-5 w-5 fill-current" />
-                                Continuer (-1 ❤️)
-                            </button>
+                        <div class="relative z-10">
+                            <div class="h-24 w-24 rounded-full bg-red-500/10 border-2 border-red-500/40 grid place-items-center mx-auto mb-8 shadow-[0_0_40px_rgba(239,68,68,0.2)]">
+                                <Clock class="h-12 w-12 text-red-500 animate-pulse" />
+                            </div>
                             
-                            <button 
-                                @click="handleTimeoutSubmit"
-                                class="w-full py-4 rounded-2xl border-2 border-white/5 text-muted-foreground font-bold uppercase tracking-widest hover:bg-white/5 transition-all"
-                            >
-                                Arrêter et voir le score
-                            </button>
+                            <h2 class="font-display text-4xl text-white font-black uppercase italic tracking-tighter mb-4">CHRONO_EXPIRED</h2>
+                            <p class="text-white/40 text-xs font-bold uppercase tracking-[0.2em] mb-10 px-4 leading-loose">
+                                Le flux temporel a été interrompu. Voulez-vous injecter un cœur de secours pour prolonger la séquence de 30 secondes ?
+                            </p>
+
+                            <div class="flex flex-col gap-4">
+                                <HUDButton 
+                                    @click="continueWithHeart"
+                                    :disabled="isSubmitting"
+                                    variant="primary"
+                                    class="h-16 rounded-2xl"
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <Heart class="h-5 w-5 fill-current" />
+                                        <span>INJECTER_COEUR (-1 ❤️)</span>
+                                    </div>
+                                </HUDButton>
+                                
+                                <button 
+                                    @click="handleTimeoutSubmit"
+                                    class="h-14 rounded-2xl border-2 border-white/5 text-white/40 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white/5 transition-all"
+                                >
+                                    ABANDONNER_SEQUENCE
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </Modal>
         </div>
+        <MobileTabBar />
     </SiteLayout>
 </template>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>

@@ -297,8 +297,22 @@ html.dark, .dark {
     height: 12px;
     padding: 2px;
     background: rgba(0, 0, 0, 0.3);
-    border-radius: 3px;
+    border-radius: 6px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(6, 182, 212, 0.3);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(6, 182, 212, 0.6);
   }
 
   .progress-segment {

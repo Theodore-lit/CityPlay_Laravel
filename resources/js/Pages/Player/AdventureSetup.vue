@@ -7,6 +7,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { User, Users, MapPin, ArrowRight, ShieldCheck, Zap, Terminal, Bike, Info, Car, Gauge, Target, Navigation } from 'lucide-vue-next';
 import { ref, onMounted } from 'vue';
 import gsap from 'gsap';
+import { cn } from '@/lib/utils';
 
 const props = defineProps({
     city: Object,
@@ -109,16 +110,16 @@ onMounted(() => {
             <div class="grid grid-cols-2 gap-6">
                 <button @click="selectedMode = 'solo'" :class="cn('p-8 rounded-[2rem] border-2 transition-all text-left relative overflow-hidden group', selectedMode === 'solo' ? 'bg-primary/10 border-primary shadow-[0_0_30px_rgba(6,182,212,0.15)]' : 'hud-glass-card border-white/5 hover:border-white/20')">
                     <div class="relative z-10">
-                        <User :class="cn('h-8 w-8 mb-4 transition-colors', selectedMode === 'solo' ? 'text-primary' : 'text-white/40')" />
+                        <User :class="cn('h-8 w-8 mb-4 transition-colors', selectedMode === 'solo' ? 'text-primary' : 'text-white/60')" />
                         <div class="font-black text-lg text-white uppercase italic">MODE_SOLO</div>
-                        <div class="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mt-1">EXPLORATION_INDIVIDUELLE</div>
+                        <div class="text-[10px] text-white/60 font-black uppercase tracking-[0.2em] mt-1">EXPLORATION_INDIVIDUELLE</div>
                     </div>
                 </button>
                 <button @click="selectedMode = 'team'" :class="cn('p-8 rounded-[2rem] border-2 transition-all text-left relative overflow-hidden group', selectedMode === 'team' ? 'bg-purple-500/10 border-purple-500 shadow-[0_0_30px_rgba(217,70,239,0.15)]' : 'hud-glass-card border-white/5 hover:border-white/20')">
                     <div class="relative z-10">
-                        <Users :class="cn('h-8 w-8 mb-4 transition-colors', selectedMode === 'team' ? 'text-purple-500' : 'text-white/40')" />
+                        <Users :class="cn('h-8 w-8 mb-4 transition-colors', selectedMode === 'team' ? 'text-purple-500' : 'text-white/60')" />
                         <div class="font-black text-lg text-white uppercase italic">UNITÉ_TACTIQUE</div>
-                        <div class="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mt-1">COOPÉRATION_MULTI_LINK</div>
+                        <div class="text-[10px] text-white/60 font-black uppercase tracking-[0.2em] mt-1">COOPÉRATION_MULTI_LINK</div>
                     </div>
                 </button>
             </div>
@@ -139,9 +140,9 @@ onMounted(() => {
                         { id: 'car', icon: Car, label: 'VOITURE', dist: '< 100 KM' }
                     ]" :key="m.id" @click="transportMode = m.id" 
                     :class="cn('p-6 rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 group', transportMode === m.id ? 'bg-primary/10 border-primary shadow-[0_0_20px_rgba(6,182,212,0.1)]' : 'hud-glass-card border-white/5 hover:border-white/20')">
-                        <component :is="m.icon" :class="cn('h-8 w-8 transition-colors', transportMode === m.id ? 'text-primary' : 'text-white/40')" />
+                        <component :is="m.icon" :class="cn('h-8 w-8 transition-colors', transportMode === m.id ? 'text-primary' : 'text-white/60')" />
                         <span class="text-[10px] font-black uppercase tracking-widest text-white">{{ m.label }}</span>
-                        <span class="text-[8px] text-white/30 font-black tracking-widest">{{ m.dist }}</span>
+                        <span class="text-[8px] text-white/50 font-black tracking-widest">{{ m.dist }}</span>
                     </button>
                 </div>
             </section>
@@ -159,7 +160,7 @@ onMounted(() => {
                         { id: 'medium', label: 'MOYEN', color: 'border-amber-500/40 text-amber-400 bg-amber-500/5' },
                         { id: 'hard', label: 'DIFFICILE', color: 'border-red-500/40 text-red-400 bg-red-500/5' }
                     ]" :key="d.id" @click="difficulty = d.id" 
-                    :class="cn('p-6 rounded-2xl border-2 transition-all font-black text-[10px] uppercase tracking-[0.4em]', difficulty === d.id ? d.color + ' shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'hud-glass-card border-white/5 text-white/40 hover:text-white')">
+                    :class="cn('p-6 rounded-2xl border-2 transition-all font-black text-[10px] uppercase tracking-[0.4em]', difficulty === d.id ? d.color + ' shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'hud-glass-card border-white/5 text-white/60 hover:text-white')">
                         {{ d.label }}
                     </button>
                 </div>

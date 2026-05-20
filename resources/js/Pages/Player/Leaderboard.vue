@@ -99,13 +99,13 @@ const players = computed(() => {
                 <div class="flex items-center justify-center gap-2 mt-1">
                     <span class="text-[8px] text-primary/60 font-black tracking-widest">{{ players[pos].country }}</span>
                     <div class="h-1 w-1 rounded-full bg-white/20" />
-                    <span class="text-[8px] text-white/40 font-black tracking-widest flex items-center gap-1">
+                    <span class="text-[8px] text-white/60 font-black tracking-widest flex items-center gap-1">
                         <Flame class="h-2 w-2 text-orange-500" /> {{ players[pos].streak }}j
                     </span>
                 </div>
                 <div class="mt-4 font-display text-lg md:text-2xl text-primary font-black italic tracking-tighter drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]">
                     {{ players[pos].xp.toLocaleString() }}
-                    <span class="text-[10px] opacity-40 italic tracking-widest ml-1">XP</span>
+                    <span class="text-[10px] opacity-60 italic tracking-widest ml-1">XP</span>
                 </div>
             </div>
           </div>
@@ -120,7 +120,7 @@ const players = computed(() => {
           <div v-for="(p, i) in players.slice(3)" :key="p.name" 
                class="flex items-center gap-6 p-4 rounded-2xl hover:bg-white/[0.03] transition-all group border border-transparent hover:border-white/5">
             
-            <div class="w-8 font-display text-white/20 text-center font-black text-xs group-hover:text-primary transition-colors">
+            <div class="w-8 font-display text-white/40 text-center font-black text-xs group-hover:text-primary transition-colors">
                 {{ (i + 4).toString().padStart(2, '0') }}
             </div>
             
@@ -135,9 +135,9 @@ const players = computed(() => {
                 {{ p.name }}
               </div>
               <div class="flex items-center gap-3 mt-1">
-                <span class="text-[9px] text-white/30 font-black tracking-widest uppercase">{{ p.country }}</span>
+                <span class="text-[9px] text-white/50 font-black tracking-widest uppercase">{{ p.country }}</span>
                 <div class="h-0.5 w-4 bg-white/10" />
-                <div class="text-[9px] text-white/40 flex items-center gap-1 font-black uppercase tracking-widest">
+                <div class="text-[9px] text-white/60 flex items-center gap-1 font-black uppercase tracking-widest">
                   <Flame class="h-3 w-3 text-orange-500/60" /> {{ p.streak }} JOURS
                 </div>
               </div>
@@ -145,7 +145,7 @@ const players = computed(() => {
 
             <div class="text-right">
                 <div class="font-display text-primary font-black text-lg italic tracking-tighter">{{ p.xp.toLocaleString() }}</div>
-                <div class="text-[8px] text-white/20 font-black tracking-widest uppercase mt-0.5">PTS_EXPERIENCE</div>
+                <div class="text-[8px] text-white/40 font-black tracking-widest uppercase mt-0.5">PTS_EXPERIENCE</div>
             </div>
           </div>
         </div>

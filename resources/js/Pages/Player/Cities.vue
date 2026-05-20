@@ -140,7 +140,7 @@ const mapPoints = [
         >
           <div class="relative aspect-[16/9] overflow-hidden">
             <img
-              :src="c.image_path || 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?auto=format&fit=crop&q=80&w=800'"
+              :src="cityImage(c)"
               :alt="c.name"
               class="w-full h-full object-cover city-hud-img"
             />
@@ -164,7 +164,7 @@ const mapPoints = [
             <!-- PROGRESS BAR HUD -->
             <div class="mt-4">
               <div class="flex justify-between items-center mb-2 text-[8px] font-black uppercase tracking-[0.2em]">
-                <span class="text-white/40">EXPLORATION_STATUS</span>
+                <span class="text-white/60">EXPLORATION_STATUS</span>
                 <span class="text-primary">{{ c.discovered_count || 0 }} / {{ c.total_count || 0 }} NODES</span>
               </div>
               <div class="segmented-progress">
@@ -175,7 +175,7 @@ const mapPoints = [
             </div>
 
             <div class="mt-5 flex items-center justify-between">
-              <div class="flex items-center gap-4 text-[9px] font-black tracking-widest text-white/40 uppercase">
+              <div class="flex items-center gap-4 text-[9px] font-black tracking-widest text-white/60 uppercase">
                 <span class="flex items-center gap-1.5"><MapPin class="h-3 w-3 text-primary" />{{ c.total_count || 0 }} NODES</span>
               </div>
               <div class="h-9 w-9 rounded-full border border-primary/20 flex items-center justify-center group-hover:border-primary group-hover:bg-primary/10 transition-all">
@@ -218,7 +218,7 @@ const mapPoints = [
             <div class="p-8">
               <div class="mb-4 flex items-center justify-between text-[10px] uppercase">
                 <span class="font-black tracking-widest text-accent">{{ event.cityName }}</span>
-                <div class="flex items-center gap-2 font-bold text-white/40">
+                <div class="flex items-center gap-2 font-bold text-white/60">
                   <Calendar class="h-3 w-3" /> {{ formatDate(event.event_date) }}
                 </div>
               </div>
@@ -226,12 +226,12 @@ const mapPoints = [
               <h3 class="font-display text-xl font-black uppercase italic text-white transition-colors group-hover:text-accent mb-3">
                 {{ event.title }}
               </h3>
-              <p class="line-clamp-2 text-xs leading-relaxed text-white/60 mb-6 uppercase font-bold tracking-widest">
+              <p class="line-clamp-2 text-xs leading-relaxed text-white/70 mb-6 uppercase font-bold tracking-widest">
                 {{ event.description }}
               </p>
               
               <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2 text-[10px] font-black tracking-widest text-white/40">
+                <div class="flex items-center gap-2 text-[10px] font-black tracking-widest text-white/60">
                   <div class="glass flex h-8 w-8 items-center justify-center rounded-lg text-accent">
                     <ImageIcon class="h-4 w-4" />
                   </div>
@@ -294,13 +294,13 @@ const mapPoints = [
               
               <div class="mb-8 grid grid-cols-2 gap-6">
                 <div class="glass rounded-2xl border border-white/5 p-4">
-                  <div class="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Date de l'événement</div>
+                  <div class="text-[10px] font-black uppercase tracking-widest text-white/60 mb-2">Date de l'événement</div>
                   <div class="flex items-center gap-3 font-bold text-white">
                     <Calendar class="h-5 w-5 text-accent" /> {{ formatDate(selectedEvent.event_date) }}
                   </div>
                 </div>
                 <div class="glass rounded-2xl border border-white/5 p-4">
-                  <div class="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Lieu</div>
+                  <div class="text-[10px] font-black uppercase tracking-widest text-white/60 mb-2">Lieu</div>
                   <div class="flex items-center gap-3 font-bold text-white">
                     <MapPin class="h-5 w-5 text-accent" /> {{ selectedEvent.location_name || 'Non spécifié' }}
                   </div>

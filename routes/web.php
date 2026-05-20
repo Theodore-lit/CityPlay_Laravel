@@ -44,6 +44,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/player/location/{location}/unlock', [PlayerController::class, 'unlockLocation'])->name('player.unlock-location');
     Route::post('/player/location/{location}/complete', [PlayerController::class, 'completeLocation'])->name('player.complete-location');
     Route::post('/player/update-position', [PlayerController::class, 'updatePosition'])->name('player.update-position');
+    Route::post('/notifications/{id}/mark-as-read', function ($id) {
+        auth()->user()->notifications()->where('id', $id)->first()?->markAsRead();
+        return back();
+    })->name('notifications.mark-as-read');
     Route::get('/api/missions/{city}', [PlayerController::class, 'getMissionDetails'])->name('api.missions.show');
 
     // Team Routes
@@ -52,7 +56,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/teams/join', [TeamController::class, 'join'])->name('teams.join');
     Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
     Route::post('/teams/{team}/start-quest/{city}', [TeamController::class, 'startQuest'])->name('teams.start-quest');
-    Route::get('/teams/{team}/join-game/{city}', [TeamController::class, 'joinGame'])->name('teams.join-game');
+    Route::get('/teams/{team}/join-game/{city}/{session?}', [TeamController::class, 'joinGame'])->name('teams.join-game');
 
     // Admin Routes
     Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');

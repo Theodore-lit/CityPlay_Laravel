@@ -23,7 +23,6 @@ const props = defineProps({
     }
 });
 
-const buttonRef = ref(null);
 const sweepRef = ref(null);
 const sweep2Ref = ref(null);
 
@@ -35,48 +34,51 @@ const variants = {
 
 const computedClasses = cn(variants[props.variant], props.className);
 
+let tl;
+
+const handleMouseEnter = () => {
+    if (sweepRef.value && sweep2Ref.value) {
+        gsap.to([sweepRef.value, sweep2Ref.value], {
+            left: '150%',
+            duration: 0.5,
+            stagger: 0.08,
+            ease: "power4.out",
+            overwrite: true,
+            onComplete: () => {
+                gsap.set([sweepRef.value, sweep2Ref.value], { left: '-150%' });
+                if (tl) tl.restart();
+            }
+        });
+    }
+};
+
 onMounted(() => {
     if (sweepRef.value && sweep2Ref.value) {
-        const tl = gsap.timeline({ repeat: -1, repeatDelay: 3 });
+        tl = gsap.timeline({ repeat: -1, repeatDelay: 2.5 });
         
         tl.to(sweepRef.value, {
             left: '150%',
-            duration: 1.5,
-            ease: "power2.inOut",
+            duration: 1.2,
+            ease: "power3.inOut",
         })
         .to(sweep2Ref.value, {
             left: '150%',
-            duration: 1.2,
-            ease: "power2.inOut",
-        }, "-=1.3");
-
-        // Animation au survol
-        buttonRef.value.addEventListener('mouseenter', () => {
-            gsap.to([sweepRef.value, sweep2Ref.value], {
-                left: '150%',
-                duration: 0.6,
-                stagger: 0.1,
-                ease: "power4.out",
-                overwrite: true,
-                onComplete: () => {
-                    gsap.set([sweepRef.value, sweep2Ref.value], { left: '-150%' });
-                    tl.restart();
-                }
-            });
-        });
+            duration: 1,
+            ease: "power3.inOut",
+        }, "-=1.0");
     }
 });
 </script>
 
 <template>
-    <Link v-if="href" :href="href" :class="computedClasses" ref="buttonRef">
+    <Link v-if="href" :href="href" :class="computedClasses" @mouseenter="handleMouseEnter">
         <div class="mirror-sweep" ref="sweepRef"></div>
         <div class="mirror-sweep opacity-30 w-[20%]" ref="sweep2Ref"></div>
         <div class="relative z-10 flex flex-col items-center justify-center gap-0.5">
             <slot />
         </div>
     </Link>
-    <button v-else :class="computedClasses" :disabled="disabled" ref="buttonRef">
+    <button v-else :class="computedClasses" :disabled="disabled" @mouseenter="handleMouseEnter">
         <div class="mirror-sweep" ref="sweepRef"></div>
         <div class="mirror-sweep opacity-30 w-[20%]" ref="sweep2Ref"></div>
         <div class="relative z-10 flex flex-col items-center justify-center gap-0.5">

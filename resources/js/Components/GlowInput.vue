@@ -30,11 +30,17 @@ defineExpose({ focus: () => input.value.focus() });
 </script>
 
 <template>
-    <div class="space-y-2">
-        <label v-if="label" class="block text-xs uppercase tracking-widest text-muted-foreground font-bold ml-1">
+    <div class="space-y-3">
+        <label v-if="label" class="block text-[9px] uppercase tracking-[0.4em] text-white/40 font-black ml-2">
             {{ label }}
         </label>
         <div class="relative group">
+            <!-- Mechanical Corners -->
+            <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/20 group-focus-within:border-primary transition-colors" />
+            <div class="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/20 group-focus-within:border-primary transition-colors" />
+            <div class="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/20 group-focus-within:border-primary transition-colors" />
+            <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white/20 group-focus-within:border-primary transition-colors" />
+
             <input
                 :type="type"
                 :value="modelValue"
@@ -43,12 +49,15 @@ defineExpose({ focus: () => input.value.focus() });
                 v-bind="$attrs"
                 :placeholder="placeholder"
                 :required="required"
-                class="w-full h-12 rounded-xl bg-input border border-border px-4 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 shadow-sm"
-                :class="{ 'border-destructive focus:border-destructive focus:ring-destructive/20': error }"
+                class="w-full h-12 bg-white/[0.02] border-2 border-white/5 px-6 text-sm text-white font-black tracking-widest placeholder:text-white/10 outline-none focus:border-primary/40 focus:bg-primary/5 transition-all duration-500 uppercase"
+                :class="{ 'border-red-500/40 focus:border-red-500/60 focus:bg-red-500/5': error }"
             />
+            
+            <!-- Focus Glow Line -->
+            <div class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-focus-within:w-full transition-all duration-700 shadow-[0_0_10px_#06b6d4]" />
         </div>
-        <p v-if="error" class="text-xs text-destructive mt-1 ml-1 animate-fade-up">
-            {{ error }}
+        <p v-if="error" class="text-[9px] text-red-400 font-black uppercase tracking-widest mt-1 ml-2 animate-fade-up">
+            SYSTEM_ERROR: {{ error }}
         </p>
     </div>
 </template>

@@ -23,12 +23,12 @@ const props = defineProps({
 });
 
 const page = usePage();
-const user = computed(() => props.user || page.props.auth.user);
+const user = computed(() => props.user || page.props.auth?.user);
 
 // Logic from style2
-const level = computed(() => user.value?.level || 24);
-const xp = computed(() => props.stats.xp_in_level ?? 2840);
-const xpMax = computed(() => props.stats.xp_per_level ?? 4000);
+const level = computed(() => user.value?.level || 1);
+const xp = computed(() => props.stats?.xp_in_level ?? 0);
+const xpMax = computed(() => props.stats?.xp_per_level ?? 4000);
 const pct = computed(() => Math.min(100, (xp.value / xpMax.value) * 100));
 
 const initials = computed(() =>
@@ -36,15 +36,15 @@ const initials = computed(() =>
 );
 
 const heroStats = computed(() => [
-  { icon: Trophy, value: String(props.stats.missions ?? 47), label: 'MISSIONS', color: 'text-primary' },
-  { icon: Zap, value: (props.stats.total_xp ?? 12840).toLocaleString('fr-FR'), label: 'TOTAL XP', color: 'text-cyan-400' },
+  { icon: Trophy, value: String(props.stats?.missions ?? 0), label: 'MISSIONS', color: 'text-primary' },
+  { icon: Zap, value: (props.stats?.total_xp ?? 0).toLocaleString('fr-FR'), label: 'TOTAL XP', color: 'text-cyan-400' },
   {
     icon: Network,
-    value: `${props.stats.cities_unlocked ?? 4} / ${props.stats.cities_total ?? 5}`,
+    value: `${props.stats?.cities_unlocked ?? 0} / ${props.stats?.cities_total ?? 0}`,
     label: 'VILLES',
     color: 'text-purple-400'
   },
-  { icon: Flame, value: `${props.stats.streak_days ?? 32}j`, label: 'SÉRIE', color: 'text-orange-500' },
+  { icon: Flame, value: `${props.stats?.streak_days ?? 0}j`, label: 'SÉRIE', color: 'text-orange-500' },
 ]);
 
 const achievements = [
@@ -203,10 +203,10 @@ const navLinks = [
                   
                   <!-- LOCK OVERLAY -->
                   <div v-if="city.mission_status === 'lock'" class="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10">
-                     <div class="h-16 w-16 rounded-2xl glass border-white/10 grid place-items-center text-white/20">
+                     <div class="h-16 w-16 rounded-2xl glass border-white/10 grid place-items-center text-white/40">
                         <Lock class="h-8 w-8" />
                      </div>
-                     <span class="text-[10px] font-black tracking-[0.4em] text-white/40 uppercase">DATA_ENCRYPTED</span>
+                     <span class="text-[10px] font-black tracking-[0.4em] text-white/60 uppercase">DATA_ENCRYPTED</span>
                   </div>
                 </div>
                 <div class="p-6 relative">
@@ -214,10 +214,10 @@ const navLinks = [
                     {{ city.name }}
                   </h4>
                   <div class="flex items-center justify-between">
-                    <div class="text-[9px] font-black tracking-[0.15em] text-white/40 uppercase flex items-center gap-1.5">
+                    <div class="text-[9px] font-black tracking-[0.15em] text-white/60 uppercase flex items-center gap-1.5">
                       STATUS: 
                       <span v-if="city.mission_status === 'ok'" class="text-green-400 drop-shadow-[0_0_8px_#4ade80]">OPERATIONAL</span>
-                      <span v-else-if="city.mission_status === 'lock'" class="text-white/20">LOCKED_CORE</span>
+                      <span v-else-if="city.mission_status === 'lock'" class="text-white/30">LOCKED_CORE</span>
                       <span v-else class="text-orange-400 drop-shadow-[0_0_8px_#fb923c]">SIGNAL_DETECTED</span>
                     </div>
                     <div class="h-8 w-8 rounded-full border border-primary/20 flex items-center justify-center group-hover:border-primary group-hover:bg-primary/10 transition-all">
@@ -301,7 +301,7 @@ const navLinks = [
               </div>
               <div class="mt-8">
                 <div class="text-6xl font-display font-black italic tracking-tighter leading-none text-white drop-shadow-[0_0_25px_rgba(249,115,22,0.6)]">{{ props.stats.streak_days ?? 32 }}j</div>
-                <div class="text-[10px] font-black tracking-[0.6em] text-orange-500/60 mt-3 uppercase">STREAK_RECORD_DATA</div>
+                <div class="text-[10px] font-black tracking-[0.6em] text-orange-500/80 mt-3 uppercase">STREAK_RECORD_DATA</div>
               </div>
             </div>
           </div>
