@@ -6,14 +6,39 @@ import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
+import Modal from '@/Components/Modal.vue';
+import DangerButton from '@/Components/DangerButton.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
 
 const showingNavigationDropdown = ref(false);
 const page = usePage();
 const user = page.props.auth.user;
+
+const showingLogoutModal = ref(false);
+const logoutForm = useForm({
+    deactivate: false
+});
+
+const handleLogoutClick = () => {
+    if (user.role === 'joueur') {
+        showingLogoutModal.value = true;
+    } else {
+        performLogout();
+    }
+};
+
+const performLogout = (deactivate = false) => {
+    logoutForm.deactivate = deactivate;
+    logoutForm.post(route('logout'), {
+        onFinish: () => {
+            showingLogoutModal.value = false;
+        }
+    });
+};
 </script>
 
 <template>
-    <div class="min-h-screen bg-gaming-dark text-white font-sans">
+    <div class="min-h-screen bg-gray-50 text-gray-900 font-sans">
         <!-- Navigation -->
         <nav class="bg-gaming-surface border-b-2 border-gaming-blue/40 sticky top-0 z-50 shadow-gaming py-2">
             <!-- max-w-7xl remplacé par max-w-full avec de généreux paddings pour étaler la navbar -->
@@ -91,9 +116,31 @@ const user = page.props.auth.user;
         </header>
 
         <!-- Page Content -->
-        <main class="flex-1 flex flex-col overflow-hidden">
+        <main class="flex-1">
             <slot />
         </main>
+
+        <!-- Logout/Deactivation Modal -->
+        <Modal :show="showingLogoutModal" @close="showingLogoutModal = false">
+            <div class="p-6">
+                <h2 class="text-lg font-black text-gray-900 uppercase tracking-widest mb-4">
+                    Déconnexion
+                </h2>
+                <p class="text-sm text-gray-600 mb-6">
+                    Voulez-vous désactiver votre compte avant de vous déconnecter ? 
+                    <br><br>
+                    <span class="italic text-xs">Note : Si vous ne désactivez pas votre compte, il restera actif pendant 2 mois d'inactivité avant d'être archivé automatiquement.</span>
+                </p>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <SecondaryButton @click="performLogout(false)">
+                        Non, juste déconnexion
+                    </SecondaryButton>
+                    <DangerButton @click="performLogout(true)">
+                        Oui, désactiver mon compte
+                    </DangerButton>
+                </div>
+            </div>
+        </Modal>
     </div>
 </template>
 

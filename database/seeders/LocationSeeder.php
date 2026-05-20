@@ -5,14 +5,17 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Location;
 use App\Models\City;
+use App\Models\LocationImage;
 
 class LocationSeeder extends Seeder
 {
     public function run(): void
     {
-        $cotonou = City::where('name', 'Cotonou Vibrante')->first();
-        $ouidah = City::where('name', 'Ouidah Historique')->first();
-        $portoNovo = City::where('name', 'Porto-Novo Impériale')->first();
+        $cotonou = City::where('name', 'Cotonou')->first();
+        $portoNovo = City::where('name', 'Porto-Novo')->first();
+        $calavi = City::where('name', 'Abomey-Calavi')->first();
+        $parakou = City::where('name', 'Parakou')->first();
+        $ouidah = City::where('name', 'Ouidah')->first();
 
         // Ouidah
         Location::updateOrCreate(

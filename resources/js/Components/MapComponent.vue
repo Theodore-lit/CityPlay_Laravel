@@ -1,6 +1,7 @@
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch, defineExpose } from 'vue';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css'; // Assure-toi que le CSS est importé
 
 /**
  * Composant MapComponent : Gère l'affichage de la carte Leaflet,
@@ -12,8 +13,6 @@ const props = defineProps({
     targetLocation: Object, // Lieu cible actuel
     teamMembers: Array,   // Liste des membres de l'équipe avec leur position {id, name, lat, lng}
 });
-
-const emit = defineEmits(['locationReached']);
 
 const mapContainer = ref(null);
 let map = null;
@@ -150,6 +149,14 @@ const updatePathLine = () => {
 /**
  * Met à jour le marqueur de position de l'utilisateur sur la carte.
  */
+const refreshSize = () => {
+    if (map) {
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 200); // Petit délai pour laisser le layout se stabiliser
+    }
+};
+
 const updateUserMarker = (pos) => {
     if (!map || !pos) return;
 
@@ -253,9 +260,7 @@ watch(() => props.teamMembers, () => {
 }, { deep: true });
 
 watch(() => props.userPosition, (newPos) => {
-    if (newPos) {
-        updateUserMarker(newPos);
-    }
+    if (newPos) updateUserMarker(newPos);
 }, { deep: true });
 
 watch(() => props.targetLocation, () => {
@@ -280,6 +285,9 @@ onUnmounted(() => {
         map.remove(); // Nettoyage de la mémoire
     }
 });
+
+// // On expose la fonction pour le parent
+// defineExpose({ refreshSize });
 </script>
 
 <style>
@@ -326,5 +334,11 @@ onUnmounted(() => {
         linear-gradient(rgba(0, 112, 255, 0.2) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0, 112, 255, 0.2) 1px, transparent 1px);
     background-size: 40px 40px;
+}
+/* Assure que Leaflet prend toute la place */
+.leaflet-container {
+    height: 100% !important;
+    width: 100% !important;
+    background: #0f172a !important;
 }
 </style>

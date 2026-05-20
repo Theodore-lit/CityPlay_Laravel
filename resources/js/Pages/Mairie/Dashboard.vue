@@ -16,6 +16,7 @@ import { useForm } from '@inertiajs/vue3';
 const props = defineProps({
     cities: Array,
     stats: Object,
+    auth: Object,
 });
 
 const copyShareLink = async (city) => {

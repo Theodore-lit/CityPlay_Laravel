@@ -21,6 +21,9 @@ class City extends Model
     protected $fillable = [
         'name',             // Nom de la ville (ex: Cotonou Vibrante)
         'description',      // Description textuelle pour les joueurs
+        'latitude',         // Centre de la ville (lat)
+        'longitude',        // Centre de la ville (lng)
+        'radius_meters',    // Rayon de jeu autorisé
         'image_path',       // Chemin vers l'image de couverture
         'latitude',
         'longitude',
@@ -31,6 +34,7 @@ class City extends Model
         'opening_hours',    // Horaires de jeu autorisés (JSON)
         'forbidden_zones',  // Zones hors-jeu (JSON)
         'creator_id',       // ID de l'utilisateur (mairie/admin) créateur
+        'mairie_id',        // ID de l'utilisateur (mairie)
     ];
 
     /**
@@ -42,6 +46,8 @@ class City extends Model
         'is_active' => 'boolean',
         'start_date' => 'date',
         'end_date' => 'date',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
     ];
 
     protected $appends = [
@@ -59,6 +65,10 @@ class City extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'creator_id');
+    }
+    public function mairie()
+    {
+        return $this->belongsTo(User::class, 'mairie_id');
     }
 
     /**
