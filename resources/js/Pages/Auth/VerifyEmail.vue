@@ -1,9 +1,8 @@
 <script setup>
 import { computed } from 'vue';
-import AuthLayout from '@/Layouts/AuthLayout.vue';
-import NeonButton from '@/Components/NeonButton.vue';
+import GuestLayout from '@/Layouts/GuestLayout.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { Mail, LogOut } from 'lucide-vue-next';
 
 const props = defineProps({
     status: {
@@ -23,37 +22,40 @@ const verificationLinkSent = computed(
 </script>
 
 <template>
-    <AuthLayout 
-        title="Vérification" 
-        subtitle="Merci de vous être inscrit ! Avant de commencer, veuillez vérifier votre adresse email."
-    >
-        <Head title="Vérification Email — CityPlay" />
+    <GuestLayout>
+        <Head title="Email Verification" />
+
+        <div class="mb-4 text-sm text-gray-600">
+            Thanks for signing up! Before getting started, could you verify your
+            email address by clicking on the link we just emailed to you? If you
+            didn't receive the email, we will gladly send you another.
+        </div>
 
         <div
+            class="mb-4 text-sm font-medium text-green-600"
             v-if="verificationLinkSent"
-            class="mb-6 p-4 rounded-xl bg-success/10 border border-success/20 text-sm font-medium text-success text-center"
         >
-            Un nouveau lien de vérification a été envoyé à l'adresse email fournie lors de l'inscription.
+            A new verification link has been sent to the email address you
+            provided during registration.
         </div>
 
         <form @submit.prevent="submit">
-            <div class="flex flex-col gap-4">
-                <NeonButton
-                    class="w-full"
+            <div class="mt-4 flex items-center justify-between">
+                <PrimaryButton
+                    :class="{ 'opacity-25': form.processing }"
                     :disabled="form.processing"
                 >
-                    Renvoyer l'Email <Mail class="h-4 w-4 ml-2" />
-                </NeonButton>
+                    Resend Verification Email
+                </PrimaryButton>
 
                 <Link
                     :href="route('logout')"
                     method="post"
                     as="button"
-                    class="text-xs text-muted-foreground hover:text-white underline text-center flex items-center justify-center gap-2 transition-colors"
+                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    >Log Out</Link
                 >
-                    <LogOut class="h-3 w-3" /> Se déconnecter
-                </Link>
             </div>
         </form>
-    </AuthLayout>
+    </GuestLayout>
 </template>

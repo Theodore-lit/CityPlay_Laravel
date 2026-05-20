@@ -10,75 +10,73 @@ class CitySeeder extends Seeder
 {
     public function run(): void
     {
-        $mairieCotonou = User::where('email', 'cotonou@mairie.bj')->first();
-        $mairieOuidah = User::where('email', 'ouidah@mairie.bj')->first();
-        $mairiePorto = User::where('email', 'porto-novo@mairie.bj')->first();
-        $mairieParakou = User::where('email', 'parakou@mairie.bj')->first();
-        $mairieAbomey = User::where('email', 'abomey@mairie.bj')->first();
+        $mairieCotonou = User::where('email', 'mairie.cotonou@cityplay.bj')->first();
+        $mairiePorto = User::where('email', 'mairie.portonovo@cityplay.bj')->first();
+        $mairieCalavi = User::where('email', 'mairie.calavi@cityplay.bj')->first();
+        $mairieParakou = User::where('email', 'mairie.parakou@cityplay.bj')->first();
+        $mairieOuidah = User::where('email', 'mairie.ouidah@cityplay.bj')->first();
 
-        City::updateOrCreate(
-            ['name' => 'Cotonou Vibrante'],
-            [
-                'description' => 'Explorez la capitale économique du Bénin, entre marchés animés et plages de sable fin.',
-                'latitude' => 6.3654,
-                'longitude' => 2.4183,
-                'is_active' => true,
-                'creator_id' => $mairieCotonou->id,
-                'opening_hours' => ['start' => '07:00', 'end' => '23:00'],
-                'image_path' => 'cities/cotonou.webp',
-            ]
-        );
+        City::create([
+            'name' => 'Cotonou',
+            'description' => 'La capitale économique vibrante, entre terre et mer.',
+            'latitude' => 6.3667,
+            'longitude' => 2.4333,
+            'radius_meters' => 5000,
+            'is_active' => true,
+            'creator_id' => 1,
+            'mairie_id' => $mairieCotonou->id,
+            'opening_hours' => ['start' => '07:00', 'end' => '23:00'],
+        ]);
 
-        City::updateOrCreate(
-            ['name' => 'Ouidah Historique'],
-            [
-                'description' => 'Plongez au cœur de l\'histoire et de la culture vodoun dans la cité des Kpassè.',
-                'latitude' => 6.3623,
-                'longitude' => 2.0850,
-                'is_active' => true,
-                'creator_id' => $mairieOuidah->id,
-                'opening_hours' => ['start' => '08:00', 'end' => '19:00'],
-                'image_path' => 'cities/ouidah.webp',
-            ]
-        );
+        City::create([
+            'name' => 'Porto-Novo',
+            'description' => 'La capitale administrative, riche en patrimoine colonial.',
+            'latitude' => 6.4969,
+            'longitude' => 2.6289,
+            'radius_meters' => 4000,
+            'is_active' => true,
+            'creator_id' => 1,
 
-        City::updateOrCreate(
-            ['name' => 'Porto-Novo Impériale'],
-            [
-                'description' => 'Découvrez les charmes de la capitale administrative et ses trésors coloniaux.',
-                'latitude' => 6.4969,
-                'longitude' => 2.6289,
-                'is_active' => true,
-                'creator_id' => $mairiePorto->id,
-                'opening_hours' => ['start' => '08:00', 'end' => '20:00'],
-                'image_path' => 'cities/porto.webp',
-            ]
-        );
+            'mairie_id' =>    $mairiePorto->id,
+            'opening_hours' => ['start' => '08:00', 'end' => '20:00'],
+        ]);
 
-        City::updateOrCreate(
-            ['name' => 'Parakou la Cité des Princes'],
-            [
-                'description' => 'Porte d\'entrée du Nord Bénin, Parakou vous accueille avec son marché international et son riche patrimoine culturel.',
-                'latitude' => 9.3372,
-                'longitude' => 2.6303,
-                'is_active' => true,
-                'creator_id' => $mairieParakou->id,
-                'opening_hours' => ['start' => '08:00', 'end' => '21:00'],
-                'image_path' => 'cities/parakou.webp',
-            ]
-        );
+        City::create([
+            'name' => 'Abomey-Calavi',
+            'description' => 'La cité universitaire et carrefour stratégique.',
+            'latitude' => 6.4481,
+            'longitude' => 2.3557,
+            'radius_meters' => 6000,
+            'is_active' => true,
+            'creator_id' => 1,
 
-        City::updateOrCreate(
-            ['name' => 'Abomey la Royale'],
-            [
-                'description' => 'Ancienne capitale du royaume de Dahomey, classée au patrimoine mondial de l\'UNESCO.',
-                'latitude' => 7.1855,
-                'longitude' => 1.9912,
-                'is_active' => true,
-                'creator_id' => $mairieAbomey->id,
-                'opening_hours' => ['start' => '08:30', 'end' => '18:30'],
-                'image_path' => 'cities/abomey.webp',
-            ]
-        );
+            'mairie_id' =>  $mairieCalavi->id,
+            'opening_hours' => ['start' => '06:00', 'end' => '22:00'],
+        ]);
+
+        City::create([
+            'name' => 'Parakou',
+            'description' => 'La métropole du Nord, carrefour commercial majeur.',
+            'latitude' => 9.3372,
+            'longitude' => 2.6303,
+            'radius_meters' => 7000,
+            'is_active' => true,
+            'creator_id' => 1,
+            'mairie_id' => $mairieParakou->id,
+            'opening_hours' => ['start' => '07:00', 'end' => '21:00'],
+        ]);
+
+        City::create([
+            'name' => 'Ouidah',
+            'description' => 'Cité historique et spirituelle, berceau du Vodoun.',
+            'latitude' => 6.3622,
+            'longitude' => 2.0850,
+            'radius_meters' => 3000,
+            'is_active' => true,
+            'creator_id' => 1,
+
+            'mairie_id' => $mairieOuidah->id,
+            'opening_hours' => ['start' => '08:00', 'end' => '19:00'],
+        ]);
     }
 }

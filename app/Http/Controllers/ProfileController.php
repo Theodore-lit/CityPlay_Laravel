@@ -29,18 +29,13 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $user = $request->user();
-        $user->fill($request->validated());
+        $request->user()->fill($request->validated());
 
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
+        if ($request->user()->isDirty('email')) {
+            $request->user()->email_verified_at = null;
         }
 
-        if ($request->has('deactivate_on_logout')) {
-            $user->deactivate_on_logout = $request->deactivate_on_logout;
-        }
-
-        $user->save();
+        $request->user()->save();
 
         return Redirect::route('profile.edit');
     }

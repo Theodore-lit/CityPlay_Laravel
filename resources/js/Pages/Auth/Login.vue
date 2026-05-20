@@ -1,9 +1,11 @@
 <script setup>
-import AuthLayout from '@/Layouts/AuthLayout.vue';
-import GlowInput from '@/Components/GlowInput.vue';
-import NeonButton from '@/Components/NeonButton.vue';
+import Checkbox from '@/Components/Checkbox.vue';
+import GuestLayout from '@/Layouts/GuestLayout.vue';
+import InputError from '@/Components/InputError.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ArrowRight, Lock, Mail } from 'lucide-vue-next';
 
 defineProps({
     canResetPassword: {
@@ -28,74 +30,71 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthLayout 
-        title="Heureux de vous revoir" 
-        subtitle="Connectez-vous pour continuer votre aventure."
-    >
-        <Head title="Connexion — CityPlay" />
+    <GuestLayout>
+        <Head title="Log in" />
 
-        <div v-if="status" class="mb-4 text-sm font-medium text-success text-center bg-success/10 py-2 rounded-lg">
+        <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
             {{ status }}
         </div>
 
-        <form @submit.prevent="submit" class="space-y-5">
-            <GlowInput
-                label="Email"
-                type="email"
-                v-model="form.email"
-                placeholder="votre@aventure.bj"
-                required
-                autofocus
-                autocomplete="username"
-                :error="form.errors.email"
-            />
+        <form @submit.prevent="submit">
+            <div>
+                <InputLabel for="email" value="Email" />
 
-            <div class="space-y-2">
-                <GlowInput
-                    label="Mot de passe"
-                    type="password"
-                    v-model="form.password"
-                    placeholder="••••••••"
+                <TextInput
+                    id="email"
+                    type="email"
+                    class="mt-1 block w-full"
+                    v-model="form.email"
                     required
-                    autocomplete="current-password"
-                    :error="form.errors.password"
+                    autofocus
+                    autocomplete="username"
                 />
-                
-                <div v-if="canResetPassword" class="flex justify-end">
-                    <Link
-                        :href="route('password.request')"
-                        class="text-xs text-electric hover:underline transition-colors"
-                    >
-                        Mot de passe oublié ?
-                    </Link>
-                </div>
+
+                <InputError class="mt-2" :message="form.errors.email" />
             </div>
 
-            <div class="flex items-center">
-                <label class="flex items-center cursor-pointer group">
-                    <input 
-                        type="checkbox" 
-                        name="remember" 
-                        v-model="form.remember"
-                        class="h-4 w-4 rounded border-electric/30 bg-gaming-darker text-electric focus:ring-electric focus:ring-offset-gaming-darker"
-                    />
-                    <span class="ms-2 text-xs text-muted-foreground group-hover:text-foreground transition-colors">Se souvenir de moi</span>
+            <div class="mt-4">
+                <InputLabel for="password" value="Password" />
+
+                <TextInput
+                    id="password"
+                    type="password"
+                    class="mt-1 block w-full"
+                    v-model="form.password"
+                    required
+                    autocomplete="current-password"
+                />
+
+                <InputError class="mt-2" :message="form.errors.password" />
+            </div>
+
+            <div class="mt-4 block">
+                <label class="flex items-center">
+                    <Checkbox name="remember" v-model:checked="form.remember" />
+                    <span class="ms-2 text-sm text-gray-600"
+                        >Remember me</span
+                    >
                 </label>
             </div>
 
-            <NeonButton
-                class="w-full mt-2"
-                :disabled="form.processing"
-            >
-                Entrer dans le jeu <ArrowRight class="h-4 w-4 ml-2" />
-            </NeonButton>
-        </form>
+            <div class="mt-4 flex items-center justify-end">
+                <Link
+                    v-if="canResetPassword"
+                    :href="route('password.request')"
+                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                    Forgot your password?
+                </Link>
 
-        <template #footer>
-            Pas encore de compte ? 
-            <Link :href="route('register')" class="text-electric font-bold hover:underline">
-                Créer un compte
-            </Link>
-        </template>
-    </AuthLayout>
+                <PrimaryButton
+                    class="ms-4"
+                    :class="{ 'opacity-25': form.processing }"
+                    :disabled="form.processing"
+                >
+                    Log in
+                </PrimaryButton>
+            </div>
+        </form>
+    </GuestLayout>
 </template>

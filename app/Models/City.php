@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Support\StorageUrl;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -25,9 +23,6 @@ class City extends Model
         'longitude',        // Centre de la ville (lng)
         'radius_meters',    // Rayon de jeu autorisé
         'image_path',       // Chemin vers l'image de couverture
-        'latitude',
-        'longitude',
-        'radius_meters',
         'is_active',        // Statut d'activation de la ville
         'start_date',       // Date de début de l'événement
         'end_date',         // Date de fin de l'événement
@@ -50,15 +45,6 @@ class City extends Model
         'longitude' => 'decimal:8',
     ];
 
-    protected $appends = [
-        'image_url',
-    ];
-
-    protected function imageUrl(): Attribute
-    {
-        return Attribute::get(fn () => StorageUrl::url($this->image_path));
-    }
-
     /**
      * Relation : Une ville appartient à un créateur (User).
      */
@@ -77,22 +63,6 @@ class City extends Model
     public function locations()
     {
         return $this->hasMany(Location::class);
-    }
-
-    /**
-     * Relation : Une ville contient plusieurs quiz.
-     */
-    public function quizzes()
-    {
-        return $this->hasMany(Quiz::class);
-    }
-
-    /**
-     * Relation : Une ville contient plusieurs événements.
-     */
-    public function events()
-    {
-        return $this->hasMany(CityEvent::class);
     }
 
     /**

@@ -20,9 +20,6 @@ class DatabaseSeeder extends Seeder
             CitySeeder::class,
             LocationSeeder::class,
             EnigmaSeeder::class,
-            QuizSeeder::class,
-            MassiveQuizSeeder::class,
-            TeamSeeder::class,
         ]);
 
         $this->seedTeamsAndSessions();

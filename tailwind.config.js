@@ -3,7 +3,6 @@ import forms from '@tailwindcss/forms';
 
 /** @type {import('tailwindcss').Config} */
 export default {
-    darkMode: 'class',
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
@@ -14,50 +13,35 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['var(--font-sans)', ...defaultTheme.fontFamily.sans],
-                display: ['var(--font-display)', ...defaultTheme.fontFamily.sans],
+                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
             colors: {
-                background: 'var(--background)',
-                foreground: 'var(--foreground)',
-                card: 'var(--card)',
-                'card-foreground': 'var(--card-foreground)',
-                popover: 'var(--popover)',
-                'popover-foreground': 'var(--popover-foreground)',
-                primary: 'var(--primary)',
-                'primary-foreground': 'var(--primary-foreground)',
-                secondary: 'var(--secondary)',
-                'secondary-foreground': 'var(--secondary-foreground)',
-                muted: 'var(--muted)',
-                'muted-foreground': 'var(--muted-foreground)',
-                accent: 'var(--accent)',
-                'accent-foreground': 'var(--accent-foreground)',
-                destructive: 'var(--destructive)',
-                'destructive-foreground': 'var(--destructive-foreground)',
-                border: 'var(--border)',
-                input: 'var(--input)',
-                ring: 'var(--ring)',
-                electric: 'var(--electric)',
-                'electric-foreground': 'var(--electric-foreground)',
-                'cyan-neon': 'var(--cyan-neon)',
-                'purple-neon': 'var(--purple-neon)',
-                success: 'var(--success)',
-                warning: 'var(--warning)',
                 gaming: {
-                    dark: 'var(--gaming-dark)',
-                    darker: 'var(--gaming-darker)',
-                    panel: 'var(--gaming-panel)',
+                    orange: {
+                        light: '#ff9d66',
+                        DEFAULT: '#f97316',
+                        dark: '#c2410c',
+                    },
+                    blue: {
+                        light: '#60a5fa',
+                        DEFAULT: '#2563eb',
+                        dark: '#1e40af',
+                    },
+                    green: {
+                        light: '#4ade80',
+                        DEFAULT: '#16a34a',
+                        dark: '#15803d',
+                    },
+                    dark: '#18181b',
+                    surface: '#ffffff',
                 }
             },
             boxShadow: {
-                'neon': 'var(--shadow-neon)',
-                'neon-hover': 'var(--shadow-neon-hover)',
-                'purple': 'var(--shadow-purple)',
-                'purple-hover': 'var(--shadow-purple-hover)',
+                'gaming': '0 0 20px rgba(37, 99, 235, 0.3)',
+                'gaming-green': '0 0 20px rgba(22, 163, 74, 0.3)',
             }
         },
     },
-
 
     plugins: [forms],
 };

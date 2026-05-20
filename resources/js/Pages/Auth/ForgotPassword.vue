@@ -1,9 +1,10 @@
 <script setup>
-import AuthLayout from '@/Layouts/AuthLayout.vue';
-import GlowInput from '@/Components/GlowInput.vue';
-import NeonButton from '@/Components/NeonButton.vue';
+import GuestLayout from '@/Layouts/GuestLayout.vue';
+import InputError from '@/Components/InputError.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import TextInput from '@/Components/TextInput.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { Mail, ArrowRight } from 'lucide-vue-next';
 
 defineProps({
     status: {
@@ -21,37 +22,47 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthLayout 
-        title="Récupération" 
-        subtitle="Entrez votre email pour recevoir un lien de réinitialisation."
-    >
-        <Head title="Mot de passe oublié — CityPlay" />
+    <GuestLayout>
+        <Head title="Forgot Password" />
+
+        <div class="mb-4 text-sm text-gray-600">
+            Forgot your password? No problem. Just let us know your email
+            address and we will email you a password reset link that will allow
+            you to choose a new one.
+        </div>
 
         <div
             v-if="status"
-            class="mb-6 p-4 rounded-xl bg-success/10 border border-success/20 text-sm font-medium text-success text-center"
+            class="mb-4 text-sm font-medium text-green-600"
         >
             {{ status }}
         </div>
 
-        <form @submit.prevent="submit" class="space-y-6">
-            <GlowInput
-                label="Email"
-                type="email"
-                v-model="form.email"
-                placeholder="votre@aventure.bj"
-                required
-                autofocus
-                autocomplete="username"
-                :error="form.errors.email"
-            />
+        <form @submit.prevent="submit">
+            <div>
+                <InputLabel for="email" value="Email" />
 
-            <NeonButton
-                class="w-full"
-                :disabled="form.processing"
-            >
-                Envoyer le lien <Mail class="h-4 w-4 ml-2" />
-            </NeonButton>
+                <TextInput
+                    id="email"
+                    type="email"
+                    class="mt-1 block w-full"
+                    v-model="form.email"
+                    required
+                    autofocus
+                    autocomplete="username"
+                />
+
+                <InputError class="mt-2" :message="form.errors.email" />
+            </div>
+
+            <div class="mt-4 flex items-center justify-end">
+                <PrimaryButton
+                    :class="{ 'opacity-25': form.processing }"
+                    :disabled="form.processing"
+                >
+                    Email Password Reset Link
+                </PrimaryButton>
+            </div>
         </form>
-    </AuthLayout>
+    </GuestLayout>
 </template>

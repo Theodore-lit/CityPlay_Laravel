@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('enigmas', function (Blueprint $table) {
             $table->id();
             $table->foreignId('location_id')->constrained()->onDelete('cascade');
-            $table->string('title')->nullable();
+            $table->string('title');
             $table->text('content');
             $table->string('difficulty'); // easy, medium, hard
             $table->string('answer')->nullable();
@@ -23,7 +23,6 @@ return new class extends Migration
             $table->integer('penalty_seconds')->default(0);
             $table->integer('time_limit_seconds')->nullable();
             $table->string('type')->default('devinette'); // devinette, aventure
-            $table->boolean('is_site_specific')->default(false); // true if riddle is only solvable on site
             $table->integer('sequence_order')->default(0);
             $table->string('image_path')->nullable();
             $table->timestamps();

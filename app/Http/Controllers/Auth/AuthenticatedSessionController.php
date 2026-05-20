@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,36 +27,11 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): Response|RedirectResponse
+    public function store(LoginRequest $request): RedirectResponse
     {
-        $user = User::where('email', $request->email)->first();
-
-        if ($user && $user->role == 'joueur' && !$user->is_verified) {
-            return Inertia::render('Auth/Register', [
-                'status' => 'otp_sent',
-                'email' => $user->email,
-            ]);
-        }
-
         $request->authenticate();
 
-        // Check if user is active
-        if (!auth()->user()->is_active) {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            
-            return back()->withErrors([
-                'email' => 'Votre compte est archivé ou désactivé. Veuillez contacter un administrateur pour le réactiver.',
-            ]);
-        }
-
         $request->session()->regenerate();
-
-        // Update last activity
-        $user = auth()->user();
-        $user->last_activity_at = now();
-        $user->save();
 
         return redirect()->intended(route('dashboard', absolute: false));
     }
@@ -67,10 +41,13 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        $user = auth()->user();
-        if ($user->role == 'joueur') {
-            $user->is_active = $request->input('deactivate_on_logout') ? false : true;
-            $user->save();
+        $user = Auth::user();
+
+        if ($user && $request->input('deactivate')) {
+            $user->update([
+                'is_active' => false,
+                'expired_at' => now()
+            ]);
         }
 
         Auth::guard('web')->logout();

@@ -12,9 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('otp_code', 6)->nullable()->after('email');
-            $table->timestamp('otp_expires_at')->nullable()->after('otp_code');
-            $table->boolean('is_verified')->default(false)->after('otp_expires_at');
+            $table->string('role')->default('joueur'); // super_admin, mairie, organisateur, joueur, challenger, coequipier
+            $table->integer('coins')->default(0);
+            $table->integer('hearts')->default(3);
+            $table->string('avatar')->nullable();
         });
     }
 
@@ -24,7 +25,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['otp_code', 'otp_expires_at', 'is_verified']);
+            $table->dropColumn(['role', 'coins', 'hearts', 'avatar']);
         });
     }
 };
