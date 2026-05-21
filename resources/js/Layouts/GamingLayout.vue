@@ -38,7 +38,7 @@ const performLogout = (deactivate = false) => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-50 text-gray-900 font-sans">
+    <div class="min-h-screen bg-background text-gray-900 font-sans">
         <!-- Navigation -->
         <nav class="bg-gaming-surface border-b-2 border-gaming-blue/40 sticky top-0 z-50 shadow-gaming py-2">
             <!-- max-w-7xl remplacé par max-w-full avec de généreux paddings pour étaler la navbar -->

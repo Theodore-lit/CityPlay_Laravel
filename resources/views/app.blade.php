@@ -6,6 +6,18 @@
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
+        <!-- Script de détection du thème (Anti-Flicker) -->
+        <script>
+            (function() {
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                if (savedTheme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.add('light');
+                }
+            })();
+        </script>
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />

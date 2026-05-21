@@ -15,7 +15,7 @@ class CityEventController extends Controller
     public function index(City $city)
     {
         // Check if user is creator or super_admin
-        if (auth()->user()->role !== 'super_admin' && $city->creator_id !== auth()->id()) {
+        if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
 
@@ -27,7 +27,7 @@ class CityEventController extends Controller
     public function store(Request $request, City $city)
     {
         // Check if user is creator or super_admin
-        if (auth()->user()->role !== 'super_admin' && $city->creator_id !== auth()->id()) {
+        if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
 
@@ -70,7 +70,7 @@ class CityEventController extends Controller
     {
         $city = $event->city;
         // Check if user is creator or super_admin
-        if (auth()->user()->role !== 'super_admin' && $city->creator_id !== auth()->id()) {
+        if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
 

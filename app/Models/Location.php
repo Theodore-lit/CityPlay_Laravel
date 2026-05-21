@@ -43,7 +43,16 @@ class Location extends Model
     protected $appends = [
         'cover_image',
         'image_urls',
+        'image_url',
     ];
+
+    /**
+     * Alias pour cover_image pour assurer la compatibilité avec le composant AppImage
+     */
+    protected function imageUrl(): Attribute
+    {
+        return $this->coverImage();
+    }
 
     /**
      * Accesseur pour l'image de couverture du lieu.

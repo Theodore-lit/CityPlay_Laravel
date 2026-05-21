@@ -66,7 +66,19 @@ const formatDate = (dateString) => {
 const DEFAULT_EVENT_IMAGE = 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&q=80&w=800';
 const DEFAULT_CITY_IMAGE = 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?auto=format&fit=crop&q=80&w=800';
 
-const cityImage = (city) => city?.image_url || storageUrl(city?.image_path) || DEFAULT_CITY_IMAGE;
+const cityImage = (city) => {
+  // Priorité 1 : URL complète (Accessor backend)
+  if (city?.image_url && city.image_url.startsWith('http')) return city.image_url;
+  
+  // Priorité 2 : Chemin brut s'il est déjà une URL complète
+  if (city?.image_path && city.image_path.startsWith('http')) return city.image_path;
+  
+  // Priorité 3 : Traitement via storageUrl pour les fichiers locaux
+  const processed = storageUrl(city?.image_url || city?.image_path);
+  
+  // Retourne l'image traitée ou l'image par défaut
+  return processed || DEFAULT_CITY_IMAGE;
+};
 const eventImage = (event) => firstStorageUrl(event?.image_urls) || firstStorageUrl(event?.images) || DEFAULT_EVENT_IMAGE;
 
 // Markers for the mini map - simplified version
@@ -128,12 +140,18 @@ const mapPoints = [
           :class="{ 'grayscale-[0.8] opacity-80': c.has_completed_adventure }"
           :style="{ animationDelay: `${i * 60}ms` }"
         >
-          <img
+          <AppImage
             :src="cityImage(c)"
             :alt="c.name"
-            loading="lazy"
+            :fallback="DEFAULT_CITY_IMAGE"
             class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
+          >
+            <template #placeholder>
+              <div class="absolute inset-0 bg-gaming-darker grid place-items-center">
+                <ImageIcon class="h-12 w-12 text-white/10" />
+              </div>
+            </template>
+          </AppImage>
           <div class="absolute inset-0 bg-gradient-to-t from-gaming-darker via-gaming-darker/40 to-transparent" />
 
           <div class="absolute top-4 left-4 right-4 flex justify-between">      

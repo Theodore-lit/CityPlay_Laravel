@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\City;
 use App\Models\GameSession;
+use App\Models\User;
 use App\Support\StorageUrl;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class MairieController extends Controller
@@ -22,21 +25,30 @@ class MairieController extends Controller
         }
 
         // Mairie only sees their own cities
-        $city = City::where('creator_id', auth()->id())->first();
+        $city = City::where('mairie_id', auth()->id())->first();
 
         if ($city) {
-            return redirect()->route('mairie.cities.show', $city->id);
+            return redirect()->route('mairie.city.hub', $city->id);
         }
 
         // Fallback if no city created yet (though should not happen with current flow)
-        return Inertia::render('Mairie/Dashboard', [
-            'cities' => [],
-            'stats' => [
-                'total_sessions' => 0,
-                'active_players' => 0,
-            ]
+        return Inertia::render('Admin/City', [
+            'city' => [],
+            ]);
+    }
+
+    public function storeCity(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'radius_meters' => 'required|integer|min:100',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
+        $user = auth()->user();
 
         $marie = User::create([
             'name' => $validated['city_name'],
@@ -66,72 +78,10 @@ class MairieController extends Controller
         return redirect(route('admin.dashboard', absolute: false));
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
-
-    public function storeCity(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'radius_meters' => 'required|integer|min:100',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-        ]);
-
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('cities', 'public');
-            $validated['image_path'] = $path;
-        }
-
-        $city = City::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'latitude' => $validated['latitude'],
-            'longitude' => $validated['longitude'],
-            'radius_meters' => $validated['radius_meters'],
-            'image_path' => $validated['image_path'] ?? null,
-            'creator_id' => auth()->id(),
-            'is_active' => true,
-        ]);
-
-        return redirect()->back()->with('success', 'Ville créée avec succès.');
-    }
-
     public function updateCity(Request $request, City $city)
     {
         // Check if user is creator or super_admin
-        if (auth()->user()->role !== 'super_admin' && $city->creator_id !== auth()->id()) {
+        if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
 
@@ -169,7 +119,7 @@ class MairieController extends Controller
     public function showCity(City $city)
     {
         // Check if user is creator or super_admin
-        if (auth()->user()->role !== 'super_admin' && $city->creator_id !== auth()->id()) {
+        if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
 
@@ -181,7 +131,7 @@ class MairieController extends Controller
     public function cityHub(City $city)
     {
         // Check if user is creator or super_admin
-        if (auth()->user()->role !== 'super_admin' && $city->creator_id !== auth()->id()) {
+        if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
 

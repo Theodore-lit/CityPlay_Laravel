@@ -151,11 +151,11 @@ const copyShareLink = async (city) => {
 
       <!-- STATS -->
       <div class="mb-10 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div v-for="s in adminStats" :key="s.label" class="rounded-3xl bg-gaming-dark/40 backdrop-blur-xl p-6 border border-white/5 hover:border-electric/30 transition-all group relative overflow-hidden shadow-xl">
+        <div v-for="s in adminStats" :key="s.label" class="rounded-3xl bg-white/5 backdrop-blur-xl p-6 border border-white/5 hover:border-electric/30 transition-all group relative overflow-hidden shadow-xl">
           <div class="absolute inset-0 bg-gradient-to-br from-electric/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
-              <div :class="`h-12 w-12 rounded-2xl bg-white/5 border border-white/10 grid place-items-center group-hover:scale-110 group-hover:border-electric/50 transition-all ${s.color}`">
+              <div :class="`h-12 w-12 rounded-2xl bg-gaming-darker border border-white/10 grid place-items-center group-hover:scale-110 group-hover:border-electric/50 transition-all ${s.color}`">
                   <component :is="s.icon" class="h-6 w-6" />
               </div>
               <span class="text-[10px] font-black uppercase tracking-[0.2em] text-electric bg-electric/10 border border-electric/20 px-2 py-1 rounded-lg shadow-neon-sm">{{ s.delta }}</span>
@@ -167,7 +167,7 @@ const copyShareLink = async (city) => {
       </div>
 
       <!-- CITIES TABLE -->
-            <div class="rounded-[2.5rem] bg-gaming-dark/40 backdrop-blur-xl border border-white/5 overflow-hidden shadow-2xl shadow-black/50 group/table">
+            <div class="bg-white/5 rounded-[2.5rem] backdrop-blur-xl border border-white/5 overflow-hidden shadow-3xl shadow-black/50 group/table">
                 <div class="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-electric/10 via-white/5 to-transparent relative overflow-hidden">
                     <div class="absolute inset-0 bg-grid-white/[0.02] bg-[size:20px_20px]"></div>
                     <h2 class="font-display text-2xl flex items-center gap-4 text-white relative z-10">
@@ -250,7 +250,7 @@ const copyShareLink = async (city) => {
                                         <button @click="copyShareLink(city)" class="h-10 w-10 rounded-xl bg-white/5 border border-white/10 grid place-items-center text-cyan-neon hover:bg-cyan-neon hover:text-white hover:shadow-neon-cyan transition-all" title="Partager le lien">
                                             <Share2 class="h-5 w-5" />
                                         </button>
-                                        <Link :href="route('mairie.cities.show', city.id)" class="h-10 w-10 rounded-xl bg-electric/10 border border-electric/20 grid place-items-center text-electric hover:bg-electric hover:text-white hover:shadow-neon-sm transition-all">
+                                        <Link :href="route('mairie.city.hub', city.id)" class="h-10 w-10 rounded-xl bg-electric/10 border border-electric/20 grid place-items-center text-electric hover:bg-electric hover:text-white hover:shadow-neon-sm transition-all">
                                             <ChevronRight class="h-5 w-5" />
                                         </Link>
                                     </div>
@@ -268,7 +268,7 @@ const copyShareLink = async (city) => {
         <div class="lg:col-span-9 space-y-8">
 
             <!-- USERS TABLE -->
-            <div class="rounded-[2.5rem] bg-gaming-dark/40 backdrop-blur-xl border border-white/5 overflow-hidden shadow-2xl shadow-black/50 group/table">
+            <div class="rounded-[2.5rem] bg-white/6 backdrop-blur-xl border border-white/5 overflow-hidden shadow-3xl shadow-black/50 group/table">
                 <div class="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-purple-neon/10 via-white/5 to-transparent relative overflow-hidden">
                     <div class="absolute inset-0 bg-grid-white/[0.02] bg-[size:20px_20px]"></div>
                     <h2 class="font-display text-2xl flex items-center gap-4 text-white relative z-10">
@@ -318,7 +318,7 @@ const copyShareLink = async (city) => {
                                     <div class="flex items-center gap-2.5">
                                         <div :class="cn(
                                             'h-2 w-2 rounded-full',
-                                            player.is_active ? 'bg-success shadow-[0_0_12px_rgba(34,197,94,0.5)]' : 'bg-destructive shadow-[0_0_12px_rgba(239,68,68,0.5)]'
+                                            player.is_active ? 'bg-green-400 shadow-[0_0_12px_rgba(34,197,94,0.5)]' : 'bg-reed-400 shadow-[0_0_12px_rgba(239,68,68,0.5)]'
                                         )"></div>
                                         <span class="text-[10px] uppercase font-black tracking-widest text-white/90">{{ player.is_active ? 'Opérationnel' : 'Neutralisé' }}</span>
                                     </div>
@@ -326,9 +326,9 @@ const copyShareLink = async (city) => {
                                 <td class="p-6 text-right">
                                     <button @click="toggleUser(player.id)" :class="cn(
                                         'h-10 px-6 rounded-xl font-black uppercase tracking-[0.1em] text-[10px] transition-all border flex items-center gap-2 ml-auto',
-                                        player.is_active
-                                            ? 'bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive hover:text-white hover:shadow-neon-red'
-                                            : 'bg-success/10 border-success/30 text-success hover:bg-success hover:text-white hover:shadow-neon-green'
+                                        player.is_active 
+                                            ? 'bg-red-600 border-red-200 text-white hover:bg-white hover:text-red-600 hover:shadow-neon-red' 
+                                            : 'bg-green-600 border-green-200 text-white hover:bg-white hover:text-green-600 hover:shadow-neon-green'
                                     )">
                                         <Ban v-if="player.is_active" class="h-3.5 w-3.5" />
                                         <CheckCircle v-else class="h-3.5 w-3.5" />
@@ -488,7 +488,7 @@ const copyShareLink = async (city) => {
         </div>
     </div>
 
-    <MobileTabBar />
+    <!-- <MobileTabBar /> -->
   </SiteLayout>
 </template>
 

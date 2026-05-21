@@ -25,14 +25,14 @@ class CitySeeder extends Seeder
             City::updateOrCreate(
                 ['name' => 'Cotonou Vibrante'],
                 [
-                    'description' => 'Explorez la capitale économique du Bénin, entre marchés animés et plages de sable fin.',
+                    'description' => 'La métropole bouillonnante du Bénin. Entre le marché Dantokpa et les plages de Fidjrossè, vivez l\'effervescence d\'une ville qui ne dort jamais.',
                     'latitude' => 6.3654,
                     'longitude' => 2.4183,
                     'is_active' => true,
                     'creator_id' => $admin->id,
                     'mairie_id' => $mairieCotonou->id,
                     'opening_hours' => ['start' => '07:00', 'end' => '23:00'],
-                    'image_path' => 'cities/cotonou.webp',
+                    'image_path' => 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?auto=format&fit=crop&q=80&w=1200',
                 ]
             );
         }
@@ -42,14 +42,14 @@ class CitySeeder extends Seeder
             City::updateOrCreate(
                 ['name' => 'Ouidah Historique'],
                 [
-                    'description' => 'Plongez au cœur de l\'histoire et de la culture vodoun dans la cité des Kpassè.',
+                    'description' => 'Capitale mondiale du Vodoun. Parcourez la Route des Esclaves et découvrez les mystères du Temple des Pythons.',
                     'latitude' => 6.3623,
                     'longitude' => 2.0850,
                     'is_active' => true,
                     'creator_id' => $admin->id,
                     'mairie_id' => $mairieOuidah->id,
                     'opening_hours' => ['start' => '08:00', 'end' => '19:00'],
-                    'image_path' => 'cities/ouidah.webp',
+                    'image_path' => 'https://images.unsplash.com/photo-1590603783180-8736a6552912?auto=format&fit=crop&q=80&w=1200',
                 ]
             );
         }
@@ -59,14 +59,14 @@ class CitySeeder extends Seeder
             City::updateOrCreate(
                 ['name' => 'Porto-Novo Impériale'],
                 [
-                    'description' => 'Découvrez les charmes de la capitale administrative et ses trésors coloniaux.',
+                    'description' => 'La capitale aux trois noms. Admirez l\'architecture afro-brésilienne et les musées royaux de cette cité paisible.',
                     'latitude' => 6.4969,
                     'longitude' => 2.6289,
                     'is_active' => true,
                     'creator_id' => $admin->id,
                     'mairie_id' => $mairiePorto->id,
                     'opening_hours' => ['start' => '08:00', 'end' => '20:00'],
-                    'image_path' => 'cities/porto.webp',
+                    'image_path' => 'https://images.unsplash.com/photo-1572522085350-997f80598715?auto=format&fit=crop&q=80&w=1200',
                 ]
             );
         }
@@ -76,14 +76,14 @@ class CitySeeder extends Seeder
             City::updateOrCreate(
                 ['name' => 'Parakou la Cité des Princes'],
                 [
-                    'description' => 'Porte d\'entrée du Nord Bénin, Parakou vous accueille avec son marché international et son riche patrimoine culturel.',
+                    'description' => 'Le carrefour du Nord. Découvrez le palais des Kobourou et l\'hospitalité légendaire du peuple Baatonu.',
                     'latitude' => 9.3372,
                     'longitude' => 2.6303,
                     'is_active' => true,
                     'creator_id' => $admin->id,
                     'mairie_id' => $mairieParakou->id,
                     'opening_hours' => ['start' => '08:00', 'end' => '21:00'],
-                    'image_path' => 'cities/parakou.webp',
+                    'image_path' => 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?q=80&w=1200',
                 ]
             );
         }
@@ -93,14 +93,14 @@ class CitySeeder extends Seeder
             City::updateOrCreate(
                 ['name' => 'Abomey la Royale'],
                 [
-                    'description' => 'Ancienne capitale du royaume de Dahomey, classée au patrimoine mondial de l\'UNESCO.',
+                    'description' => 'Le berceau des rois. Visitez les palais royaux et revivez l\'épopée des Amazones du Dahomey.',
                     'latitude' => 7.1855,
                     'longitude' => 1.9912,
                     'is_active' => true,
                     'creator_id' => $admin->id,
                     'mairie_id' => $mairieAbomey->id,
-                    'opening_hours' => ['start' => '08:30', 'end' => '18:30'],
-                    'image_path' => 'cities/abomey.webp',
+                    'opening_hours' => ['start' => '08:00', 'end' => '19:00'],
+                    'image_path' => 'https://images.unsplash.com/photo-1590603783180-8736a6552912?q=80&w=1200',
                 ]
             );
         }
