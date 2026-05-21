@@ -7,8 +7,8 @@ import GpsSearchInput from '@/Components/GpsSearchInput.vue';
 import Pagination from '@/Components/Pagination.vue';
 import AppImage from '@/Components/AppImage.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { 
-  Users, Map, Target, TrendingUp, Activity, DollarSign, 
+import {
+  Users, Map, Target, TrendingUp, Activity, DollarSign,
   Plus, Settings, Building2, Brain, ChevronRight, LayoutDashboard, ShieldCheck, Zap,
   Share2, Ban, CheckCircle, MapPin
 } from 'lucide-vue-next';
@@ -69,10 +69,10 @@ const openCityModal = (city = null) => {
 };
 
 const submitCity = () => {
-    const url = cityForm.id 
+    const url = cityForm.id
         ? route('mairie.cities.update', cityForm.id)
         : route('admin.mairie-city.store');
-        
+
     cityForm.post(url, {
         forceFormData: true,
         onSuccess: () => {
@@ -326,8 +326,8 @@ const copyShareLink = async (city) => {
                                 <td class="p-6 text-right">
                                     <button @click="toggleUser(player.id)" :class="cn(
                                         'h-10 px-6 rounded-xl font-black uppercase tracking-[0.1em] text-[10px] transition-all border flex items-center gap-2 ml-auto',
-                                        player.is_active 
-                                            ? 'bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive hover:text-white hover:shadow-neon-red' 
+                                        player.is_active
+                                            ? 'bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive hover:text-white hover:shadow-neon-red'
                                             : 'bg-success/10 border-success/30 text-success hover:bg-success hover:text-white hover:shadow-neon-green'
                                     )">
                                         <Ban v-if="player.is_active" class="h-3.5 w-3.5" />
@@ -354,7 +354,7 @@ const copyShareLink = async (city) => {
                 </div>
                 <h2 class="font-display text-2xl text-white mb-2 font-black italic tracking-tight">Espace admin optimisé</h2>
                 <p class="text-xs text-purple-neon/60 uppercase tracking-[0.2em] font-bold mb-8">Capacités du système</p>
-                
+
                 <div class="space-y-6">
                     <div class="flex items-start gap-4 group">
                         <div class="mt-1 h-1.5 w-1.5 rounded-full bg-purple-neon group-hover:scale-150 transition-transform shadow-neon-purple"></div>
@@ -409,14 +409,14 @@ const copyShareLink = async (city) => {
             <h2 class="font-display text-2xl text-white mb-6">Nouvelle Ville & Mairie</h2>
             <form @submit.prevent="submitMairie" class="space-y-6">
                 <div class="space-y-4">
-                    <GpsSearchInput 
-                        v-model="mairieForm.city_name" 
-                        label="Nom de la Ville (Recherche GPS)" 
+                    <GpsSearchInput
+                        v-model="mairieForm.city_name"
+                        label="Nom de la Ville (Recherche GPS)"
                         placeholder="Ex: Cotonou, Bénin"
                         @select="onCitySelect"
-                        required 
+                        required
                     />
-                    
+
                     <div class="grid gap-4 md:grid-cols-2">
                         <GlowInput v-model="mairieForm.email" type="email" label="Email Mairie" placeholder="contact@mairie.bj" required />
                         <GlowInput v-model="mairieForm.radius_meters" type="number" label="Rayon Tactique (mètres)" placeholder="5000" required />
