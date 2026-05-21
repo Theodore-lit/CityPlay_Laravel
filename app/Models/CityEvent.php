@@ -18,6 +18,9 @@ class CityEvent extends Model
         'images',
         'event_date',
         'location_name',
+        'diamond_price',
+        'has_vip_pass',
+        'reward_type',
         'is_active',
     ];
 
@@ -25,12 +28,17 @@ class CityEvent extends Model
         'images' => 'array',
         'event_date' => 'datetime',
         'is_active' => 'boolean',
+        'has_vip_pass' => 'boolean',
+        'diamond_price' => 'integer',
     ];
 
     protected $appends = [
         'image_urls',
     ];
 
+    /**
+     * Accesseur pour transformer les chemins de stockage en URLs accessibles.
+     */
     protected function imageUrls(): Attribute
     {
         return Attribute::get(fn () => StorageUrl::urls($this->images ?? []));
