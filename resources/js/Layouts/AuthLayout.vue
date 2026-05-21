@@ -1,15 +1,26 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { Compass } from 'lucide-vue-next';
+import { onMounted } from 'vue';
 
 defineProps({
     title: String,
     subtitle: String,
 });
+
+// Synchronisation du thème au montage pour les pages d'auth
+onMounted(() => {
+    const theme = localStorage.getItem('theme') || 'dark';
+    if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+});
 </script>
 
 <template>
-    <div class="min-h-screen relative flex items-center justify-center px-4 py-12 overflow-hidden bg-gaming-darker">
+    <div class="min-h-screen relative flex items-center justify-center px-4 py-12 overflow-hidden bg-background text-foreground">
         <!-- Background Effects -->
         <div class="absolute inset-0 grid-bg opacity-40 z-0" />
         <div class="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-electric/20 blur-3xl z-0" />
