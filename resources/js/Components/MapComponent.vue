@@ -48,7 +48,6 @@ const initMap = () => {
         keyboard: false // Désactive le clavier
     }).setView(center, 16);
 
-    // Pas de L.tileLayer pour garder le fond noir/abstrait
 
     // Ajout des cercles de radar concentriques
     const radarOptions = {
@@ -287,8 +286,8 @@ onUnmounted(() => {
     }
 });
 
-// On expose la fonction pour le parent
-defineExpose({ refreshSize });
+// // On expose la fonction pour le parent
+// defineExpose({ refreshSize });
 </script>
 
 <style>

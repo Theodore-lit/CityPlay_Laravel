@@ -21,40 +21,39 @@ const props = defineProps({
 });
 
 // --- ÉTATS RÉACTIFS ---
-const userPosition = ref(null); // Coordonnées GPS actuelles du joueur
-const teamMembers = ref(props.initialTeamPositions || []); // Positions des autres membres de l'équipe
-const isPaused = ref(false); // État de pause du chronomètre
-const totalErrors = ref(0); // Compteur d'erreurs pour le calcul des étoiles
-const showHint = ref(false); // Affichage ou non de l'indice
-const usedHints = ref(0); // Nombre d'indices utilisés
-const gameTime = ref(0); // Temps écoulé en secondes
-const timerInterval = ref(null); // Intervalle du chronomètre
-const mapRef = ref(null); // Référence vers le composant carte
+const userPosition = ref(null);
+const teamMembers = ref(props.initialTeamPositions || []);
+const isPaused = ref(false);
+const totalErrors = ref(0);
+const showHint = ref(false);
+const usedHints = ref(0);
+const gameTime = ref(0);
+const timerInterval = ref(null);
+const mapRef = ref(null);
 
 // Modal Énigme / Questionnaire
-const showRiddleModal = ref(false); // Contrôle l'affichage du modal de défi
-const riddleType = ref('site'); // Type de défi : 'unlock' (trouver) ou 'site' (sur place)
-const selectedLocation = ref(null); // Lieu actuellement en interaction
-const currentRiddle = ref(null); // Énigme active
-const riddleAnswer = ref(''); // Réponse saisie par le joueur (mode texte)
-const isQuestionnaireActive = ref(false); // Bascule entre mode texte et mode QCM
-const currentQuestionIndex = ref(0); // Index de la question actuelle dans le QCM
-const questionnaireAnswers = ref([]); // Historique des réponses fournies
+const showRiddleModal = ref(false);
+const riddleType = ref('site'); // 'unlock' or 'site'
+const selectedLocation = ref(null);
+const currentRiddle = ref(null);
+const riddleAnswer = ref('');
+const isQuestionnaireActive = ref(false);
+const currentQuestionIndex = ref(0);
+const questionnaireAnswers = ref([]);
 
 // Modal Succès
-const showSuccessModal = ref(false); // Modal de fin de quête réussi
-const earnedStars = ref(3); // Nombre d'étoiles gagnées
-const earnedXp = ref(150); // XP gagnés
+const showSuccessModal = ref(false);
+const earnedStars = ref(3);
+const earnedXp = ref(150);
 
-// Toast (Notifications éphémères)
+// Toast
 const toast = ref({ show: false, message: '', type: 'info' });
 
-/**
- * Active la surveillance GPS en temps réel.
- */
 const updateGPS = () => {
     if ("geolocation" in navigator) {
         navigator.geolocation.watchPosition((position) => {
+            console.log(position.coords.latitude)
+            console.log(position.coords.longitude)
             userPosition.value = {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude
@@ -67,9 +66,6 @@ const updateGPS = () => {
 
 
 // --- COMPUTED ---
-/**
- * Calcule la distance brute en mètres entre le joueur et la cible.
- */
 const rawDistance = computed(() => {
     if (!userPosition.value || !currentTarget.value) return null;
     return calculateDistance(
@@ -78,25 +74,18 @@ const rawDistance = computed(() => {
     );
 });
 
-/**
- * Formate la distance pour l'affichage (m ou km).
- */
+console.log(rawDistance.value)
+
 const distanceToClosest = computed(() => {
     if (rawDistance.value === null) return '---';
     const dist = rawDistance.value;
     return dist > 1000 ? (dist/1000).toFixed(1) + 'km' : Math.round(dist) + 'm';
 });
 
-/**
- * Vérifie si le joueur est à moins de 50 mètres de la cible.
- */
 const isNearLocation = computed(() => {
     return rawDistance.value !== null && rawDistance.value < 50;
 });
 
-/**
- * Calcule un score de proximité pour la jauge radar (0-100%).
- */
 const proximityScore = computed(() => {
     if (rawDistance.value === null) return 0;
     const dist = rawDistance.value;
@@ -104,33 +93,24 @@ const proximityScore = computed(() => {
     return Math.max(0, 100 - (dist / 10)); // 0m = 100%, 1000m = 0%
 });
 
-/**
- * Identifie le lieu cible actuel basé sur la session de jeu.
- */
+const cityData = computed(() => props.city);
+const gameMode = computed(() => props.currentSession ? 'aventure' : 'classique');
+
 const currentTarget = computed(() => {
     if (!props.locations || !props.currentSession) return null;
     return props.locations.find(l => l.id === props.currentSession.current_location_id) || props.locations[0] || null;
 });
 
-/**
- * Récupère l'énigme active liée au lieu cible.
- */
 const activeEnigma = computed(() => {
     if (!currentTarget.value) return null;
     return currentTarget.value.enigmas?.find(e => e.id === props.currentSession.current_enigma_id) || currentTarget.value.enigmas?.[0];
 });
 
-/**
- * Texte de l'énigme à afficher au joueur.
- */
 const displayEnigma = computed(() => {
     return activeEnigma.value?.content || "Suivez le radar pour découvrir ce lieu mystérieux...";
 });
 
 // --- MÉTHODES ---
-/**
- * Démarre le chronomètre de jeu.
- */
 const startTimer = () => {
     if (timerInterval.value) clearInterval(timerInterval.value);
     timerInterval.value = setInterval(() => {
@@ -138,33 +118,21 @@ const startTimer = () => {
     }, 1000);
 };
 
-/**
- * Formate les secondes en MM:SS.
- */
 const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-/**
- * Affiche un toast d'information.
- */
 const showGameToast = (message, type = 'info') => {
     toast.value = { show: true, message, type };
     setTimeout(() => { toast.value.show = false; }, 3000);
 };
 
-/**
- * Bascule l'état de pause.
- */
 const togglePause = () => {
     isPaused.value = !isPaused.value;
 };
 
-/**
- * Débloque l'indice de l'énigme en échange de XP.
- */
 const handleUseHint = () => {
     if (usePage().props.auth.user.xp < 50) {
         showGameToast("XP insuffisants pour un indice.", "error");
@@ -179,9 +147,6 @@ const handleUseHint = () => {
     });
 };
 
-/**
- * Vérifie si le joueur est sur le lieu cible pour déclencher le défi final.
- */
 const verifyPosition = () => {
     if (isNearLocation.value && currentTarget.value) {
         isPaused.value = true; // Arrête le chrono dès la validation du lieu
@@ -205,9 +170,6 @@ const verifyPosition = () => {
     }
 };
 
-/**
- * Initialise le mode QCM pour un lieu.
- */
 const startQuestionnaire = () => {
     isQuestionnaireActive.value = true;
     currentQuestionIndex.value = 0;
@@ -216,34 +178,29 @@ const startQuestionnaire = () => {
     showRiddleModal.value = true;
 };
 
-/**
- * Traite la sélection d'une réponse dans un QCM.
- */
 const selectQuestionOption = (option) => {
     if (questionnaireAnswers.value[currentQuestionIndex.value]) return;
 
     questionnaireAnswers.value[currentQuestionIndex.value] = option;
     
     if (option.is_correct) {
-        showGameToast("Bonne réponse !", "success");
-    } else {
-        totalErrors.value++;
-        showGameToast("Mauvaise réponse !", "error");
-    }
-
-    // Délai avant passage à la question suivante pour retour visuel
-    setTimeout(() => {
         if (currentQuestionIndex.value < currentRiddle.value.questions.length - 1) {
-            currentQuestionIndex.value++;
+            setTimeout(() => { currentQuestionIndex.value++; }, 1000);
         } else {
             handleSuccess();
         }
-    }, 1500);
+    } else {
+        totalErrors.value++;
+        showGameToast("Mauvaise réponse !", "error");
+        // On passe quand même à la suivante pour la logique de quiz
+        if (currentQuestionIndex.value < currentRiddle.value.questions.length - 1) {
+            setTimeout(() => { currentQuestionIndex.value++; }, 1000);
+        } else {
+            handleSuccess();
+        }
+    }
 };
 
-/**
- * Soumet la réponse à une énigme textuelle.
- */
 const submitRiddle = () => {
     if (riddleAnswer.value.toLowerCase().trim() === currentRiddle.value.answer?.toLowerCase().trim()) {
         handleSuccess();
@@ -253,9 +210,6 @@ const submitRiddle = () => {
     }
 };
 
-/**
- * Gère la réussite d'un lieu (attribution étoiles, XP et redirection).
- */
 const handleSuccess = () => {
     // Calcul des étoiles basé sur les erreurs du quiz
     earnedStars.value = Math.max(1, 3 - totalErrors.value);
@@ -414,117 +368,24 @@ onUnmounted(() => {
     <MobileTabBar />
 
     <!-- MODALS -->
-    <Modal :show="showRiddleModal" @close="showRiddleModal = false" maxWidth="xl">
-        <div class="bg-gaming-darker border border-electric/20 rounded-[2.5rem] overflow-hidden shadow-2xl relative">
-            <!-- Background Decoration -->
-            <div class="absolute inset-0 grid-bg opacity-5 pointer-events-none"></div>
-            
-            <div v-if="isQuestionnaireActive" class="relative z-10">
-                <!-- Header / Progress Bar -->
-                <div class="p-6 pb-0">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-2">
-                            <div class="p-2 rounded-lg bg-electric/10 text-electric">
-                                <Brain class="h-5 w-5" />
-                            </div>
-                            <h2 class="font-display text-xl text-white uppercase tracking-tight">Questions Mystère</h2>
-                        </div>
-                        <div class="text-[10px] text-muted-foreground font-black uppercase tracking-widest">
-                            {{ currentQuestionIndex + 1 }} / {{ currentRiddle?.questions?.length }}
-                        </div>
-                    </div>
-                    <!-- Progress Bar -->
-                    <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                        <div 
-                            class="h-full bg-gradient-to-r from-electric to-primary transition-all duration-700 ease-out shadow-neon"
-                            :style="{ width: `${((currentQuestionIndex + 1) / currentRiddle?.questions?.length) * 100}%` }"
-                        ></div>
-                    </div>
+    <Modal :show="showRiddleModal" @close="showRiddleModal = false">
+        <div class="p-8 bg-gaming-darker border border-electric/20 rounded-[2.5rem] max-w-lg mx-auto">
+            <div v-if="isQuestionnaireActive" class="space-y-6">
+                <div class="text-[10px] text-electric font-black uppercase tracking-widest">Question {{ currentQuestionIndex + 1 }} / {{ currentRiddle?.questions?.length }}</div>
+                <div class="p-6 rounded-3xl bg-white/5 border border-white/10 text-lg text-white font-display">
+                    {{ currentRiddle?.questions?.[currentQuestionIndex]?.question_text }}
                 </div>
-
-                <div class="p-8 space-y-8">
-                    <!-- Question Card -->
-                    <Transition name="fade-slide" mode="out-in">
-                        <div :key="currentQuestionIndex" class="space-y-8">
-                            <div class="relative">
-                                <div class="absolute -left-4 top-0 bottom-0 w-1 bg-electric rounded-full shadow-neon"></div>
-                                <h3 class="text-xl md:text-2xl text-white font-display leading-tight pl-4">
-                                    {{ currentRiddle?.questions?.[currentQuestionIndex]?.question_text }}
-                                </h3>
-                            </div>
-
-                            <!-- Options Grid -->
-                            <div class="grid gap-4">
-                                <button 
-                                    v-for="(option, idx) in currentRiddle?.questions?.[currentQuestionIndex]?.options" 
-                                    :key="idx" 
-                                    @click="selectQuestionOption(option)"
-                                    :disabled="!!questionnaireAnswers[currentQuestionIndex]"
-                                    :class="cn(
-                                        'group relative w-full p-5 rounded-2xl border transition-all duration-300 text-left overflow-hidden',
-                                        !questionnaireAnswers[currentQuestionIndex] 
-                                            ? 'bg-white/5 border-white/10 hover:border-electric/50 hover:bg-electric/5' 
-                                            : questionnaireAnswers[currentQuestionIndex] === option
-                                                ? option.is_correct 
-                                                    ? 'bg-success/10 border-success shadow-[0_0_20px_rgba(34,197,94,0.2)]'
-                                                    : 'bg-destructive/10 border-destructive shadow-[0_0_20px_rgba(239,68,68,0.2)]'
-                                                : option.is_correct && questionnaireAnswers[currentQuestionIndex]
-                                                    ? 'bg-success/5 border-success/30 opacity-60'
-                                                    : 'bg-white/5 border-white/5 opacity-40'
-                                    )"
-                                >
-                                    <div class="flex items-center justify-between gap-4 relative z-10">
-                                        <span :class="cn(
-                                            'text-base font-medium transition-colors',
-                                            questionnaireAnswers[currentQuestionIndex] === option ? 'text-white' : 'text-foreground/80 group-hover:text-white'
-                                        )">
-                                            {{ option.option_text }}
-                                        </span>
-                                        
-                                        <!-- Status Icon -->
-                                        <div v-if="questionnaireAnswers[currentQuestionIndex] === option" class="shrink-0">
-                                            <CheckCircle2 v-if="option.is_correct" class="h-6 w-6 text-success" />
-                                            <XCircle v-else class="h-6 w-6 text-destructive" />
-                                        </div>
-                                    </div>
-
-                                    <!-- Hover Effect Background -->
-                                    <div class="absolute inset-0 bg-gradient-to-r from-electric/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                </button>
-                            </div>
-                        </div>
-                    </Transition>
+                <div class="grid gap-3">
+                    <button v-for="(option, idx) in currentRiddle?.questions?.[currentQuestionIndex]?.options" :key="idx" @click="selectQuestionOption(option)" class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-electric transition-all text-left">
+                        {{ option.option_text }}
+                    </button>
                 </div>
-            </aside>
-
-            <!-- Riddle Mode (Old fallback) -->
-            <div v-else class="p-8 space-y-8 relative z-10">
-                <div class="flex items-center gap-3">
-                    <div class="p-2 rounded-lg bg-electric/10 text-electric">
-                        <MapPin class="h-5 w-5" />
-                    </div>
-                    <h2 class="font-display text-2xl text-white">{{ selectedLocation?.display_name }}</h2>
-                </div>
-                
-                <div class="relative p-8 rounded-[2rem] bg-white/5 border border-white/10">
-                    <div class="absolute -top-3 left-8 px-4 bg-gaming-darker text-[10px] text-electric font-black uppercase tracking-widest">Énigme du lieu</div>
-                    <p class="text-lg italic text-foreground/90 leading-relaxed text-center">"{{ currentRiddle?.content }}"</p>
-                </div>
-
-                <div class="space-y-4">
-                    <div class="relative">
-                        <input 
-                            v-model="riddleAnswer" 
-                            @keyup.enter="submitRiddle" 
-                            placeholder="Tapez votre réponse ici..." 
-                            class="w-full h-16 rounded-2xl bg-white/5 border border-white/10 px-6 text-white text-lg outline-none focus:border-electric focus:bg-white/10 transition-all placeholder:text-muted-foreground/30" 
-                        />
-                        <ArrowRight class="absolute right-6 top-1/2 -translate-y-1/2 h-6 w-6 text-electric/30" />
-                    </div>
-                    <NeonButton size="xl" class="w-full rounded-2xl h-16" @click="submitRiddle">
-                        VALIDER LA RÉPONSE
-                    </NeonButton>
-                </div>
+            </div>
+            <div v-else class="space-y-6">
+                <h2 class="font-display text-2xl">{{ selectedLocation?.display_name }}</h2>
+                <p class="p-6 rounded-3xl bg-white/5 border border-white/10 italic text-foreground/90 leading-relaxed">"{{ currentRiddle?.content }}"</p>
+                <input v-model="riddleAnswer" @keyup.enter="submitRiddle" placeholder="Votre réponse..." class="w-full h-14 rounded-2xl bg-gaming-darker border border-electric/30 px-6 text-white outline-none focus:border-electric transition-all" />
+                <NeonButton class="w-full" @click="submitRiddle">Soumettre</NeonButton>
             </div>
         </div>
     </Modal>
@@ -547,7 +408,7 @@ onUnmounted(() => {
                 </div>
             </div>
             <div class="flex flex-col gap-3">
-                <NeonButton size="xl" class="w-full rounded-2xl" @click="goBackToLobby">CONTINUER</NeonButton>
+                <NeonButton size="xl" class="w-full rounded-2xl" @click="showSuccessModal = false">CONTINUER</NeonButton>
                 <button @click="goBackToLobby" class="text-xs text-electric font-black uppercase tracking-[0.2em] hover:text-white transition-colors">
                     REJOUER / LOBBY
                 </button>
@@ -567,16 +428,5 @@ onUnmounted(() => {
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, -20px); }
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
-
-.fade-slide-enter-active, .fade-slide-leave-active {
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateX(30px);
-}
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateX(-30px);
-}
 </style>
+

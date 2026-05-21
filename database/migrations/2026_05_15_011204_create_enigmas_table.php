@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('type')->default('devinette'); // devinette, aventure
             $table->boolean('is_site_specific')->default(false); // true if riddle is only solvable on site
             $table->integer('sequence_order')->default(0);
+            $table->json('indices')->nullable();
             $table->string('image_path')->nullable();
             $table->timestamps();
         });
