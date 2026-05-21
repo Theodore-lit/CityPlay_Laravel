@@ -106,7 +106,7 @@ html.dark, .dark {
     content: "";
     position: fixed;
     inset: 0;
-    z-index: 9999; /* Premier plan */
+    z-index: 10000; /* Premier plan */
     pointer-events: none; /* Ne bloque pas les clics */
     background-image: url('../images/bg.png');
     background-size: cover;

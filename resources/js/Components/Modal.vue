@@ -26,12 +26,10 @@ watch(
         if (props.show) {
             document.body.style.overflow = 'hidden';
             showSlot.value = true;
-
             await nextTick();
             dialog.value?.showModal();
         } else {
             document.body.style.overflow = '';
-
             setTimeout(() => {
                 dialog.value?.close();
                 showSlot.value = false;
@@ -47,20 +45,15 @@ const close = () => {
 };
 
 const closeOnEscape = (e) => {
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' && props.show) {
         e.preventDefault();
-
-        if (props.show) {
-            close();
-        }
+        close();
     }
 };
 
 onMounted(() => document.addEventListener('keydown', closeOnEscape));
-
 onUnmounted(() => {
     document.removeEventListener('keydown', closeOnEscape);
-
     document.body.style.overflow = '';
 });
 
@@ -71,6 +64,8 @@ const maxWidthClass = computed(() => {
         lg: 'sm:max-w-lg',
         xl: 'sm:max-w-xl',
         '2xl': 'sm:max-w-2xl',
+        '3xl': 'sm:max-w-3xl',
+        '4xl': 'sm:max-w-4xl',
     }[props.maxWidth];
 });
 </script>
@@ -81,7 +76,7 @@ const maxWidthClass = computed(() => {
         ref="dialog"
     >
         <div
-            class="fixed inset-0 z-50 overflow-y-auto px-4 py-6 sm:px-0"
+            class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-4 py-6 sm:px-0"
             scroll-region
         >
             <Transition
@@ -97,9 +92,7 @@ const maxWidthClass = computed(() => {
                     class="fixed inset-0 transform transition-all"
                     @click="close"
                 >
-                    <div
-                        class="absolute inset-0 bg-gray-500 opacity-75"
-                    />
+                    <div class="absolute inset-0 bg-black/40 backdrop-blur-md" />
                 </div>
             </Transition>
 
@@ -113,12 +106,24 @@ const maxWidthClass = computed(() => {
             >
                 <div
                     v-show="show"
-                    class="mb-6 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:mx-auto sm:w-full"
+                    class="transform transition-all sm:mx-auto sm:w-full flex items-center justify-center"
                     :class="maxWidthClass"
                 >
-                    <slot v-if="showSlot" />
+                    <div class="w-full h-full">
+                        <slot v-if="showSlot" />
+                    </div>
                 </div>
             </Transition>
         </div>
     </dialog>
 </template>
+
+<style scoped>
+/* Cache la scrollbar par défaut du dialog pour garder le style propre */
+dialog::backdrop {
+    background: transparent;
+}
+dialog:focus {
+    outline: none;
+}
+</style>
