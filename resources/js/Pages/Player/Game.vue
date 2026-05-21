@@ -299,10 +299,6 @@ onUnmounted(() => {
                   <div class="absolute -top-2 -right-1 z-20 flex items-center gap-2 bg-gaming-dark/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 shadow-lg">
                       <Clock class="h-3.5 w-3.5 text-electric" />
                       <span class="text-xs font-mono font-bold text-white">{{ formatTime(gameTime) }}</span>
-                      <button @click="togglePause" class="ml-2 p-1 rounded-md hover:bg-white/10 transition-colors">
-                          <Pause v-if="!isPaused" class="h-3 w-3 text-electric" />
-                          <Play v-else class="h-3 w-3 text-electric" />
-                      </button>
                   </div>
               </div>
           </div>
@@ -318,8 +314,13 @@ onUnmounted(() => {
                               <span class="text-2xl font-display text-white tracking-wider">{{ distanceToClosest || '---' }}</span>
                           </div>
                       </div>
-                      <div class="flex items-center gap-1">
-                          <div v-for="i in 5" :key="i" :class="cn('h-1.5 w-4 rounded-full transition-all duration-500', i/5 <= proximityScore/100 ? (proximityScore > 80 ? 'bg-destructive shadow-neon-error' : 'bg-electric shadow-neon') : 'bg-white/10')"></div>
+                      <div class="flex items-center gap-1 border-sm p-1 bg-green-600">
+                          <p class="text-white text-lg" >Pause </p>
+                          <button @click="togglePause" class="ml-2 p-1 rounded-md hover:bg-white/10 transition-colors">
+                            <Pause v-if="!isPaused" class="h-4 w-4 text-electric" />
+                            <Play v-else class="h-3 w-3 text-electric" />
+                        </button>
+                          <!-- <div v-for="i in 5" :key="i" :class="cn('h-1.5 w-4 rounded-full transition-all duration-500', i/5 <= proximityScore/100 ? (proximityScore > 80 ? 'bg-destructive shadow-neon-error' : 'bg-electric shadow-neon') : 'bg-white/10')"></div> -->
                       </div>
                   </div>
                   <button @click="verifyPosition" :disabled="isPaused" class="h-24 w-24 rounded-3xl bg-success text-white shadow-neon-success flex flex-col items-center justify-center gap-1 hover:scale-105 active:scale-95 transition-all border-4 border-gaming-darker shrink-0">
