@@ -28,7 +28,7 @@ class MairieController extends Controller
         $city = City::where('mairie_id', auth()->id())->first();
 
         if ($city) {
-            return redirect()->route('mairie.cities.show', $city->id);
+            return redirect()->route('mairie.city.hub', $city->id);
         }
 
         // Fallback if no city created yet (though should not happen with current flow)
@@ -81,7 +81,7 @@ class MairieController extends Controller
     public function updateCity(Request $request, City $city)
     {
         // Check if user is creator or super_admin
-        if (auth()->user()->role !== 'super_admin' && $city->creator_id !== auth()->id()) {
+        if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
 
@@ -119,9 +119,9 @@ class MairieController extends Controller
     public function showCity(City $city)
     {
         // Check if user is creator or super_admin
-        // if (auth()->user()->role !== 'super_admin' && $city->creator_id !== auth()->id()) {
-        //     abort(403);
-        // }
+        if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
+            abort(403);
+        }
 
         return Inertia::render('Mairie/CityShow', [
             'city' => $city->load(['locations.enigmas.questions.options']),
@@ -131,7 +131,7 @@ class MairieController extends Controller
     public function cityHub(City $city)
     {
         // Check if user is creator or super_admin
-        if (auth()->user()->role !== 'super_admin' && $city->creator_id !== auth()->id()) {
+        if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
 

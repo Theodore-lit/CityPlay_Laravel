@@ -250,7 +250,7 @@ const copyShareLink = async (city) => {
                                         <button @click="copyShareLink(city)" class="h-10 w-10 rounded-xl bg-white/5 border border-white/10 grid place-items-center text-cyan-neon hover:bg-cyan-neon hover:text-white hover:shadow-neon-cyan transition-all" title="Partager le lien">
                                             <Share2 class="h-5 w-5" />
                                         </button>
-                                        <Link :href="route('mairie.cities.show', city.id)" class="h-10 w-10 rounded-xl bg-electric/10 border border-electric/20 grid place-items-center text-electric hover:bg-electric hover:text-white hover:shadow-neon-sm transition-all">
+                                        <Link :href="route('mairie.city.hub', city.id)" class="h-10 w-10 rounded-xl bg-electric/10 border border-electric/20 grid place-items-center text-electric hover:bg-electric hover:text-white hover:shadow-neon-sm transition-all">
                                             <ChevronRight class="h-5 w-5" />
                                         </Link>
                                     </div>
