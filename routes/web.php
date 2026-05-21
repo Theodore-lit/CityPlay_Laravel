@@ -98,10 +98,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
        // Mairie Event Routes ---- kamal
     Route::get('/mairie/city/{city}/events', [CityEventController::class, 'index'])->name('mairie.cities.events');
     Route::post('/mairie/city/{city}/events', [CityEventController::class, 'store'])->name('mairie.events.store');
+    Route::put('/mairie/events/{event}', [CityEventController::class, 'store'])->name('mairie.events.edit');
     Route::delete('/mairie/events/{event}', [CityEventController::class, 'delete'])->name('mairie.events.delete');
     Route::get('/city/{city}/events/{event}', [CityEventController::class, 'show'])->name('mairie.events.show');
     });
-    
+
 });
 
 Route::middleware('auth')->group(function () {
