@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\CityController;
+use App\Http\Controllers\CityEventController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\MairieController;
@@ -93,11 +95,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::patch('/mairie/city/{city}/toggle', [MairieController::class, 'toggleStatus'])->name('mairie.city.toggle');
 
-        // Mairie Event Routes
-        Route::get('/mairie/city/{city}/events', [MairieController::class, 'cityEvents'])->name('mairie.cities.events');
-        Route::post('/mairie/city/{city}/events', [MairieController::class, 'storeEvent'])->name('mairie.events.store');
-        Route::delete('/mairie/events/{event}', [MairieController::class, 'deleteEvent'])->name('mairie.events.delete');
+       // Mairie Event Routes ---- kamal
+    Route::get('/mairie/city/{city}/events', [CityEventController::class, 'index'])->name('mairie.cities.events');
+    Route::post('/mairie/city/{city}/events', [CityEventController::class, 'store'])->name('mairie.events.store');
+    Route::delete('/mairie/events/{event}', [CityEventController::class, 'delete'])->name('mairie.events.delete');
+    Route::get('/city/{city}/events/{event}', [CityEventController::class, 'show'])->name('mairie.events.show');
     });
+    
 });
 
 Route::middleware('auth')->group(function () {
