@@ -167,7 +167,7 @@ const copyShareLink = async (city) => {
       </div>
 
       <!-- CITIES TABLE -->
-            <div class="rounded-[2.5rem] bg-gaming-dark/40 backdrop-blur-xl border border-white/5 overflow-hidden shadow-3xl shadow-black/50 group/table">
+            <div class="bg-white/5 rounded-[2.5rem] backdrop-blur-xl border border-white/5 overflow-hidden shadow-3xl shadow-black/50 group/table">
                 <div class="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-electric/10 via-white/5 to-transparent relative overflow-hidden">
                     <div class="absolute inset-0 bg-grid-white/[0.02] bg-[size:20px_20px]"></div>
                     <h2 class="font-display text-2xl flex items-center gap-4 text-white relative z-10">
@@ -268,7 +268,7 @@ const copyShareLink = async (city) => {
         <div class="lg:col-span-9 space-y-8">
 
             <!-- USERS TABLE -->
-            <div class="rounded-[2.5rem] bg-gaming-dark/40 backdrop-blur-xl border border-white/5 overflow-hidden shadow-3xl shadow-black/50 group/table">
+            <div class="rounded-[2.5rem] bg-white/6 backdrop-blur-xl border border-white/5 overflow-hidden shadow-3xl shadow-black/50 group/table">
                 <div class="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-purple-neon/10 via-white/5 to-transparent relative overflow-hidden">
                     <div class="absolute inset-0 bg-grid-white/[0.02] bg-[size:20px_20px]"></div>
                     <h2 class="font-display text-2xl flex items-center gap-4 text-white relative z-10">
@@ -318,7 +318,7 @@ const copyShareLink = async (city) => {
                                     <div class="flex items-center gap-2.5">
                                         <div :class="cn(
                                             'h-2 w-2 rounded-full',
-                                            player.is_active ? 'bg-success shadow-[0_0_12px_rgba(34,197,94,0.5)]' : 'bg-destructive shadow-[0_0_12px_rgba(239,68,68,0.5)]'
+                                            player.is_active ? 'bg-green-400 shadow-[0_0_12px_rgba(34,197,94,0.5)]' : 'bg-reed-400 shadow-[0_0_12px_rgba(239,68,68,0.5)]'
                                         )"></div>
                                         <span class="text-[10px] uppercase font-black tracking-widest text-white/90">{{ player.is_active ? 'Opérationnel' : 'Neutralisé' }}</span>
                                     </div>

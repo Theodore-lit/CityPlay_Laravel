@@ -22,16 +22,11 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
         $user = auth()->user();
-        if ($user->role === 'mairie') {
-            $city = City::where('mairie_id', $user->id);
-            return redirect()->route('mairie.cities.show', $city->id);
-            }
-            elseif ($user->role === 'super_admin') {
-            return redirect()->route('admin.dashboard');
 
-        }
-        else {
-            
+        // Si c'est une mairie ou un super_admin, ils vont sur le même dashboard d'administration
+        if ($user->role === 'mairie' || $user->role === 'super_admin') {
+            return redirect()->route('admin.dashboard');
+        } else {
             return redirect()->route('player.dashboard');
         }
     })->name('dashboard');
@@ -65,12 +60,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/teams/{team}/join-game/{city}', [TeamController::class, 'joinGame'])->name('teams.join-game');
     });
 
-    // --- ROUTES ADMIN ---
-    Route::middleware('role:super_admin')->group(function () {
+    // --- ROUTES ADMIN & MAIRIE (COMMUNES) ---
+    Route::middleware('role:mairie,super_admin')->group(function () {
+        // On ne la définit QU'UNE SEULE FOIS ici
         Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+
         Route::post('/admin/mairie-city', [AdminController::class, 'storeMairieWithCity'])->name('admin.mairie-city.store');
         Route::patch('/admin/users/{user}/toggle', [AdminController::class, 'toggleUserStatus'])->name('admin.users.toggle');
-        Route::get('/admin/cities', [MairieController::class, 'dashboard'])->name('admin.cities');
 
         Route::get('/admin/cities/{city}/quizzes', [AdminController::class, 'cityQuizzes'])->name('admin.cities.quizzes');
         Route::post('/admin/cities/{city}/quizzes', [AdminController::class, 'storeQuiz'])->name('admin.quizzes.store');
@@ -84,10 +80,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/admin/location', [AdminController::class, 'storeLocation'])->name('admin.location.store');
         Route::post('/admin/enigma', [AdminController::class, 'storeEnigma'])->name('admin.enigma.store');
         Route::post('/admin/user/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('admin.user.toggle-status');
-    });
 
-    // --- ROUTES MAIRIE ---
-    Route::middleware('role:mairie')->group(function () {
+        // --- Spécifiques Mairie ---
         Route::get('/mairie/city/{city}/hub', [MairieController::class, 'cityHub'])->name('mairie.city.hub');
         Route::post('/mairie/cities', [MairieController::class, 'storeCity'])->name('mairie.cities.store');
         Route::post('/mairie/cities/{city}/update', [MairieController::class, 'updateCity'])->name('mairie.cities.update');
@@ -96,6 +90,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/mairie/location/{location}/update', [MairieController::class, 'updateLocation'])->name('mairie.locations.update');
         Route::post('/mairie/location/{location}/enigma', [MairieController::class, 'storeEnigma'])->name('mairie.enigmas.store');
         Route::post('/mairie/location/{location}/image', [MairieController::class, 'storeLocationImage'])->name('mairie.locations.image');
+
         Route::patch('/mairie/city/{city}/toggle', [MairieController::class, 'toggleStatus'])->name('mairie.city.toggle');
 
         // Mairie Event Routes
@@ -115,4 +110,4 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{notification}/read', [PlayerController::class, 'markNotificationRead'])->name('notifications.read');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

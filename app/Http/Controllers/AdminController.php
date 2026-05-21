@@ -16,7 +16,14 @@ class AdminController extends Controller
     public function dashboard()
     {
         if (auth()->user()->role !== 'super_admin') {
-            return redirect()->route('mairie.dashboard');
+
+            $city = City::where('mairie_id', auth()->id())->first();
+
+            if ($city) {
+                return redirect()->route('mairie.cities.show', $city->id);
+            }
+
+            // return redirect()->route('mairie.dashboard');
         }
 
         return Inertia::render('Admin/Dashboard', [
