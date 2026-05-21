@@ -22,7 +22,6 @@ return new class extends Migration
             $table->integer('diamonds')->default(0); // kamal: ajout de la colonne diamant pour acheter des pass
             $table->integer('hearts')->default(3);
             $table->integer('xp')->default(0);
-            $table->integer('diamonds')->default(0);
             $table->integer('level')->default(1);
             $table->string('avatar')->nullable();
             $table->timestamp('last_activity_at')->nullable();

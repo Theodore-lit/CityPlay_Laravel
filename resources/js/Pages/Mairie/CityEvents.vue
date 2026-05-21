@@ -97,7 +97,7 @@ const formatDate = (dateString) => {
 </script>
 
 <template>
-    <Head :title="`Événements - ${city.name} — CityPlay HQ`" />
+    <Head :title="`Événements - ${city.name}`" />
 
     <SiteLayout>
         <div class="mx-auto max-w-7xl px-4 sm:px-6 py-10 pb-28 md:pb-12 relative z-10">
@@ -149,6 +149,8 @@ const formatDate = (dateString) => {
                         </div>
                     </div>
 
+                        <Link :href="route('mairie.events.show', { city: city.id, event: event.id })" class="group/title">
+
                     <div class="p-8">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-widest">
@@ -159,11 +161,10 @@ const formatDate = (dateString) => {
                             </div>
                         </div>
 
-                        <Link :href="route('mairie.events.show', { city: city.id, event: event.id })" class="group/title">
                             <h3 class="font-display text-xl text-foreground uppercase italic font-black mb-3 line-clamp-1 tracking-tight group-hover/title:text-primary transition-colors italic">
                                 {{ event.title }}
                             </h3>
-                        </Link>
+
 
                         <p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-6">{{ event.description }}</p>
 
@@ -181,13 +182,14 @@ const formatDate = (dateString) => {
                                 <button class="group/btn relative px-4 py-2 overflow-hidden rounded-lg glass border border-primary/20 hover:border-primary transition-all">
                                     <div class="absolute inset-0 bg-primary/10 translate-y-full group-hover/btn:translate-y-0 transition-transform"></div>
                                     <div class="relative flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest">
-                                        <span>Intel</span>
-                                        <Eye class="h-3.5 w-3.5" />
+                                        <!-- <span>Intel</span> -->
+                                        <Eye class="h-4.5 w-4.5" />
                                     </div>
                                 </button>
                             </Link>
                         </div>
                     </div>
+                    </Link>
                 </div>
             </div>
 
