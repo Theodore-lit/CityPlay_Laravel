@@ -345,10 +345,16 @@ class PlayerController extends Controller
 
         $quiz->load('city');
 
+        $nextQuiz = \App\Models\Quiz::where('city_id', $quiz->city_id)
+        ->where('id', '>', $quiz->id)
+        ->orderBy('id', 'asc')
+        ->first();
+
         return Inertia::render('Player/QuizResult', [
             'quiz' => $quiz->only(['id', 'title', 'category']),
             'city' => $quiz->city,
             'result' => $result,
+            'nextQuizId' => $nextQuiz ? $nextQuiz->id : null,
         ]);
     }
 
