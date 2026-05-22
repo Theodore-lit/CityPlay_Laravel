@@ -10,7 +10,7 @@ use App\Models\EventRedemption;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
-class RewardController extends Controller
+class RewardsController extends Controller
 {
     /**
      * Affiche la page des récompenses avec le solde du joueur
@@ -40,15 +40,42 @@ class RewardController extends Controller
             ->latest()
             ->get();
 
+        // Nouveaux lots (prizes) à ouvrir
+        $prizes = \App\Models\UserPrize::where('user_id', $user->id)
+            ->latest()
+            ->get();
+
         return Inertia::render('Player/Rewards', [
             'events' => $events,
             'myRewards' => $myRewards,
+            'prizes' => $prizes,
             'stats' => [
                 'current_coins' => $user->coins,
                 'current_diamonds' => $user->diamonds,
                 'total_redemptions' => $myRewards->count(),
             ],
         ]);
+    }
+
+    /**
+     * Ouvre un lot (prize) avec succès.
+     */
+    public function openPrize(\App\Models\UserPrize $prize)
+    {
+        if ($prize->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($prize->is_opened) {
+            return back()->with('error', 'Ce lot a déjà été ouvert.');
+        }
+
+        $prize->update([
+            'is_opened' => true,
+            'opened_at' => now(),
+        ]);
+
+        return back()->with('success', 'Lot ouvert avec succès !');
     }
 
     /**

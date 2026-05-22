@@ -12,7 +12,7 @@ const tabs = [
   { to: 'player.cities', icon: Map, label: 'Villes' },
   { to: 'player.modes', icon: Gamepad2, label: 'Jouer' },
   { to: 'player.leaderboard', icon: Trophy, label: 'Classement' },
-  { to: 'player.rewards', icon: Gift, label: 'Récompenses' },
+  { to: 'player.rewards.index', icon: Gift, label: 'Récompenses' },
 ];
 
 const isActive = (routeName) => route().current(routeName);
