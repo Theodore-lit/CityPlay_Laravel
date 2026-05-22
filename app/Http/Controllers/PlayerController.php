@@ -505,11 +505,20 @@ class PlayerController extends Controller
             ->first();
 
         // Filtrage des lieux ayant des énigmes correspondant à la difficulté
-        $availableLocations = $city->locations()->whereHas('enigmas', function($q) use ($difficulty) {
-            $q->where('difficulty', $difficulty);
-        })->with(['enigmas' => function($q) use ($difficulty) {
-            $q->where('difficulty', $difficulty);
-        }])->get();
+        $availableLocations = $city->locations()
+            ->whereHas('enigmas', function($q) use ($difficulty) {
+                $q->where('difficulty', $difficulty);
+            })
+            ->with([
+                'enigmas' => function($q) use ($difficulty) {
+                    $q->where('difficulty', $difficulty);
+                },
+                'locationImages',
+                'userProgress' => function($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                }
+            ])
+            ->get();
 
         // Filtrage géographique basé sur le mode de transport
         if ($lat && $lng) {

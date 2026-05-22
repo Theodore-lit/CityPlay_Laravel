@@ -95,6 +95,14 @@ class Location extends Model
     }
 
     /**
+     * Relation : Un lieu possède plusieurs images.
+     */
+    public function locationImages()
+    {
+        return $this->hasMany(LocationImage::class);
+    }
+
+    /**
      * Relation : Suivi de la progression des utilisateurs sur ce lieu.
      */
     public function userProgress()

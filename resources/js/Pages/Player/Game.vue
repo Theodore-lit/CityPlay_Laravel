@@ -1,35 +1,34 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from "vue";
-import { Head, Link, router, usePage } from "@inertiajs/vue3";
-import SiteLayout from "@/Layouts/SiteLayout.vue";
-import MobileTabBar from "@/Components/MobileTabBar.vue";
-import NeonButton from "@/Components/NeonButton.vue";
-import MapComponent from "@/Components/MapComponent.vue";
-import Modal from "@/Components/Modal.vue";
+import { usePage, router, Head } from "@inertiajs/vue3";
 import {
     MapPin,
-    QrCode,
     Navigation,
-    Sparkles,
-    Lock,
     Target,
     Zap,
-    ChevronLeft,
-    Star,
-    Heart,
     Clock,
+    Pause,
     Play,
     Info,
     CheckCircle2,
-    Trophy,
-    Brain,
-    Pause,
-    HelpCircle,
     Eye,
-    XCircle,
+    Star,
+    Trophy,
     ArrowRight,
+    HelpCircle,
+    X,
+    ChevronLeft,
+    Brain,
+    Lock,
 } from "lucide-vue-next";
+import MapComponent from "@/Components/MapComponent.vue";
+import MobileTabBar from "@/Components/MobileTabBar.vue";
+import NeonButton from "@/Components/NeonButton.vue";
+import Modal from "@/Components/Modal.vue";
 import { cn } from "@/lib/utils";
+import gsap from "gsap";
+import confetti from "canvas-confetti";
+import SiteLayout from "@/Layouts/SiteLayout.vue";
 
 const props = defineProps({
     city: Object,
@@ -219,34 +218,64 @@ const handleUseHint = () => {
 };
 
 const verifyPosition = () => {
-    if (isNearLocation.value && currentTarget.value) {
-        isPaused.value = true; // Arrête le chrono dès la validation du lieu
-        showGameToast("Position confirmée !", "success");
-        setTimeout(() => {
-            selectedLocation.value = currentTarget.value;
-            riddleType.value = "site";
-            const locWithEnigmas = props.locations.find(
-                (l) => l.id === selectedLocation.value.id,
-            );
-            const enigmas = locWithEnigmas?.enigmas || [];
-            currentRiddle.value =
-                enigmas.find((e) => e.is_site_specific) || enigmas[0];
+    if (!userPosition.value || !currentTarget.value) return;
 
-            if (currentRiddle.value?.questions?.length > 0) {
-                startQuestionnaire();
-            } else {
-                showRiddleModal.value = true;
-            }
-        }, 800);
-    } else {
-        const distMsg =
-            distanceToClosest.value !== "---"
-                ? ` (${distanceToClosest.value})`
-                : "";
-        showGameToast(
-            `Signal trop faible. Rapprochez-vous du point cible.${distMsg}`,
-            "warning",
+    if (isNearLocation.value) {
+        // Animation de Victoire / Position Confirmée
+        confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ["#0070ff", "#00f2ff", "#ffffff"],
+        });
+
+        gsap.to(".radar-circle", {
+            scale: 1.2,
+            opacity: 0,
+            duration: 0.5,
+            ease: "power2.out",
+        });
+
+        isPaused.value = true;
+        router.post(
+            route("player.unlock-location", currentTarget.value.id),
+            {},
+            {
+                onSuccess: (page) => {
+                    const session = page.props.currentSession;
+                    if (session.status === "completed") {
+                        showSuccessModal.value = true;
+                    } else {
+                        // On passe au questionnaire (Bonus)
+                        selectedLocation.value = currentTarget.value;
+                        currentRiddle.value = currentTarget.value.enigmas.find(
+                            (e) => e.is_site_specific,
+                        );
+                        if (currentRiddle.value?.questions?.length > 0) {
+                            isQuestionnaireActive.value = true;
+                            currentQuestionIndex.value = 0;
+                            questionnaireAnswers.value = [];
+                            showRiddleModal.value = true;
+                            
+                            // Animation d'entrée du questionnaire
+                            nextTick(() => {
+                                gsap.from(".question-card", {
+                                    y: 50,
+                                    opacity: 0,
+                                    duration: 0.8,
+                                    ease: "back.out(1.7)"
+                                });
+                            });
+                        } else {
+                            showSuccessModal.value = true;
+                        }
+                    }
+                },
+            },
         );
+    } else {
+        totalErrors.value++;
+        showGameToast("Vous n'êtes pas encore sur le lieu exact.", "error");
     }
 };
 
@@ -258,36 +287,40 @@ const startQuestionnaire = () => {
     showRiddleModal.value = true;
 };
 
+const selectedOption = ref(null);
+
 const selectQuestionOption = (option) => {
-    if (questionnaireAnswers.value[currentQuestionIndex.value]) return;
-
-    questionnaireAnswers.value[currentQuestionIndex.value] = option;
-
-    if (option.is_correct) {
-        if (
-            currentQuestionIndex.value <
-            currentRiddle.value.questions.length - 1
-        ) {
-            setTimeout(() => {
-                currentQuestionIndex.value++;
-            }, 1000);
-        } else {
-            handleSuccess();
-        }
-    } else {
+    if (selectedOption.value) return; // Empêche de changer après sélection
+    selectedOption.value = option;
+    
+    if (!option.is_correct) {
         totalErrors.value++;
         showGameToast("Mauvaise réponse !", "error");
-        // On passe quand même à la suivante pour la logique de quiz
-        if (
-            currentQuestionIndex.value <
-            currentRiddle.value.questions.length - 1
-        ) {
-            setTimeout(() => {
-                currentQuestionIndex.value++;
-            }, 1000);
-        } else {
-            handleSuccess();
-        }
+    } else {
+        showGameToast("Bien joué !", "success");
+    }
+};
+
+const nextQuestion = () => {
+    if (!selectedOption.value) return;
+    
+    questionnaireAnswers.value[currentQuestionIndex.value] = selectedOption.value;
+    selectedOption.value = null;
+
+    if (currentQuestionIndex.value < currentRiddle.value.questions.length - 1) {
+        currentQuestionIndex.value++;
+        
+        // Animation de transition
+        nextTick(() => {
+            gsap.from(".question-card", {
+                x: 30,
+                opacity: 0,
+                duration: 0.5,
+                ease: "power2.out"
+            });
+        });
+    } else {
+        handleSuccess();
     }
 };
 
@@ -647,62 +680,112 @@ const outGame = () => {
         </div>
         <MobileTabBar />
 
-        <!-- MODALS -->
-        <Modal :show="showRiddleModal" @close="showRiddleModal = false">
-            <div
-                class="p-8 bg-gaming-darker border border-electric/20 rounded-[2.5rem] max-w-lg mx-auto"
+        <!-- BONUS QUESTIONNAIRE OVERLAY -->
+        <Transition name="fade-scale">
+            <div 
+                v-if="showRiddleModal" 
+                class="fixed inset-0 z-[150] bg-gaming-dark/95 backdrop-blur-3xl flex flex-col items-center justify-center p-6"
             >
-                <h2>Félicitaion d'avoir gagner la partie. Voici des bonus pour
-                vous</h2>
-                <div v-if="isQuestionnaireActive" class="space-y-6">
-                    <div
-                        class="text-[10px] text-electric font-black uppercase tracking-widest"
-                    >
-                        Question {{ currentQuestionIndex + 1 }} /
-                        {{ currentRiddle?.questions?.length }}
+                <!-- Decorative background elements -->
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-electric to-transparent opacity-50"></div>
+                <div class="absolute -top-20 -right-20 w-80 h-80 bg-electric/10 rounded-full blur-[100px]"></div>
+                
+                <div class="w-full max-w-2xl space-y-8 relative">
+                    <!-- Progress Bar -->
+                    <div v-if="isQuestionnaireActive" class="space-y-4">
+                        <div class="flex justify-between items-end">
+                            <div class="space-y-1">
+                                <div class="text-[10px] text-electric font-black uppercase tracking-[0.4em]">Mission Bonus</div>
+                                <h2 class="text-3xl font-display text-white uppercase italic font-black tracking-tighter">Exploration <span class="text-white/40">Data</span></h2>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Progression</div>
+                                <div class="text-xl font-display text-white">{{ currentQuestionIndex + 1 }} / {{ currentRiddle?.questions?.length }}</div>
+                            </div>
+                        </div>
+                        <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/10 p-0.5">
+                            <div 
+                                class="h-full bg-electric rounded-full shadow-neon transition-all duration-700 ease-out"
+                                :style="{ width: `${((currentQuestionIndex + 1) / currentRiddle?.questions?.length) * 100}%` }"
+                            ></div>
+                        </div>
                     </div>
-                    <div
-                        class="p-6 rounded-3xl bg-white/5 border border-white/10 text-lg text-white font-display"
-                    >
-                        {{
-                            currentRiddle?.questions?.[currentQuestionIndex]
-                                ?.question_text
-                        }}
+
+                    <!-- Question Card -->
+                    <div v-if="isQuestionnaireActive" class="question-card space-y-6">
+                        <div class="glass-strong p-8 md:p-12 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group">
+                            <div class="absolute -top-10 -left-10 h-32 w-32 bg-electric/5 rounded-full blur-3xl group-hover:bg-electric/10 transition-colors"></div>
+                            
+                            <div class="relative z-10 flex gap-6 items-start">
+                                <div class="h-14 w-14 rounded-2xl bg-electric/10 border border-electric/20 flex items-center justify-center shrink-0">
+                                    <HelpCircle class="h-7 w-7 text-electric" />
+                                </div>
+                                <div class="text-xl md:text-2xl font-display text-white leading-tight uppercase italic font-black">
+                                    {{ currentRiddle?.questions?.[currentQuestionIndex]?.question_text }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Options Grid -->
+                        <div class="grid gap-4">
+                            <button
+                                v-for="(option, idx) in currentRiddle?.questions?.[currentQuestionIndex]?.options"
+                                :key="idx"
+                                @click="selectQuestionOption(option)"
+                                :disabled="selectedOption !== null"
+                                :class="cn(
+                                    'w-full p-6 rounded-2xl border transition-all duration-300 flex items-center justify-between group',
+                                    selectedOption === option 
+                                        ? (option.is_correct ? 'bg-success/20 border-success shadow-neon-success' : 'bg-destructive/20 border-destructive shadow-neon-error')
+                                        : (selectedOption && option.is_correct ? 'bg-success/10 border-success/50' : 'bg-white/5 border-white/10 hover:border-electric/50 hover:bg-white/10')
+                                )"
+                            >
+                                <span :class="cn('text-sm font-bold uppercase tracking-wider', selectedOption === option ? 'text-white' : 'text-white/60')">
+                                    {{ option.option_text }}
+                                </span>
+                                <div v-if="selectedOption === option" class="h-6 w-6 rounded-full flex items-center justify-center">
+                                    <CheckCircle2 v-if="option.is_correct" class="h-5 w-5 text-success" />
+                                    <X v-else class="h-5 w-5 text-destructive" />
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Next Action -->
+                        <div class="flex justify-end pt-4">
+                            <NeonButton 
+                                v-if="selectedOption"
+                                @click="nextQuestion"
+                                size="xl"
+                                class="px-10 group"
+                            >
+                                {{ currentQuestionIndex < currentRiddle.questions.length - 1 ? 'QUESTION SUIVANTE' : 'TERMINER LA MISSION' }}
+                                <ArrowRight class="ml-2 h-5 w-5 group-hover:translate-x-2 transition-transform" />
+                            </NeonButton>
+                        </div>
                     </div>
-                    <div class="grid gap-3">
-                        <button
-                            v-for="(option, idx) in currentRiddle?.questions?.[
-                                currentQuestionIndex
-                            ]?.options"
-                            :key="idx"
-                            @click="selectQuestionOption(option)"
-                            class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-electric transition-all text-left"
-                        >
-                            {{ option.option_text }}
-                        </button>
+
+                    <!-- Riddle Mode (Fallback/Legacy if no questions) -->
+                    <div v-else class="space-y-6 text-center">
+                        <div class="h-20 w-20 bg-electric/10 rounded-[2rem] border border-electric/20 flex items-center justify-center mx-auto mb-8 shadow-neon shadow-electric/10">
+                            <Brain class="h-10 w-10 text-electric" />
+                        </div>
+                        <h2 class="font-display text-4xl text-white uppercase italic font-black mb-2">{{ selectedLocation?.display_name }}</h2>
+                        <p class="text-white/50 italic mb-10 leading-relaxed text-lg max-w-lg mx-auto">
+                            "{{ currentRiddle?.content }}"
+                        </p>
+                        <div class="relative max-w-md mx-auto">
+                            <input
+                                v-model="riddleAnswer"
+                                @keyup.enter="submitRiddle"
+                                placeholder="DÉCRYPTEZ LE SECRET..."
+                                class="w-full h-16 rounded-2xl bg-white/5 border border-white/10 px-8 text-white outline-none focus:border-electric transition-all text-center tracking-widest font-black placeholder:text-white/20"
+                            />
+                        </div>
+                        <NeonButton size="xl" class="w-full max-w-md mt-6" @click="submitRiddle">VALIDER LA RÉPONSE</NeonButton>
                     </div>
-                </div>
-                <div v-else class="space-y-6">
-                    <h2 class="font-display text-2xl">
-                        {{ selectedLocation?.display_name }}
-                    </h2>
-                    <p
-                        class="p-6 rounded-3xl bg-white/5 border border-white/10 italic text-foreground/90 leading-relaxed"
-                    >
-                        "{{ currentRiddle?.content }}"
-                    </p>
-                    <input
-                        v-model="riddleAnswer"
-                        @keyup.enter="submitRiddle"
-                        placeholder="Votre réponse..."
-                        class="w-full h-14 rounded-2xl bg-gaming-darker border border-electric/30 px-6 text-white outline-none focus:border-electric transition-all"
-                    />
-                    <NeonButton class="w-full" @click="submitRiddle"
-                        >Soumettre</NeonButton
-                    >
                 </div>
             </div>
-        </Modal>
+        </Transition>
 
         <Modal :show="showSuccessModal" @close="showSuccessModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-2xl z-[100]">
     <div class="relative z-[110] p-10 bg-gaming-darker border border-electric rounded-[3rem] text-center max-w-sm mx-auto"
@@ -855,5 +938,19 @@ const outGame = () => {
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
+}
+
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.fade-scale-enter-from,
+.fade-scale-leave-to {
+    opacity: 0;
+    transform: scale(0.9);
+}
+
+.drop-shadow-neon {
+    filter: drop-shadow(0 0 8px rgba(0, 112, 255, 0.5));
 }
 </style>
