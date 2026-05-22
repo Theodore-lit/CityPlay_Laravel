@@ -221,14 +221,6 @@ const verifyPosition = () => {
     if (!userPosition.value || !currentTarget.value) return;
 
     if (isNearLocation.value) {
-        // Animation de Victoire / Position Confirmée
-        confetti({
-            particleCount: 150,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ["#0070ff", "#00f2ff", "#ffffff"],
-        });
-
         gsap.to(".radar-circle", {
             scale: 1.2,
             opacity: 0,
@@ -243,6 +235,18 @@ const verifyPosition = () => {
             {
                 onSuccess: (page) => {
                     const session = page.props.currentSession;
+                    
+                    // On attend un peu que le loader disparaisse pour lancer les confettis
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 150,
+                            spread: 70,
+                            origin: { y: 0.6 },
+                            zIndex: 10000, // Au-dessus du loader s'il reste
+                            colors: ["#0070ff", "#00f2ff", "#ffffff"],
+                        });
+                    }, 500);
+
                     if (session.status === "completed") {
                         showSuccessModal.value = true;
                     } else {
@@ -494,7 +498,7 @@ const outGame = () => {
                 >
                     <div class="w-full aspect-square max-w-[400px] relative">
                         <div
-                            class="absolute inset-0 rounded-full border-2 border-electric/20 overflow-hidden shadow-neon-blue-lg bg-white"
+                            class="absolute inset-0 rounded-full border-2 border-electric/20 overflow-hidden shadow-neon-blue-lg bg-gaming-darker"
                         >
                             <MapComponent
                             v-if="!isAnyOverlayActive"
@@ -589,7 +593,7 @@ const outGame = () => {
             </div>
 
             <!-- MODE CLASSIQUE -->
-            <div
+            <!-- <div
                 v-else
                 class="grid gap-4 md:gap-6 lg:grid-cols-12 flex-1 min-h-0"
             >
@@ -651,7 +655,7 @@ const outGame = () => {
                         </div>
                     </div>
                 </aside>
-            </div>
+            </div> -->
 
             <!-- TOAST -->
             <Transition name="toast">
@@ -787,70 +791,80 @@ const outGame = () => {
             </div>
         </Transition>
 
-        <Modal :show="showSuccessModal" @close="showSuccessModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-2xl z-[100]">
-    <div class="relative z-[110] p-10 bg-gaming-darker border border-electric rounded-[3rem] text-center max-w-sm mx-auto"
+        <!-- VICTORY / SUCCESS OVERLAY -->
+        <Transition name="fade-scale">
+            <div 
+                v-if="showSuccessModal" 
+                class="fixed inset-0 z-[160] bg-gaming-dark/95 backdrop-blur-3xl flex flex-col items-center justify-center p-6 overflow-hidden"
             >
-           
-                <Trophy class="h-16 w-16 text-electric mx-auto mb-6" />
-                <h2 class="font-display text-3xl mb-2 text-white">
-                    FÉLICITATIONS !
-                </h2>
-                <div class="flex justify-center gap-2 mb-8">
-                    <Star
-                        v-for="s in 3"
-                        :key="s"
-                        :class="
-                            cn(
-                                'h-8 w-8',
-                                s <= earnedStars
-                                    ? 'text-yellow-400 fill-yellow-400'
-                                    : 'text-white/10',
-                            )
-                        "
-                    />
-                </div>
-                <div class="grid grid-cols-2 gap-4 mb-8">
-                    <div
-                        class="p-4 rounded-2xl bg-white/5 border border-white/10"
-                    >
-                        <div
-                            class="text-[10px] text-muted-foreground uppercase"
-                        >
-                            XP GAGNÉS
+                <!-- Victory Glow -->
+                <div class="absolute inset-0 bg-gradient-to-b from-electric/20 via-transparent to-success/10 pointer-events-none"></div>
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-electric/10 rounded-full blur-[120px] animate-pulse"></div>
+
+                <div class="w-full max-w-lg relative z-10 text-center space-y-10">
+                    <!-- Icon & Title -->
+                    <div class="space-y-4">
+                        <div class="relative inline-block">
+                            <div class="absolute inset-0 bg-electric blur-2xl opacity-30 animate-pulse"></div>
+                            <div class="relative h-24 w-24 rounded-[2rem] bg-electric/10 border-2 border-electric flex items-center justify-center mx-auto shadow-neon">
+                                <Trophy class="h-12 w-12 text-electric" />
+                            </div>
                         </div>
-                        <div class="text-xl font-display text-electric">
-                            +150 PX
+                        <h2 class="font-display text-5xl md:text-6xl text-white uppercase italic font-black tracking-tighter leading-none">
+                            Lieu <span class="text-electric">Sécurisé !</span>
+                        </h2>
+                        <div v-if="selectedLocation" class="space-y-2 animate-fade-up">
+                            <h3 class="text-2xl font-display text-white uppercase tracking-tight">{{ selectedLocation.name }}</h3>
+                            <p class="text-sm text-white/60 italic leading-relaxed max-w-sm mx-auto">" {{ selectedLocation.description }} "</p>
+                        </div>
+                        <p v-else class="text-white/40 font-black uppercase tracking-[0.4em] text-xs">Mission accomplie avec succès</p>
+                    </div>
+
+                    <!-- Stars Animation -->
+                    <div class="flex justify-center gap-4">
+                        <Star
+                            v-for="s in 3"
+                            :key="s"
+                            :class="cn(
+                                'h-12 w-12 transition-all duration-1000 delay-[500ms]',
+                                s <= earnedStars ? 'text-warning fill-warning drop-shadow-neon scale-110' : 'text-white/5 opacity-20'
+                            )"
+                        />
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="glass-strong p-6 rounded-3xl border border-white/10 space-y-1">
+                            <div class="text-[10px] text-white/40 font-black uppercase tracking-widest">XP GAGNÉS</div>
+                            <div class="text-3xl font-display text-electric">+150 PX</div>
+                        </div>
+                        <div class="glass-strong p-6 rounded-3xl border border-white/10 space-y-1">
+                            <div class="text-[10px] text-white/40 font-black uppercase tracking-widest">DURÉE</div>
+                            <div class="text-3xl font-display text-success">{{ formatTime(gameTime) }}</div>
                         </div>
                     </div>
-                    <div
-                        class="p-4 rounded-2xl bg-white/5 border border-white/10"
-                    >
-                        <div
-                            class="text-[10px] text-muted-foreground uppercase"
+
+                    <!-- Action Button -->
+                    <div class="space-y-6 pt-4">
+                        <NeonButton
+                            size="xl"
+                            class="w-full h-20 rounded-[2rem] text-lg tracking-[0.3em]"
+                            @click="goBackToLobby(); showSuccessModal = false"
                         >
-                            DURÉE
-                        </div>
-                        <div class="text-xl font-display text-success">
-                            {{ formatTime(gameTime) }}
-                        </div>
+                            RETOUR AU LOBBY
+                        </NeonButton>
+                        
+                        <!-- <button
+                            @click="goBackToLobby"
+                            class="group flex items-center justify-center gap-2 mx-auto text-white/30 hover:text-electric transition-colors uppercase font-black tracking-widest text-[10px]"
+                        >
+                            RETOUR AU LOBBY
+                            <ArrowRight class="h-4 w-4 group-hover:translate-x-2 transition-transform" />
+                        </button> -->
                     </div>
-                </div>
-                <div class="flex flex-col gap-3">
-                    <NeonButton
-                        size="xl"
-                        class="w-full rounded-2xl"
-                        @click="resumeGame(); showSuccessModal = false"
-                        >CONTINUER</NeonButton
-                    >
-                    <button
-                        @click="goBackToLobby"
-                        class="text-xs text-electric font-black uppercase tracking-[0.2em] hover:text-white transition-colors"
-                    >
-                        REJOUER / LOBBY
-                    </button>
                 </div>
             </div>
-        </Modal>
+        </Transition>
 
         <!-- Modal Indice -->
 <div v-if="showHintModal" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
