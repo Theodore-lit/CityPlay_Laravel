@@ -15,7 +15,9 @@ class EnigmeQuestionSeeder extends Seeder
     public function run(): void
     {
         // On nettoie la table pour éviter les doublons en cas de "db:seed" multiple
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
         DB::table('enigma_questions')->truncate();
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
 
         // Le même mapping pour cibler précisément les bonnes énigmes
         $questionsData = [

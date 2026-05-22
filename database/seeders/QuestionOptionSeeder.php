@@ -16,7 +16,9 @@ class QuestionOptionSeeder extends Seeder
     public function run(): void
     {
         // Nettoyage de la table avant insertion pour éviter les doublons
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
         DB::table('enigma_question_options')->truncate();
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
 
         // Mapping complet des questions associées à leurs options de réponse
         $optionsData = [
