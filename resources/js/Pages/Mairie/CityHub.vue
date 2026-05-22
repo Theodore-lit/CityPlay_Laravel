@@ -8,6 +8,7 @@ import {
 
 const props = defineProps({
     city: Object,
+    auth: Object,
 });
 
 const menus = [
@@ -56,7 +57,7 @@ const menus = [
     <div class="mx-auto max-w-7xl px-4 sm:px-6 py-10 pb-28 md:pb-12">
       <!-- Header -->
       <div class="flex items-center gap-6 mb-12">
-        <Link :href="route('mairie.dashboard')" class="h-12 w-12 rounded-2xl glass grid place-items-center text-electric hover:scale-110 transition-all border border-electric/20">
+        <Link v-if="auth.user.role == 'super_admin'" :href="route('admin.dashboard')" class="h-12 w-12 rounded-2xl glass grid place-items-center text-electric hover:scale-110 transition-all border border-electric/20">
           <ChevronLeft class="h-6 w-6" />
         </Link>
         <div>

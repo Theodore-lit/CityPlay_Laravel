@@ -43,7 +43,16 @@ class Location extends Model
     protected $appends = [
         'cover_image',
         'image_urls',
+        'image_url',
     ];
+
+    /**
+     * Alias pour cover_image pour assurer la compatibilité avec le composant AppImage
+     */
+    protected function imageUrl(): Attribute
+    {
+        return $this->coverImage();
+    }
 
     /**
      * Accesseur pour l'image de couverture du lieu.
@@ -83,6 +92,14 @@ class Location extends Model
     public function quizzes()
     {
         return $this->hasMany(Quiz::class);
+    }
+
+    /**
+     * Relation : Un lieu possède plusieurs images.
+     */
+    public function locationImages()
+    {
+        return $this->hasMany(LocationImage::class);
     }
 
     /**

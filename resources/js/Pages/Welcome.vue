@@ -71,10 +71,10 @@ const testimonials = [
           </p>
 
           <div class="mt-8 flex flex-wrap gap-4">
-            <NeonButton :href="auth.user ? route('player.modes') : route('register')" size="lg" class="shadow-lg shadow-electric/20">
+            <NeonButton :href="auth.user ? auth.user.role === 'super_admin' ? route('admin.dashboard') : auth.user.role === 'mairie' ? route('mairie.dashboard') : route('player.leaderboard') : route('login')" size="lg" class="shadow-lg shadow-electric/20">
               Explorer le Bénin <ArrowRight class="ml-2 h-4 w-4" />
             </NeonButton>
-            <NeonButton :href="route('player.cities')" variant="outline" size="lg" class="border-electric/30 text-electric/90">
+            <NeonButton :href="auth.user ? auth.user.role === 'super_admin' ? route('admin.dashboard') : auth.user.role === 'mairie' ? route('mairie.dashboard') : route('player.modes') : route('login')" variant="outline" size="lg" class="border-electric/30 text-electric/90">
               <Compass class="mr-2 h-4 w-4" /> Destinations
             </NeonButton>
           </div>

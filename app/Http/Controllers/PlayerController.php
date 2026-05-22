@@ -243,11 +243,27 @@ class PlayerController extends Controller
     }
 
     /**
-     * Affiche la page des récompenses (en cours de développement).
+     * Affiche la page des récompenses (Lots gagnés).
      */
     public function rewards()
     {
-        return Inertia::render('Player/Rewards');
+        return redirect()->route('player.rewards.index');
+    }
+
+    /**
+     * Affiche le Hub (Settings/Raccourcis) du joueur.
+     */
+    public function hub()
+    {
+        return Inertia::render('Player/Hub');
+    }
+
+    /**
+     * Affiche la boutique (Shop).
+     */
+    public function shop()
+    {
+        return Inertia::render('Player/Shop');
     }
 
     /**
@@ -473,7 +489,7 @@ class PlayerController extends Controller
 
     /**
      * Initialise le Lobby de l'explorateur en filtrant les énigmes par distance et difficulté.
-     */
+     */  // Theodore 
     public function startSoloQuest(Request $request, City $city)
     {
         $user = auth()->user();
@@ -489,11 +505,20 @@ class PlayerController extends Controller
             ->first();
 
         // Filtrage des lieux ayant des énigmes correspondant à la difficulté
-        $availableLocations = $city->locations()->whereHas('enigmas', function($q) use ($difficulty) {
-            $q->where('difficulty', $difficulty);
-        })->with(['enigmas' => function($q) use ($difficulty) {
-            $q->where('difficulty', $difficulty);
-        }])->get();
+        $availableLocations = $city->locations()
+            ->whereHas('enigmas', function($q) use ($difficulty) {
+                $q->where('difficulty', $difficulty);
+            })
+            ->with([
+                'enigmas' => function($q) use ($difficulty) {
+                    $q->where('difficulty', $difficulty);
+                },
+                'locationImages',
+                'userProgress' => function($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                }
+            ])
+            ->get();
 
         // Filtrage géographique basé sur le mode de transport
         if ($lat && $lng) {
@@ -531,6 +556,7 @@ class PlayerController extends Controller
         $difficulty = $request->input('difficulty', 'medium');
 
         $location = \App\Models\Location::findOrFail($locationId);
+        
 
         // Création de la session de jeu
         $session = \App\Models\GameSession::updateOrCreate(

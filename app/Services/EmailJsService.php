@@ -4,6 +4,8 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OTPMail;
 
 class EmailJsService
 {
@@ -21,7 +23,7 @@ class EmailJsService
     }
 
     /**
-     * Send an OTP email via EmailJS REST API.
+     * Send an OTP email via Laravel Mail or EmailJS.
      *
      * @param string $toEmail
      * @param string $toName
@@ -33,9 +35,16 @@ class EmailJsService
         // Toujours loguer l'OTP en local pour le développement
         Log::info("CODE OTP pour $toEmail ($toName) : $otpCode");
 
-        // Si les identifiants ne sont pas configurés, on s'arrête là sans erreur
+        // Tenter l'envoi via Laravel Mail (recommandé pour SMTP/Mailtrap)
+        try {
+            Mail::to($toEmail)->send(new OTPMail($toName, $otpCode));
+            Log::info("OTP envoyé avec succès via Laravel Mail à $toEmail");
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'envoi via Laravel Mail : " . $e->getMessage());
+        }
+
+        // Si EmailJS est configuré, on tente aussi via leur API
         if (!$this->serviceId || !$this->publicKey || $this->serviceId === 'service_id') {
-            Log::warning('EmailJS n\'est pas configuré. Le code OTP a été envoyé uniquement dans les logs.');
             return true;
         }
 
@@ -54,20 +63,15 @@ class EmailJsService
             ]);
 
             if ($response->successful()) {
+                Log::info("OTP envoyé via EmailJS à $toEmail");
                 return true;
             }
 
-            Log::error('EmailJS Error Details', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-            return false;
+            Log::error('EmailJS API Error', ['status' => $response->status(), 'body' => $response->body()]);
         } catch (\Exception $e) {
-            Log::error('EmailJS Exception', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return false;
+            Log::error("EmailJS Connection Error: " . $e->getMessage());
         }
+
+        return true;
     }
 }

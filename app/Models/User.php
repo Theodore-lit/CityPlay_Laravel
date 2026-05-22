@@ -89,4 +89,22 @@ class User extends Authenticatable
     {
         return $this->hasMany(QuizResult::class);
     }
+
+    /**
+     * Compétitions auxquelles l'utilisateur participe.
+     */
+    public function competitions()
+    {
+        return $this->belongsToMany(Competition::class, 'competition_user')
+            ->withPivot(['current_amount', 'is_winner', 'reward_claimed'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Lots (prizes) gagnés par l'utilisateur.
+     */
+    public function prizes()
+    {
+        return $this->hasMany(UserPrize::class);
+    }
 }

@@ -15,14 +15,14 @@ class MassiveQuizSeeder extends Seeder
 
         foreach ($cities as $city) {
             // Créer 30 quiz par ville
-            for ($i = 1; $i <= 30; $i++) {
+            for ($i = 1; $i <= 5; $i++) {
                 $quiz = Quiz::create([
                     'city_id' => $city->id,
                     'title' => "Défi {$city->name} #{$i}",
                     'description' => "Testez vos connaissances sur l'histoire et la culture de {$city->name}. Défi n°{$i}.",
                     'category' => $this->getRandomCategory(),
-                    'xp_reward' => rand(150, 500),
-                    'time_limit' => rand(30, 90),
+                    'xp_reward' =>100,
+                    'time_limit' => 30,
                 ]);
 
                 // Chaque quiz a 5 questions

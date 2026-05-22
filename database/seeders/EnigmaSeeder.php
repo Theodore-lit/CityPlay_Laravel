@@ -5,131 +5,246 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Enigma;
 use App\Models\Location;
-use App\Models\EnigmaResponse;
 
 class EnigmaSeeder extends Seeder
 {
     public function run(): void
     {
+        // On récupère tous les lieux créés par LocationSeeder
         $locations = Location::all();
 
-        // Mapping des énigmes par lieu
         $enigmaData = [
-            'Porte du Non-Retour' => [
+            // COTONOU
+            'La Statue de l\'Amazone' => [
                 'easy' => [
-                    'content' => "Je me dresse face à l'immensité bleue, là où le voyage commençait sans espoir de retour. Que suis-je ?",
-                    'answer' => "Mémorial",
-                    'indices' => ["Un monument pour se souvenir.", "M _ _ _ _ _ _ L"],
+                    'content' => "Je suis la fière guerrière de bronze qui veille sur le boulevard de la Marina.",
+                    'answer' => "Amazone",
+                    'indices' => ["Je mesure 30m de haut.", "Symbole du courage féminin."],
                 ],
                 'medium' => [
-                    'content' => "Combien de piliers soutiennent ma structure principale, symbolisant les âmes parties vers l'inconnu ?",
-                    'answer' => "Deux",
-                    'indices' => ["Regardez les grandes colonnes.", "D _ _ X"],
+                    'content' => "Dos à la mer, je symbolise le 'Bénin debout' et rends hommage aux Agodjié.",
+                    'answer' => "Agodjié",
+                    'indices' => ["Inaugurée en 2022.", "Je porte une lance et un fusil."],
                 ],
                 'hard' => [
-                    'content' => "Sur mon arche, des silhouettes marchent enchaînées. Vers quel point cardinal regardent-elles ?",
-                    'answer' => "Ouest",
-                    'indices' => ["La direction du soleil couchant.", "O _ _ _ T"],
+                    'content' => "Fruit de l'artiste Li Xiangqun, mon socle de granit domine le nouveau paysage côtier.",
+                    'answer' => "Li Xiangqun",
+                    'indices' => ["Je suis le plus grand monument du pays.", "Je représente l'héroïsme national."],
                 ],
                 'site' => [
-                    'content' => "Regardez les bas-reliefs sur les côtés. Quel animal est représenté aux pieds des captifs ?",
-                    'answer' => "Chien",
-                    'indices' => ["Un fidèle compagnon détourné.", "C _ _ _ N"],
+                    'content' => "Observez bien la statue. Quel métal compose majoritairement cette structure monumentale ?",
+                    'answer' => "Bronze",
+                    'indices' => ["Un métal qui verdit avec le temps.", "Alliage de cuivre et d'étain."],
                 ]
             ],
+            'Marché Dantokpa' => [
+                'easy' => [
+                    'content' => "Cœur battant de la ville, où l'on trouve tout, du tissu aux épices.",
+                    'answer' => "Dantokpa",
+                    'indices' => ["Au bord de la lagune.", "On y entend toutes les langues du pays."],
+                ],
+                'medium' => [
+                    'content' => "Le plus grand labyrinthe commercial du pays, entre le pont et la lagune.",
+                    'answer' => "Marché",
+                    'indices' => ["Mon nom est lié à une divinité.", "Poumon économique."],
+                ],
+                'hard' => [
+                    'content' => "Fondé en 1963, mon nom signifie 'sur le bord de la lagune de Dan'.",
+                    'answer' => "Dan",
+                    'indices' => ["Dan est le dieu serpent.", "Mon bâtiment principal a plusieurs étages."],
+                ],
+                'site' => [
+                    'content' => "Regardez vers le chenal. Quel pont célèbre relie les deux rives à proximité du marché ?",
+                    'answer' => "Ancien Pont",
+                    'indices' => ["Construit sous Hubert Maga.", "Il enjambe le chenal."],
+                ]
+            ],
+            'Place de l\'Étoile Rouge' => [
+                'easy' => [
+                    'content' => "Immense carrefour circulaire marqué par une étoile géante au centre.",
+                    'answer' => "Étoile Rouge",
+                    'indices' => ["Ma couleur est le rouge.", "Point central de la circulation."],
+                ],
+                'medium' => [
+                    'content' => "Monument révolutionnaire du PRPB, je prône l'unité nationale.",
+                    'answer' => "Révolution",
+                    'indices' => ["Construite dans les années 70.", "Kérékou l'a inaugurée."],
+                ],
+                'hard' => [
+                    'content' => "Je représente un homme tenant une arme, une houe et un livre.",
+                    'answer' => "Unité",
+                    'indices' => ["Le monument est une flèche.", "Célèbre la révolution de 1974."],
+                ],
+                'site' => [
+                    'content' => "Observez le monument central. Que tient l'homme en plus du fusil et de la houe ?",
+                    'answer' => "Un Livre",
+                    'indices' => ["Symbole de connaissance.", "Éducation pour tous."],
+                ]
+            ],
+            'Cathédrale Notre-Dame' => [
+                'easy' => [
+                    'content' => "Grande église aux rayures rouges et blanches près de l'ancien pont.",
+                    'answer' => "Cathédrale",
+                    'indices' => ["Plus célèbre église de la ville.", "Architecture colorée."],
+                ],
+                'medium' => [
+                    'content' => "Édifice du début du 20ème siècle dominant le quartier de Ganhi.",
+                    'answer' => "Ganhi",
+                    'indices' => ["Inaugurée en 1901.", "Style néo-gothique."],
+                ],
+                'hard' => [
+                    'content' => "Unique pour mes carreaux de céramique bicolores en Afrique de lhésitant.",
+                    'answer' => "Céramique",
+                    'indices' => ["Siège de l'archevêché.", "Non loin du chenal."],
+                ],
+                'site' => [
+                    'content' => "Quelles sont les deux couleurs caractéristiques de la façade ?",
+                    'answer' => "Rouge et Blanc",
+                    'indices' => ["Couleurs des briques.", "Très visible de loin."],
+                ]
+            ],
+            'Place de l\'Indépendance' => [
+                'easy' => [
+                    'content' => "Lieu de célébration de la fête nationale le 1er août.",
+                    'answer' => "Indépendance",
+                    'indices' => ["Quartier administratif.", "On y voit le Monument aux Morts."],
+                ],
+                'medium' => [
+                    'content' => "Entourée de ministères, j'abrite une flamme éternelle.",
+                    'answer' => "Flamme",
+                    'indices' => ["Centre civique de la nation.", "Lieu des défilés."],
+                ],
+                'hard' => [
+                    'content' => "Lieu symbolique où la souveraineté fut proclamée en 1960.",
+                    'answer' => "1960",
+                    'indices' => ["Hubert Maga y était.", "Cœur du pouvoir post-colonial."],
+                ],
+                'site' => [
+                    'content' => "Quel est le nom du monument central dédié aux combattants ?",
+                    'answer' => "Monument aux Morts",
+                    'indices' => ["Hommage aux soldats.", "Tombés pour la patrie."],
+                ]
+            ],
+
+            // OUIDAH
             'Temple des Pythons' => [
                 'easy' => [
-                    'content' => "Je rampe sans pattes et je suis vénéré ici comme une divinité protectrice. Qui suis-je ?",
+                    'content' => "Entrez ici pour voir des serpents sacrés qui ne mordent jamais.",
                     'answer' => "Python",
-                    'indices' => ["Un reptile sacré.", "P _ _ _ _ N"],
+                    'indices' => ["En liberté dans un temple.", "On peut les porter au cou."],
                 ],
                 'medium' => [
-                    'content' => "Face à moi se dresse une église. Quel est le nom de cette basilique qui cohabite avec le sacré ancien ?",
-                    'answer' => "Immaculée",
-                    'indices' => ["Lié à la Vierge Marie.", "I _ _ _ _ _ _ _ E"],
+                    'content' => "Face à la basilique, je suis le sanctuaire du dieu Dangbé.",
+                    'answer' => "Dangbé",
+                    'indices' => ["Reptiles vénérés.", "Lieu central du Vaudou."],
                 ],
                 'hard' => [
-                    'content' => "Dans la cour, un arbre centenaire abrite les esprits. De quelle espèce s'agit-il ?",
-                    'answer' => "Iroko",
-                    'indices' => ["Un géant de la forêt.", "I _ _ _ O"],
+                    'content' => "Ces reptiles auraient sauvé le roi Kpassè lors d'une guerre ancienne.",
+                    'answer' => "Kpassè",
+                    'indices' => ["Ils sortent la nuit en ville.", "Interdit de les tuer."],
                 ],
                 'site' => [
-                    'content' => "Entrez dans le sanctuaire. Combien de pythons pouvez-vous compter sur le premier muret à gauche ?",
-                    'answer' => "Douze",
-                    'indices' => ["Comptez bien les anneaux.", "D _ _ _ E"],
+                    'content' => "Quel édifice chrétien est situé exactement en face du temple ?",
+                    'answer' => "Basilique",
+                    'indices' => ["Signe de cohabitation religieuse.", "Église blanche et bleue."],
                 ]
             ],
-            'Place de l\'Amazone' => [
+            'Forêt Sacrée de Kpassè' => [
                 'easy' => [
-                    'content' => "Je suis le symbole de la fierté nationale, une femme guerrière haute de plusieurs mètres. Où suis-je ?",
-                    'answer' => "Cotonou",
-                    'indices' => ["La capitale économique.", "C _ _ _ _ _ U"],
+                    'content' => "Parc de statues mystiques et d'arbres géants où un roi a disparu.",
+                    'answer' => "Forêt Sacrée",
+                    'indices' => ["Fondateur de la ville.", "Divinités sculptées."],
                 ],
                 'medium' => [
-                    'content' => "Quelle arme est tenue fermement par la main droite de la statue géante ?",
-                    'answer' => "Fusil",
-                    'indices' => ["Une arme à feu ancienne.", "F _ _ _ L"],
+                    'content' => "Lieu où le premier roi de Ouidah s'est transformé en arbre.",
+                    'answer' => "Arbre",
+                    'indices' => ["À l'entrée de la ville.", "Famille Houédjissou."],
                 ],
                 'hard' => [
-                    'content' => "Sous mes pieds, une inscription rend hommage aux filles du Dahomey. Quel mot qualifie leur bravoure ?",
-                    'answer' => "Héroïque",
-                    'indices' => ["Digne d'une légende.", "H _ _ _ _ _ _ E"],
+                    'content' => "Mes statues d'acier racontent le panthéon : Legba, Gu et Lissa.",
+                    'answer' => "Panthéon",
+                    'indices' => ["Arbres centenaires.", "Domaine de l'invisible."],
                 ],
                 'site' => [
-                    'content' => "Observez le socle du monument. Quel est le matériau principal utilisé pour le revêtement ?",
-                    'answer' => "Granit",
-                    'indices' => ["Une pierre très dure.", "G _ _ _ _ T"],
+                    'content' => "Quelle divinité de la forge et du fer est représentée par une statue d'acier ?",
+                    'answer' => "Gu",
+                    'indices' => ["Dieu du fer.", "Patron des forgerons."],
                 ]
             ],
-            'Grande Mosquée de Porto-Novo' => [
+            'Fort Portugais' => [
                 'easy' => [
-                    'content' => "On dirait une église du Brésil, mais je suis un lieu de prière musulman. Qui suis-je ?",
-                    'answer' => "Mosquée",
-                    'indices' => ["Lieu de culte.", "M _ _ _ _ E"],
+                    'content' => "Ancienne forteresse européenne devenue musée d'histoire.",
+                    'answer' => "Fort Portugais",
+                    'indices' => ["Nom d'un pays d'Europe.", "Canons à l'entrée."],
                 ],
                 'medium' => [
-                    'content' => "De quelle couleur vive sont peintes mes façades, rappelant le style baroque ?",
-                    'answer' => "Jaune",
-                    'indices' => ["La couleur du soleil.", "J _ _ _ E"],
+                    'content' => "Construit en 1721 (Ajuda), j'étais une enclave étrangère.",
+                    'answer' => "Portugal",
+                    'indices' => ["Enclave jusqu'en 1961.", "Reliques de la traite."],
                 ],
                 'hard' => [
-                    'content' => "Le style architectural qui m'a inspiré vient d'Amérique latine. Comment appelle-t-on ces anciens esclaves revenus au pays ?",
-                    'answer' => "Agouda",
-                    'indices' => ["Le nom de la communauté.", "A _ _ _ _ A"],
+                    'content' => "Dernier fort resté sous contrôle étranger après 1960.",
+                    'answer' => "Ajuda",
+                    'indices' => ["Annexé en 1961.", "Résidence du Chacha."],
                 ],
                 'site' => [
-                    'content' => "Comptez les fenêtres sur la façade principale du premier étage. Quel est leur nombre ?",
-                    'answer' => "Sept",
-                    'indices' => ["Un chiffre porte-bonheur.", "S _ _ T"],
+                    'content' => "Quel célèbre trafiquant brésilien, ami du roi Guézo, résidait ici ?",
+                    'answer' => "Francisco Félix de Souza",
+                    'indices' => ["Surnommé le Chacha.", "Ami du roi Guézo."],
+                ]
+            ],
+            'Porte du Non-Retour' => [
+                'easy' => [
+                    'content' => "Grand arc de triomphe sur la plage face à l'atlantique.",
+                    'answer' => "Non-Retour",
+                    'indices' => ["Mémoire des esclaves.", "Fin de la Route."],
+                ],
+                'medium' => [
+                    'content' => "Érigé par l'UNESCO en 1995 pour le départ vers les Amériques.",
+                    'answer' => "UNESCO",
+                    'indices' => ["Bas-reliefs sombres.", "Sable de Djègbadji."],
+                ],
+                'hard' => [
+                    'content' => "Lieu précis de l'embarquement sur les navires négriers.",
+                    'answer' => "Navire",
+                    'indices' => ["Mémoire internationale.", "Festival Ouidah 92."],
+                ],
+                'site' => [
+                    'content' => "Quel festival mondial de 1992 est à l'origine de l'érection de cet arc ?",
+                    'answer' => "Ouidah 92",
+                    'indices' => ["Premier festival Vaudou.", "Nommé selon l'année."],
+                ]
+            ],
+            'Basilique de Ouidah' => [
+                'easy' => [
+                    'content' => "Plus grande église de Ouidah, toute blanche et bleue.",
+                    'answer' => "Basilique",
+                    'indices' => ["Plein centre-ville.", "Près des pythons."],
+                ],
+                'medium' => [
+                    'content' => "Première basilique mineure d'Afrique de l'Ouest.",
+                    'answer' => "Mineure",
+                    'indices' => ["Missionnaires français.", "Inaugurée en 1909."],
+                ],
+                'hard' => [
+                    'content' => "Construction débutée en 1903 sur un ancien palais royal.",
+                    'answer' => "1903",
+                    'indices' => ["Dédiée à la Vierge.", "Visite de Benoît XVI."],
+                ],
+                'site' => [
+                    'content' => "Quel Pape a visité cette basilique en novembre 2011 ?",
+                    'answer' => "Benoît XVI",
+                    'indices' => ["Pape allemand.", "Prédécesseur de François."],
                 ]
             ],
         ];
 
         foreach ($locations as $location) {
-            $data = $enigmaData[$location->name] ?? [
-                'easy' => [
-                    'content' => "Je suis un lieu emblématique de {$location->name}. Trouvez-moi pour continuer l'aventure.",
-                    'answer' => "Découverte",
-                    'indices' => ["L'action de trouver.", "D _ _ _ _ _ _ _ E"],
-                ],
-                'medium' => [
-                    'content' => "Cherchez l'histoire cachée derrière les murs de {$location->name}.",
-                    'answer' => "Secret",
-                    'indices' => ["Quelque chose de caché.", "S _ _ _ _ T"],
-                ],
-                'hard' => [
-                    'content' => "La clé de ce mystère réside dans le passé glorieux de {$location->name}.",
-                    'answer' => "Héritage",
-                    'indices' => ["Ce que nous laissent nos ancêtres.", "H _ _ _ _ _ _ E"],
-                ],
-                'site' => [
-                    'content' => "Regardez autour de vous. Quelle est la couleur dominante de ce site ?",
-                    'answer' => "Rouge",
-                    'indices' => ["La couleur de la terre.", "R _ _ _ E"],
-                ]
-            ];
+            if (!isset($enigmaData[$location->name])) continue;
 
-            // 1. Énigme de déblocage (Facile)
+            $data = $enigmaData[$location->name];
+
+            // 1. Facile (Navigation)
             Enigma::updateOrCreate(
                 ['location_id' => $location->id, 'difficulty' => 'easy', 'is_site_specific' => false],
                 [
@@ -141,7 +256,7 @@ class EnigmaSeeder extends Seeder
                 ]
             );
 
-            // 2. Énigme de déblocage (Moyen)
+            // 2. Moyen (Navigation)
             Enigma::updateOrCreate(
                 ['location_id' => $location->id, 'difficulty' => 'medium', 'is_site_specific' => false],
                 [
@@ -153,7 +268,7 @@ class EnigmaSeeder extends Seeder
                 ]
             );
 
-            // 3. Énigme de déblocage (Difficile)
+            // 3. Difficile (Navigation)
             Enigma::updateOrCreate(
                 ['location_id' => $location->id, 'difficulty' => 'hard', 'is_site_specific' => false],
                 [
@@ -165,7 +280,7 @@ class EnigmaSeeder extends Seeder
                 ]
             );
 
-            // 4. Énigme SUR SITE (Analyse du lieu)
+            // 4. SUR SITE (Questions techniques)
             Enigma::updateOrCreate(
                 ['location_id' => $location->id, 'is_site_specific' => true],
                 [
@@ -175,7 +290,6 @@ class EnigmaSeeder extends Seeder
                     'reward_coins' => 100,
                     'type' => 'aventure',
                     'indices' => $data['site']['indices'],
-                    'image_path' => 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?q=80&w=800',
                 ]
             );
         }

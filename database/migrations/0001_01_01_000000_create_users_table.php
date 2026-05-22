@@ -18,7 +18,8 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('role')->default('joueur'); // super_admin, mairie, joueur
-            $table->integer('coins')->default(0);
+            $table->integer('coins')->default(100);
+            $table->integer('diamonds')->default(0); // kamal: ajout de la colonne diamant pour acheter des pass
             $table->integer('hearts')->default(3);
             $table->integer('xp')->default(0);
             $table->integer('level')->default(1);

@@ -268,13 +268,13 @@ const submitEnigma = () => {
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- City Info Header -->
                 <div
-                    class="bg-white border border-gray-100 rounded-[2.5rem] p-10 mb-12 relative overflow-hidden shadow-sm"
+                    class="bg-white/5 rounded-[2.5rem] backdrop-blur-xl border border-white/5 overflow-hidden shadow-3xl p-10 mb-12 relative"
                 >
                     <div
                         class="absolute top-0 right-0 w-96 h-96 bg-gaming-orange/5 rounded-full -mr-48 -mt-48 blur-3xl"
                     ></div>
                     
-                    <div class="relative z-10">
+                    <div class="relative z-10 ">
                         <div class="flex flex-col md:flex-row gap-10">
                             <!-- City Image Display -->
                             <div class="w-full md:w-1/3 h-64 rounded-3xl overflow-hidden shadow-md bg-gray-100 border border-gray-100">
@@ -384,7 +384,7 @@ const submitEnigma = () => {
                     <div
                         v-for="location in city.locations"
                         :key="location.id"
-                        class="bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden group shadow-sm hover:shadow-md transition-all duration-300"
+                        class="bg-white/5 rounded-[2.5rem] backdrop-blur-xl border border-white/5 overflow-hidden shadow-3xl group hover:shadow-md transition-all duration-300"
                     >
                         <div
                             class="p-8 flex flex-col md:flex-row md:items-center justify-between gap-8 border-b border-gray-50"
