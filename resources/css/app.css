@@ -179,10 +179,14 @@ html.dark, .dark {
     backdrop-filter: blur(24px) saturate(200%);
     border: 1px solid var(--border);
   }
+
+  .backdrop-blur-3xl {
+    backdrop-filter: blur(32px);
+}
  
   .dark .glass-strong {
-    background: oklch(0.16 0.06 255 / 0.98) !important; /* 98% opaque */
-    border: 1px solid oklch(0.78 0.15 232 / 0.5) !important;
+    background: oklch(12.852% 0.03939 252.809 / 0.98) !important; /* 98% opaque */
+    border: 1px solid oklch(77.515% 0.14446 229.313 / 0.356) !important;
     box-shadow:
       0 25px 50px -12px rgba(0, 0, 0, 0.5),
       inset 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
@@ -273,5 +277,15 @@ html.dark, .dark {
     border: 2px solid var(--background);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+ 
+// theo
+ @keyframes flag-wave {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.08; }
+  50% { transform: translateY(-10px) scale(1.05); opacity: 0.12; }
+}
+
+.animate-flag-wave {
+  animation: flag-wave 8s ease-in-out infinite;
+}
  
  

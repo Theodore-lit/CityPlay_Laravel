@@ -97,9 +97,9 @@ class LocationSeeder extends Seeder
                 [
                     'description' => 'L\'Amazone, symbole de la bravoure et de la force de la femme béninoise, veille sur la cité.',
                     'category' => 'historique',
-                    'latitude' => 6.3486,
-                    'longitude' => 2.4331,
-                    'radius_meters' => 120,
+                    'latitude' => 6.3545,
+                    'longitude' => 2.4377,
+                    'radius_meters' => 200,
                     'status' => 'active',
                     'images' => ['https://images.unsplash.com/photo-1590603783930-9d93dcf99723?q=80&w=1200'],
                 ]

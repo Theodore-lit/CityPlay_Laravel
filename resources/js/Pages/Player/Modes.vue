@@ -18,7 +18,7 @@ const selectMode = (mode) => {
   <Head title="Modes de Jeu — CityPlay" />
 
   <SiteLayout>
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-12 pb-28 md:pb-12">
+    <div class="mx-auto mt-20 max-w-7xl px-4 sm:px-6 py-12 pb-28 md:pb-12">
       <div v-if="$page.props.flash?.success" class="mb-8 p-4 rounded-3xl bg-success/10 border border-success/20 text-success text-center font-display font-black tracking-widest uppercase text-xs animate-fade-up">
         {{ $page.props.flash?.success }}
       </div>

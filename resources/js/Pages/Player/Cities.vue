@@ -133,6 +133,15 @@ const mapPoints = [
       </div>
 
       <div class="mt-6 relative h-44 md:h-56 rounded-2xl glass-strong overflow-hidden border border-electric/10">
+        <!-- BENIN FLAG BACKGROUND (Animated) Theodore -->
+        <div class="absolute inset-0 flex opacity-[0.08] pointer-events-none animate-flag-wave">
+            <div class="w-[40%] h-full bg-[rgba(0,190,100,1)]"></div> <!-- Vert -->
+            <div class="w-[60%] h-full flex flex-col">
+                <div class="h-1/2 bg-[rgba(255,228,45,1)]"></div> <!-- Jaune -->
+                <div class="h-1/2 bg-[rgba(232,28,48,1)]"></div> <!-- Rouge -->
+            </div>
+        </div>
+        
         <div class="absolute inset-0 grid-bg opacity-30" />
         <div class="absolute inset-0">
           <div v-for="p in mapPoints" :key="p.label" class="absolute" :style="{ top: p.top, left: p.left }">
@@ -145,7 +154,7 @@ const mapPoints = [
         </div>
         <div class="absolute top-3 left-3 text-xs text-muted-foreground uppercase tracking-widest">RÉPUBLIQUE DU BÉNIN</div>
       </div>
-
+// Theo
       <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           v-for="(c, i) in filteredCities"
