@@ -191,7 +191,12 @@ const showGameToast = (message, type = "info") => {
 
 const togglePause = () => {
     isPaused.value = !isPaused.value;
-    pauseModal.value = !pauseModal.value;
+    pauseModal.value = isPaused.value;
+};
+
+const resumeGame = () => {
+    isPaused.value = false;
+    pauseModal.value = false;
 };
 
 const handleUseHint = () => {
@@ -337,9 +342,9 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 onMounted(() => {
+    console.log(activeEnigma.value)
     startTimer();
     updateGPS();
-    console.log(activeEnigma?.indices)
 });
 
 onUnmounted(() => {
@@ -751,7 +756,7 @@ const outGame = () => {
                     <NeonButton
                         size="xl"
                         class="w-full rounded-2xl"
-                        @click="showSuccessModal = false"
+                        @click="resumeGame(); showSuccessModal = false"
                         >CONTINUER</NeonButton
                     >
                     <button
@@ -807,7 +812,7 @@ const outGame = () => {
         <p class="text-muted-foreground mb-10">La mission est en pause</p>
 
         <button
-            @click="togglePause"
+            @click="resumeGame"
             class="w-full py-4 rounded-2xl bg-electric text-black font-display font-bold text-lg tracking-widest hover:scale-105 active:scale-95 transition-all"
         >
             REPRENDRE LA MISSION
