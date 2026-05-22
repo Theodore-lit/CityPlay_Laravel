@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
             EnigmaSeeder::class,
             QuizSeeder::class,
             MassiveQuizSeeder::class,
+            EnigmeQuestionSeeder::class,
+            QuestionOptionSeeder::class,
             TeamSeeder::class,
         ]);
 

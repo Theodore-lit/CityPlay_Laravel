@@ -32,7 +32,7 @@ class CitySeeder extends Seeder
                     'creator_id' => $admin->id,
                     'mairie_id' => $mairieCotonou->id,
                     'opening_hours' => ['start' => '07:00', 'end' => '23:00'],
-                    'image_path' => 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?auto=format&fit=crop&q=80&w=1200',
+                    'image_path' => 'images/cities/city-cotonou.jpg',
                 ]
             );
         }
@@ -49,7 +49,7 @@ class CitySeeder extends Seeder
                     'creator_id' => $admin->id,
                     'mairie_id' => $mairieOuidah->id,
                     'opening_hours' => ['start' => '08:00', 'end' => '19:00'],
-                    'image_path' => 'https://images.unsplash.com/photo-1590603783180-8736a6552912?auto=format&fit=crop&q=80&w=1200',
+                    'image_path' => 'images/cities/city-ouidah.jpg',
                 ]
             );
         }
@@ -66,7 +66,7 @@ class CitySeeder extends Seeder
                     'creator_id' => $admin->id,
                     'mairie_id' => $mairiePorto->id,
                     'opening_hours' => ['start' => '08:00', 'end' => '20:00'],
-                    'image_path' => 'https://images.unsplash.com/photo-1572522085350-997f80598715?auto=format&fit=crop&q=80&w=1200',
+                    'image_path' => 'images/cities/city-porto-novo.jpg',
                 ]
             );
         }
@@ -83,7 +83,7 @@ class CitySeeder extends Seeder
                     'creator_id' => $admin->id,
                     'mairie_id' => $mairieParakou->id,
                     'opening_hours' => ['start' => '08:00', 'end' => '21:00'],
-                    'image_path' => 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?q=80&w=1200',
+                    'image_path' => 'images/cities/city-parakou.jpg',
                 ]
             );
         }
@@ -100,7 +100,7 @@ class CitySeeder extends Seeder
                     'creator_id' => $admin->id,
                     'mairie_id' => $mairieAbomey->id,
                     'opening_hours' => ['start' => '08:00', 'end' => '19:00'],
-                    'image_path' => 'https://images.unsplash.com/photo-1590603783180-8736a6552912?q=80&w=1200',
+                    'image_path' => 'images/cities/city-abomey.jpg',
                 ]
             );
         }

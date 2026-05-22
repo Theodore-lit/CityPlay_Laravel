@@ -161,11 +161,11 @@ const formatTime = (seconds) => {
                 :class="canPlay ? 'hover:border-electric/40' : 'opacity-60 grayscale-[0.5]'"
             >
                 <!-- Image de fond floue -->
-                <div class="absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity">
+                <div class="absolute inset-0 group-hover:opacity-20 transition-all duration-500">
                     <AppImage
                       :src="location.cover_image || location.image_urls?.[0] || location.images?.[0]"
                       fallback="/images/placeholders/location.jpg"
-                      class="w-full h-full object-cover"
+                      class="w-full h-full object-cover hover:scale-85"
                     />
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-gaming-dark via-gaming-dark/80 to-transparent" />
