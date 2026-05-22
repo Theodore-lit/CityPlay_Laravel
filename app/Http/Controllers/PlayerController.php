@@ -243,11 +243,27 @@ class PlayerController extends Controller
     }
 
     /**
-     * Affiche la page des récompenses (en cours de développement).
+     * Affiche la page des récompenses (Lots gagnés).
      */
     public function rewards()
     {
-        return Inertia::render('Player/Rewards');
+        return redirect()->route('player.rewards.index');
+    }
+
+    /**
+     * Affiche le Hub (Settings/Raccourcis) du joueur.
+     */
+    public function hub()
+    {
+        return Inertia::render('Player/Hub');
+    }
+
+    /**
+     * Affiche la boutique (Shop).
+     */
+    public function shop()
+    {
+        return Inertia::render('Player/Shop');
     }
 
     /**

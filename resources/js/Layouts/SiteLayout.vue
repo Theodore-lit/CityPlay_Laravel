@@ -1,8 +1,9 @@
 <script setup>
 import Navbar from '@/Components/Navbar.vue';
 import Footer from '@/Components/Footer.vue';
-import { ref, onMounted } from 'vue';
-import { Sun, Moon } from 'lucide-vue-next';
+import { ref, onMounted, computed } from 'vue';
+import { Sun, Moon, Settings } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
 
 const props = defineProps({
   hideFooter: {
@@ -10,6 +11,9 @@ const props = defineProps({
     default: false,
   }
 });
+
+const page = usePage();
+const user = computed(() => page.props.auth.user);
 
 const isDark = ref(true);
 
@@ -41,6 +45,16 @@ onMounted(() => {
 <template>
   <div class="min-h-screen flex flex-col transition-colors duration-500 bg-background text-foreground">
     <Navbar />
+
+    <!-- Settings Floating Button -->
+    <Link
+      v-if="user?.role === 'joueur'"
+      :href="route('player.hub')"
+      class="fixed right-6 bottom-40 md:bottom-26 z-[60] h-12 w-12 rounded-full bg-card border border-border flex items-center justify-center text-primary shadow-lg hover:scale-110 transition-all"
+      title="Paramètres & Hub"
+    >
+      <Settings class="h-5 w-5" />
+    </Link>
 
     <!-- Theme Toggle Floating Button -->
     <button

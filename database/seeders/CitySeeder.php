@@ -17,7 +17,7 @@ class CitySeeder extends Seeder
         $mairieParakou = User::where('email', 'parakou@mairie.bj')->first();
         $mairieAbomey = User::where('email', 'abomey@mairie.bj')->first();
 
-        // Récupération d'un admin par défaut pour le creator_id (au cas où)
+        // Récupération d'un admin par défaut pour le creator_id
         $admin = User::where('email', 'admin@cityplay.bj')->first() ?? User::first();
 
         // 1. Cotonou
