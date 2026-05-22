@@ -141,7 +141,7 @@ const mapPoints = [
                 <div class="h-1/2 bg-[rgba(232,28,48,1)]"></div> <!-- Rouge -->
             </div>
         </div>
-        
+
         <div class="absolute inset-0 grid-bg opacity-30" />
         <div class="absolute inset-0">
           <div v-for="p in mapPoints" :key="p.label" class="absolute" :style="{ top: p.top, left: p.left }">
@@ -154,7 +154,7 @@ const mapPoints = [
         </div>
         <div class="absolute top-3 left-3 text-xs text-muted-foreground uppercase tracking-widest">RÉPUBLIQUE DU BÉNIN</div>
       </div>
-// Theo
+
       <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           v-for="(c, i) in filteredCities"

@@ -6,10 +6,9 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    // kamal
+    // kamal Code de kamal
     /**
      * Run the migrations.
-     */     * Code de kamal
      */
     public function up(): void
     {
