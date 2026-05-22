@@ -5,117 +5,185 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Location;
 use App\Models\City;
+use App\Models\LocationImage;
+use Illuminate\Support\Facades\DB;
 
 class LocationSeeder extends Seeder
 {
     public function run(): void
     {
+        // Nettoyage pour éviter les doublons d'images
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        LocationImage::truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         $cotonou = City::where('name', 'Cotonou')->first();
         $ouidah = City::where('name', 'Ouidah')->first();
 
         // --- COTONOU ---
         if ($cotonou) {
-            $locations = [
+            $cotonouLocations = [
                 [
                     'name' => 'La Statue de l\'Amazone',
-                    'description' => 'Fière guerrière de bronze de 30m, symbole du courage féminin et hommage aux Agodjié.',
-                    'latitude' => 6.3545,
-                    'longitude' => 2.4377,
+                    'description' => 'La fière guerrière de bronze qui veille sur le boulevard de la Marina.',
                     'category' => 'historique',
-                    'images' => ['https://images.unsplash.com/photo-1590603783930-9d93dcf99723?q=80&w=1200'],
+                    'latitude' => 6.3482,
+                    'longitude' => 2.4334,
+                    'radius_meters' => 100,
+                    'status' => 'active',
+                    'images' => [
+                        'images/locations/cotonou/amazone-1.jpg',
+                        'images/locations/cotonou/amazone-2.jpg'
+                    ]
                 ],
                 [
                     'name' => 'Marché Dantokpa',
-                    'description' => 'Le plus grand marché de l\'Afrique de l\'Ouest, véritable poumon économique au bord de la lagune.',
+                    'description' => 'Cœur battant de la ville, le plus grand labyrinthe commercial du pays.',
+                    'category' => 'culture',
                     'latitude' => 6.3654,
                     'longitude' => 2.4389,
-                    'category' => 'culture',
-                    'images' => ['https://images.unsplash.com/photo-1572522085350-997f80598715?q=80&w=1200'],
+                    'radius_meters' => 100,
+                    'status' => 'active',
+                    'images' => [
+                        'images/locations/cotonou/dantokpa-1.jpg'
+                    ]
                 ],
                 [
                     'name' => 'Place de l\'Étoile Rouge',
-                    'description' => 'Monument révolutionnaire emblématique célébrant l\'unité nationale et l\'histoire politique du pays.',
+                    'description' => 'Immense carrefour circulaire marqué par une étoile géante au centre.',
+                    'category' => 'historique',
                     'latitude' => 6.3750,
                     'longitude' => 2.4110,
-                    'category' => 'historique',
-                    'images' => ['https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?q=80&w=1200'],
+                    'radius_meters' => 100,
+                    'status' => 'active',
+                    'images' => [
+                        'images/locations/cotonou/etoile-rouge-1.jpg'
+                    ]
                 ],
                 [
                     'name' => 'Cathédrale Notre-Dame',
-                    'description' => 'Célèbre église aux rayures rouges et blanches, joyau architectural néo-gothique de Cotonou.',
-                    'latitude' => 6.3551,
-                    'longitude' => 2.4338,
+                    'description' => 'Grande église aux rayures rouges et blanches près de l\'ancien pont.',
                     'category' => 'culture',
-                    'images' => ['https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?q=80&w=1200'],
+                    'latitude' => 6.3545,
+                    'longitude' => 2.4377,
+                    'radius_meters' => 100,
+                    'status' => 'active',
+                    'images' => [
+                        'images/locations/cotonou/cathedrale-1.jpg'
+                    ]
                 ],
                 [
                     'name' => 'Place de l\'Indépendance',
-                    'description' => 'Lieu historique où fut proclamée la souveraineté en 1960, abritant le Monument aux Morts.',
+                    'description' => 'Lieu de célébration de la fête nationale le 1er août.',
+                    'category' => 'historique',
                     'latitude' => 6.3536,
                     'longitude' => 2.4285,
-                    'category' => 'historique',
-                    'images' => ['https://images.unsplash.com/photo-1564507592333-c60657eaa0ae?q=80&w=1200'],
+                    'radius_meters' => 100,
+                    'status' => 'active',
+                    'images' => [
+                        'images/locations/cotonou/independance-1.jpg'
+                    ]
                 ],
             ];
 
-            foreach ($locations as $loc) {
-                Location::updateOrCreate(
+            foreach ($cotonouLocations as $loc) {
+                $images = $loc['images'] ?? [];
+                unset($loc['images']);
+
+                $location = Location::updateOrCreate(
                     ['city_id' => $cotonou->id, 'name' => $loc['name']],
-                    array_merge($loc, ['radius_meters' => 100, 'status' => 'active'])
+                    $loc
                 );
+
+                foreach ($images as $path) {
+                    LocationImage::create([
+                        'location_id' => $location->id,
+                        'image_path' => $path
+                    ]);
+                }
             }
         }
 
         // --- OUIDAH ---
         if ($ouidah) {
-            $locations = [
+            $ouidahLocations = [
                 [
                     'name' => 'Temple des Pythons',
-                    'description' => 'Sanctuaire sacré du dieu Dangbé où vivent des pythons royaux vénérés et inoffensifs.',
+                    'description' => 'Sanctuaire historique abritant des serpents sacrés en liberté.',
+                    'category' => 'mystere',
                     'latitude' => 6.3619,
                     'longitude' => 2.0850,
-                    'category' => 'mystere',
-                    'images' => ['https://images.unsplash.com/photo-1590603783180-8736a6552912?q=80&w=1200'],
+                    'radius_meters' => 100,
+                    'status' => 'active',
+                    'images' => [
+                        'images/locations/ouidah/pythons-1.jpg'
+                    ]
                 ],
                 [
                     'name' => 'Forêt Sacrée de Kpassè',
-                    'description' => 'Domaine mystique peuplé de divinités et d\'arbres centenaires, lieu de disparition du roi Kpassè.',
+                    'description' => 'Parc de statues mystiques et d\'arbres géants où un roi a disparu.',
+                    'category' => 'mystere',
                     'latitude' => 6.3575,
                     'longitude' => 2.0818,
-                    'category' => 'mystere',
-                    'images' => ['https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1200'],
+                    'radius_meters' => 100,
+                    'status' => 'active',
+                    'images' => [
+                        'images/locations/ouidah/foret-sacree-1.jpg'
+                    ]
                 ],
                 [
                     'name' => 'Fort Portugais',
-                    'description' => 'Ancienne enclave portugaise (Fort Ajuda) devenue musée d\'histoire, témoin de la traite négrière.',
+                    'description' => 'Ancienne forteresse européenne devenue musée d\'histoire.',
+                    'category' => 'historique',
                     'latitude' => 6.3631,
                     'longitude' => 2.0880,
-                    'category' => 'historique',
-                    'images' => ['https://images.unsplash.com/photo-1590603783930-9d93dcf99723?q=80&w=1200'],
+                    'radius_meters' => 100,
+                    'status' => 'active',
+                    'images' => [
+                        'images/locations/ouidah/fort-portugais-1.jpg'
+                    ]
                 ],
                 [
                     'name' => 'Porte du Non-Retour',
-                    'description' => 'Monument solennel sur la plage marquant le point de départ des navires négriers vers les Amériques.',
+                    'description' => 'Grand arc de triomphe sur la plage face à l\'atlantique, mémoire de la traite.',
+                    'category' => 'historique',
                     'latitude' => 6.3262,
                     'longitude' => 2.0833,
-                    'category' => 'historique',
-                    'images' => ['https://images.unsplash.com/photo-1590603783180-8736a6552912?q=80&w=1200'],
+                    'radius_meters' => 100,
+                    'status' => 'active',
+                    'images' => [
+                        'images/locations/ouidah/non-retour-1.jpg'
+                    ]
                 ],
                 [
                     'name' => 'Basilique de Ouidah',
-                    'description' => 'Première basilique mineure d\'Afrique de l\'Ouest, chef-d\'œuvre colonial face au Temple des Pythons.',
+                    'description' => 'Première basilique mineure d\'Afrique de l\'Ouest, toute blanche et bleue.',
+                    'category' => 'culture',
                     'latitude' => 6.3623,
                     'longitude' => 2.0847,
-                    'category' => 'culture',
-                    'images' => ['https://images.unsplash.com/photo-1572522085350-997f80598715?q=80&w=1200'],
+                    'radius_meters' => 100,
+                    'status' => 'active',
+                    'images' => [
+                        'images/locations/ouidah/basilique-1.jpg'
+                    ]
                 ],
             ];
 
-            foreach ($locations as $loc) {
-                Location::updateOrCreate(
+            foreach ($ouidahLocations as $loc) {
+                $images = $loc['images'] ?? [];
+                unset($loc['images']);
+
+                $location = Location::updateOrCreate(
                     ['city_id' => $ouidah->id, 'name' => $loc['name']],
-                    array_merge($loc, ['radius_meters' => 100, 'status' => 'active'])
+                    $loc
                 );
+
+                foreach ($images as $path) {
+                    LocationImage::create([
+                        'location_id' => $location->id,
+                        'image_path' => $path
+                    ]);
+                }
             }
         }
     }
