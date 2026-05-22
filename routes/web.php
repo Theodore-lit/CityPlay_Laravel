@@ -3,6 +3,8 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\CityEventController;
+use App\Http\Controllers\CompetitionController;
+use App\Http\Controllers\RewardsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\MairieController;
@@ -40,7 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cities', [PlayerController::class, 'cities'])->name('player.cities');
         Route::get('/modes', [PlayerController::class, 'modes'])->name('player.modes');
         Route::get('/leaderboard', [PlayerController::class, 'leaderboard'])->name('player.leaderboard');
-        Route::get('/rewards', [PlayerController::class, 'rewards'])->name('player.rewards');
+        Route::get('/rewards', [RewardsController::class, 'index'])->name('player.rewards.index');
         Route::get('/quiz/{quiz?}', [PlayerController::class, 'quiz'])->name('player.quiz');
         Route::post('/quiz/{quiz}/submit', [PlayerController::class, 'submitQuiz'])->name('player.quiz.submit');
         Route::get('/quiz/{quiz}/result', [PlayerController::class, 'quizResult'])->name('player.quiz.result');
@@ -60,11 +62,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
         Route::post('/teams/{team}/start-quest/{city}', [TeamController::class, 'startQuest'])->name('teams.start-quest');
         Route::get('/teams/{team}/join-game/{city}', [TeamController::class, 'joinGame'])->name('teams.join-game');
+
+        // Player Hub & Shop
+        Route::get('/player/competitions', [CompetitionController::class, 'playerIndex'])->name('player.competitions');
+        Route::get('/player/competitions/{competition}', [CompetitionController::class, 'show'])->name('player.competitions.show');
+        Route::post('/player/competitions/{competition}/join', [CompetitionController::class, 'join'])->name('player.competitions.join');
+        Route::post('/player/competitions/{competition}/charge', [CompetitionController::class, 'charge'])->name('player.competitions.charge');
+        
+        Route::get('/player/hub', [PlayerController::class, 'hub'])->name('player.hub');
+        Route::get('/player/shop', [PlayerController::class, 'shop'])->name('player.shop');
+        Route::get('/city/{city}/events/{event}', [CityEventController::class, 'show'])->name('mairie.events.show');
     });
 
     // --- ROUTES ADMIN & MAIRIE (COMMUNES) ---
     Route::middleware('role:mairie,super_admin')->group(function () {
-        // On ne la définit QU'UNE SEULE FOIS ici
         Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 
         Route::post('/admin/mairie-city', [AdminController::class, 'storeMairieWithCity'])->name('admin.mairie-city.store');
@@ -95,24 +106,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::patch('/mairie/city/{city}/toggle', [MairieController::class, 'toggleStatus'])->name('mairie.city.toggle');
 
-       // Mairie Event Routes ---- kamal
-    Route::get('/mairie/city/{city}/events', [CityEventController::class, 'index'])->name('mairie.cities.events');
-    Route::post('/mairie/city/{city}/events', [CityEventController::class, 'store'])->name('mairie.events.store');
-    Route::put('/mairie/events/{event}', [CityEventController::class, 'store'])->name('mairie.events.edit');
-    Route::delete('/mairie/events/{event}', [CityEventController::class, 'delete'])->name('mairie.events.delete');
-    Route::get('/city/{city}/events/{event}', [CityEventController::class, 'show'])->name('mairie.events.show');
-    });
+        // Mairie Event Routes - kamal
+        Route::get('/mairie/city/{city}/events', [CityEventController::class, 'index'])->name('mairie.cities.events');
+        Route::post('/mairie/city/{city}/events', [CityEventController::class, 'store'])->name('mairie.events.store');
+        Route::put('/mairie/events/{event}', [CityEventController::class, 'store'])->name('mairie.events.edit');
+        Route::delete('/mairie/events/{event}', [CityEventController::class, 'delete'])->name('mairie.events.delete');
 
+        // Mairie Competition Routes - kamal
+        Route::get('/mairie/events/{event}/competitions', [CompetitionController::class, 'index'])->name('mairie.events.competitions');
+        Route::post('/mairie/competitions', [CompetitionController::class, 'store'])->name('mairie.competitions.store');
+        Route::delete('/mairie/competitions/{competition}', [CompetitionController::class, 'destroy'])->name('mairie.competitions.destroy');
+    });
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::post('/player/buy-heart', [PlayerController::class, 'buyHeart'])->name('player.buy.heart');
-    Route::post('/player/use-hint', [PlayerController::class, 'useHint'])->name('player.use-hint');
-    Route::post('/player/quiz/{quiz}/retry', [PlayerController::class, 'retryQuiz'])->name('player.quiz.retry');
-    Route::post('/notifications/{notification}/read', [PlayerController::class, 'markNotificationRead'])->name('notifications.read');
-});
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+        Route::post('/player/buy-heart', [PlayerController::class, 'buyHeart'])->name('player.buy.heart');
+        Route::post('/player/use-hint', [PlayerController::class, 'useHint'])->name('player.use-hint');
+        Route::post('/player/quiz/{quiz}/retry', [PlayerController::class, 'retryQuiz'])->name('player.quiz.retry');
+        Route::post('/notifications/{notification}/read', [PlayerController::class, 'markNotificationRead'])->name('notifications.read');
+        
+        // Rewards & Prizes
+        Route::post('/player/prizes/{prize}/open', [RewardsController::class, 'openPrize'])->name('player.prizes.open');
+    });
 
 require __DIR__ . '/auth.php';

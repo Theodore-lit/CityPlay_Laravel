@@ -98,61 +98,55 @@ const quickActions = computed(() => [
 
       <!-- STATS -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div v-for="s in adminStats" :key="s.label" class="rounded-2xl glass p-5 hover-lift">
+        <div v-for="s in adminStats" :key="s.label" class="rounded-[2.5rem] bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-5 hover-lift transition-all duration-500">
           <div class="flex justify-between items-start">
             <component :is="s.icon" :class="`h-6 w-6 ${s.color}`" />
-            <span class="text-xs text-success">{{ s.delta }}</span>
+            <span class="text-xs text-success font-black uppercase tracking-tighter">{{ s.delta }}</span>
           </div>
-          <div class="mt-3 font-display text-2xl md:text-3xl">{{ s.value }}</div>
-          <div class="text-xs uppercase tracking-widest text-muted-foreground mt-1">{{ s.label }}</div>
+          <div class="mt-3 font-display text-2xl md:text-3xl font-black text-foreground">{{ s.value }}</div>
+          <div class="text-[9px] uppercase tracking-widest text-muted-foreground font-black mt-1">{{ s.label }}</div>
         </div>
       </div>
 
       <div class="mt-8 grid gap-6 lg:grid-cols-3">
         <!-- ENGAGEMENT CHART PLACEHOLDER -->
-        <div class="lg:col-span-2 rounded-2xl glass-strong p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="font-display text-lg flex items-center gap-2"><TrendingUp class="h-5 w-5 text-electric" />Engagement</h2>
-            <select class="bg-gaming-darker border border-electric/30 rounded-lg px-3 h-9 text-sm text-white outline-none focus:border-electric transition-all">
+        <div class="lg:col-span-2 rounded-[2.5rem] bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-8">
+          <div class="flex items-center justify-between mb-8">
+            <h2 class="font-display text-lg flex items-center gap-2 uppercase italic font-black text-foreground">
+              <TrendingUp class="h-5 w-5 text-electric" />Engagement
+            </h2>
+            <select class="bg-white/5 border border-white/10 rounded-xl px-4 h-10 text-xs text-white outline-none focus:border-primary transition-all">
               <option class="bg-gaming-darker">7 derniers jours</option>
               <option class="bg-gaming-darker">30 derniers jours</option>
             </select>
           </div>
-          <div class="h-56 flex items-end gap-2">
+          <div class="h-56 flex items-end gap-3">
             <div v-for="(h, i) in [40, 65, 50, 80, 70, 95, 88, 92, 75, 100, 85, 90]" :key="i"
-                 class="flex-1 rounded-t-lg bg-gradient-to-t from-electric/80 to-purple-neon/80 hover:from-electric hover:to-purple-neon transition-all relative group"
+                 class="flex-1 rounded-t-xl bg-gradient-to-t from-primary/40 to-primary/80 hover:from-primary hover:to-primary-foreground transition-all relative group shadow-neon-sm"
                  :style="{ height: `${h}%` }">
-              <div class="absolute -top-7 left-1/2 -translate-x-1/2 text-xs opacity-0 group-hover:opacity-100 transition glass px-2 py-0.5 rounded whitespace-nowrap">{{ h * 24 }}</div>
+              <div class="absolute -top-10 left-1/2 -translate-x-1/2 text-[10px] font-black opacity-0 group-hover:opacity-100 transition-all bg-gaming-dark border border-white/10 px-3 py-1 rounded-lg whitespace-nowrap shadow-xl">
+                {{ h * 24 }} PTS
+              </div>
             </div>
           </div>
         </div>
 
         <!-- QUICK ACTIONS -->
-        <div class="rounded-2xl glass-strong p-6">
-          <h2 class="font-display text-lg mb-4 flex items-center gap-2"><Zap class="h-5 w-5 text-warning" />Actions Rapides</h2>
-          <div class="space-y-3">
+        <div class="rounded-[2.5rem] bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-8">
+          <h2 class="font-display text-lg mb-8 flex items-center gap-2 uppercase italic font-black text-foreground">
+            <Zap class="h-5 w-5 text-warning" />Actions Rapides
+          </h2>
+          <div class="space-y-4">
             <template v-for="a in quickActions" :key="a.label">
-              <button
-                v-if="a.action"
-                @click="a.action"
-                class="w-full flex items-center gap-3 p-3 rounded-xl glass hover:border-electric hover:text-electric transition text-left group"
-              >
-                <div class="h-9 w-9 rounded-lg bg-gaming-darker border border-white/5 grid place-items-center group-hover:border-electric transition-colors">
-                  <component :is="a.icon" class="h-5 w-5 text-electric" />
-                </div>
-                <span class="text-sm font-medium flex-1 text-white">{{ a.label }}</span>
-                <Plus class="h-4 w-4 text-muted-foreground group-hover:text-electric transition-colors" />
-              </button>
               <Link
-                v-else
                 :href="a.to"
-                class="w-full flex items-center gap-3 p-3 rounded-xl glass hover:border-electric hover:text-electric transition text-left group"
+                class="w-full flex items-center gap-4 p-4 rounded-[1.5rem] bg-white/5 border border-white/10 hover:border-primary/40 hover:bg-white/10 transition-all duration-500 text-left group"
               >
-                <div class="h-9 w-9 rounded-lg bg-gaming-darker border border-white/5 grid place-items-center group-hover:border-electric transition-colors">
-                  <component :is="a.icon" class="h-5 w-5 text-electric" />
+                <div class="h-10 w-10 rounded-xl bg-white/5 border border-white/5 grid place-items-center group-hover:border-primary/20 transition-colors">
+                  <component :is="a.icon" class="h-5 w-5 text-primary" />
                 </div>
-                <span class="text-sm font-medium flex-1 text-white">{{ a.label }}</span>
-                <Plus class="h-4 w-4 text-muted-foreground group-hover:text-electric transition-colors" />
+                <span class="text-xs font-black uppercase tracking-widest flex-1 text-foreground">{{ a.label }}</span>
+                <ChevronRight class="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
               </Link>
             </template>
           </div>

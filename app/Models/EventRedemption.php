@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class EventRedemption extends Model
 {
+    // kamal
     use HasFactory;
 
     protected $fillable = [

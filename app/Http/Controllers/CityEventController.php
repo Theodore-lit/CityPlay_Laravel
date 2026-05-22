@@ -10,28 +10,32 @@ use Inertia\Inertia;
 
 class CityEventController extends Controller
 {
+    // kamal
     /**
      * Affiche la liste des événements pour une mairie donnée.
+     * Logique liée à l'administration des événements par la mairie.
      */
     public function index(City $city)
     {
+        //kamal Vérification des droits d'accès : Seuls les admins et mairies peuvent gérer les événements
         if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
 
         return Inertia::render('Mairie/CityEvents', [
             'city' => $city->load(['events' => function($query) {
-                $query->latest(); // Charge les derniers événements en premier
+                $query->latest(); // Charge les derniers événements en premier pour une meilleure visibilité
             }]),
         ]);
     }
 
     /**
      * Crée ou met à jour un événement.
+     * Gère la persistance des données et le stockage des fichiers médias.
      */
 public function store(Request $request, $id) // On prend l'ID brut pour rester flexible
 {
-    // 1. Validation
+    // 1. Validation des données entrantes (titre, date, prix en diamants, etc.) kamal
     $validated = $request->validate([
         'id' => 'nullable|exists:city_events,id',
         'title' => 'required|string|max:255',
@@ -47,26 +51,27 @@ public function store(Request $request, $id) // On prend l'ID brut pour rester f
         'is_active' => 'boolean',
     ]);
 
-    // 2. Logique de récupération de l'instance
+    // 2. Logique de récupération ou d'instanciation du modèle CityEvent kamal
     if ($request->has('id') && $request->id) {
-        // Mode ÉDITION : On récupère l'événement existant
+        // Mode ÉDITION : Récupération de l'existant
         $event = CityEvent::findOrFail($request->id);
     } else {
-        // Mode CRÉATION : On crée une nouvelle instance liée à la ville
+        // Mode CRÉATION : Nouvelle instance rattachée à la ville spécifiée
         $city = City::findOrFail($id);
         $event = new CityEvent(['city_id' => $city->id]);
     }
 
-    // 3. Gestion des images (Ton StorageUrl est une bonne idée)
+    // 3. Gestion des images : mix entre les images existantes conservées et les nouvelles téléchargées kamal
     $images = StorageUrl::diskPaths($validated['existing_images'] ?? []);
 
     if ($request->hasFile('images')) {
         foreach ($request->file('images') as $image) {
+            // Stockage physique des images dans le dossier public/events
             $images[] = $image->store('events', 'public');
         }
     }
 
-    // 4. Remplissage et Sauvegarde
+    // 4. Remplissage des attributs et sauvegarde en base de données
     $event->fill([
         'title' => $validated['title'],
         'description' => $validated['description'],
@@ -85,10 +90,11 @@ public function store(Request $request, $id) // On prend l'ID brut pour rester f
 }
 
     /**
-     * Supprime un événement.
+     * Supprime un événement du système.
      */
     public function delete(CityEvent $event)
     {
+        // Sécurité renforcée pour la suppression
         if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
@@ -98,11 +104,11 @@ public function store(Request $request, $id) // On prend l'ID brut pour rester f
     }
 
     /**
-     * Affiche un événement spécifique (Optionnel).
+     * Affiche les détails d'un événement spécifique.
+     * Utilisé pour la vue publique ou détaillée côté mairie.
      */
     public function show(City $city, CityEvent $event)
     {
-        // Pas besoin de transformer manuellement ici, l'attribut image_urls du model s'en charge via $appends
         return Inertia::render('Mairie/EventShow', [
             'event' => $event,
             'city' => $city

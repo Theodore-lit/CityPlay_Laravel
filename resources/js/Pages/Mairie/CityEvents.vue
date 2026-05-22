@@ -1,4 +1,5 @@
 <script setup>
+// kamal
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import NeonButton from '@/Components/NeonButton.vue';
 import AppImage from '@/Components/AppImage.vue';
@@ -8,7 +9,7 @@ import Modal from '@/Components/Modal.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import {
     Plus, ChevronLeft, Trash2, Image as ImageIcon,
-    Save, Clock, MapPin, X, Edit2, Ticket, Gem, Gift, Eye, EyeOff
+    Save, Clock, MapPin, X, Edit2, Ticket, Gem, Gift, Eye, EyeOff, Trophy
 } from 'lucide-vue-next';
 import { ref } from 'vue';
 
@@ -19,12 +20,20 @@ const props = defineProps({
 const showEventModal = ref(false);
 const imagePreviews = ref([]);
 
+/**
+ * Types de récompenses disponibles pour les événements.
+ * Ces lots sont échangeables par les joueurs via leurs diamants.
+ */
 const rewardTypes = [
     { value: 'ticket', label: 'Ticket Entrée' },
     { value: 'meal', label: 'Repas / Snack' },
     { value: 'discount', label: 'Réduction Boutique' },
 ];
 
+/**
+ * Formulaire réactif pour la création et l'édition d'événements.
+ * Utilise useForm d'Inertia pour gérer les états de chargement et les erreurs.
+ */
 const eventForm = useForm({
     id: null,
     title: '',
@@ -39,6 +48,10 @@ const eventForm = useForm({
     existing_images: [],
 });
 
+/**
+ * Ouvre le modal de configuration d'événement.
+ * Initialise les données en cas d'édition d'un événement existant.
+ */
 const openEventModal = (event = null) => {
     if (event) {
         eventForm.id = event.id;
@@ -61,21 +74,36 @@ const openEventModal = (event = null) => {
     showEventModal.value = true;
 };
 
+/**
+ * Gère le téléchargement d'images et génère des prévisualisations locales (blobs).
+ */
 const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     eventForm.images = files;
     imagePreviews.value = files.map(file => URL.createObjectURL(file));
 };
 
+/**
+ * Supprime une image déjà présente sur le serveur lors de l'édition.
+ */
 const removeExistingImage = (index) => {
     eventForm.existing_images.splice(index, 1);
 };
 
+/**
+ * Soumet le formulaire au serveur.
+ * Utilise la méthode POST avec un override _method: PUT pour l'édition (support multipart/form-data).
+ */
 const submitEvent = () => {
+    const url = eventForm.id
+        ? route('mairie.events.edit', eventForm.id)
+        : route('mairie.events.store', props.city.id);
+
     eventForm.transform((data) => ({
         ...data,
         _method: eventForm.id ? 'PUT' : 'POST',
-    })).post(route('mairie.events.store', props.city.id), {
+    })).post(url, {
+        forceFormData: true,
         onSuccess: () => {
             showEventModal.value = false;
             eventForm.reset();
@@ -83,6 +111,9 @@ const submitEvent = () => {
     });
 };
 
+/**
+ * Supprime définitivement un événement après confirmation.
+ */
 const deleteEvent = (event) => {
     if (confirm('Supprimer cet événement ?')) {
         eventForm.delete(route('mairie.events.delete', event.id));
@@ -146,6 +177,9 @@ const formatDate = (dateString) => {
                             <button @click="deleteEvent(event)" class="h-9 w-9 rounded-xl glass border-white/10 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all">
                                 <Trash2 class="h-4 w-4" />
                             </button>
+                            <Link :href="route('mairie.events.competitions', event.id)" class="h-9 w-9 rounded-xl glass border-white/10 flex items-center justify-center text-amber-400 hover:text-amber-300 transition-all" title="Manage Competitions">
+                                <Trophy class="h-4 w-4" />
+                            </Link>
                         </div>
                     </div>
 
@@ -200,114 +234,145 @@ const formatDate = (dateString) => {
             </div>
         </div>
 
-        <Modal :show="showEventModal" @close="showEventModal = false" maxWidth="4xl">
-            <div class="relative overflow-hidden glass-strong border border-primary/20 rounded-[3rem] shadow-2xl backdrop-blur-3xl">
+        <!-- MODAL EDITOR (Gaming Style) -->
+        <div v-if="showEventModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            <div class="absolute inset-0 bg-gaming-dark/60 backdrop-blur-md" @click="showEventModal = false"></div>
+
+            <div class="relative w-full max-w-5xl bg-white/10 backdrop-blur-2xl border border-white/10 rounded-[3rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-300">
                 <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
 
-                <div class="p-8 relative z-10">
-                    <div class="flex justify-between items-center mb-10 px-4">
+                <div class="p-8 md:p-12 relative z-10">
+                    <div class="flex justify-between items-center mb-12 px-4">
                         <div>
-                            <h2 class="font-display text-3xl text-foreground uppercase italic font-black tracking-tighter">
+                            <div class="text-[10px] text-primary uppercase tracking-[0.4em] font-black mb-1 neon-text">Mission Protocol</div>
+                            <h2 class="font-display text-3xl md:text-4xl text-foreground uppercase italic font-black tracking-tighter">
                                 <span class="text-primary mr-2">//</span>Event Editor
                             </h2>
                         </div>
-                        <button @click="showEventModal = false" class="group h-10 w-10 rounded-xl glass flex items-center justify-center transition-all hover:border-primary/50">
-                            <X class="h-5 w-5 text-foreground/40 group-hover:text-primary transition-colors" />
+                        <button @click="showEventModal = false" class="group h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center transition-all hover:border-primary/50">
+                            <X class="h-6 w-6 text-foreground/40 group-hover:text-primary transition-colors" />
                         </button>
                     </div>
 
-                    <form @submit.prevent="submitEvent" class="space-y-6">
-                        <div class="grid lg:grid-cols-3 gap-6">
-                            <div class="lg:col-span-2 space-y-6">
-                                <div class="glass border border-white/5 p-6 rounded-[2rem] hover:border-primary/20 transition-colors">
-                                    <label class="text-[10px] text-primary font-black uppercase tracking-[0.2em] mb-4 block">Primary Information</label>
-                                    <div class="space-y-4">
+                    <form @submit.prevent="submitEvent" class="space-y-8">
+                        <div class="grid lg:grid-cols-3 gap-8">
+                            <!-- Left Column: Core Data -->
+                            <div class="lg:col-span-2 space-y-8">
+                                <div class="bg-white/5 border border-white/5 p-8 rounded-[2.5rem] hover:border-primary/20 transition-all duration-500">
+                                    <label class="text-[10px] text-primary font-black uppercase tracking-[0.2em] mb-6 block">Primary Information</label>
+                                    <div class="space-y-6">
                                         <GlowInput v-model="eventForm.title" placeholder="Mission Title..." required />
-                                        <div class="grid grid-cols-2 gap-4">
+
+                                        <div class="grid md:grid-cols-2 gap-6">
                                             <div class="space-y-2">
-                                                <span class="text-[9px] text-foreground/40 uppercase font-bold ml-2">Timestamp</span>
-                                                <input type="datetime-local" v-model="eventForm.event_date" class="w-full h-11 glass border border-white/10 rounded-xl px-4 text-xs text-foreground focus:border-primary outline-none transition-all" />
+                                                <span class="text-[9px] text-muted-foreground uppercase font-black ml-2 tracking-widest">Operation Timestamp</span>
+                                                <input type="datetime-local" v-model="eventForm.event_date" class="w-full h-12 bg-white/5 border border-white/10 rounded-2xl px-5 text-xs text-foreground focus:border-primary outline-none transition-all" />
                                             </div>
                                             <div class="space-y-2">
-                                                <span class="text-[9px] text-foreground/40 uppercase font-bold ml-2">Vector / Location</span>
-                                                <GlowInput v-model="eventForm.location_name" placeholder="Coordinates..." />
+                                                <span class="text-[9px] text-muted-foreground uppercase font-black ml-2 tracking-widest">Vector / Location</span>
+                                                <GlowInput v-model="eventForm.location_name" placeholder="Coordinates or Name..." />
                                             </div>
                                         </div>
-                                        <textarea v-model="eventForm.description" rows="4" placeholder="Briefing details..." class="w-full glass border border-white/10 rounded-2xl p-4 text-foreground text-xs focus:border-primary outline-none resize-none leading-relaxed transition-all"></textarea>
+
+                                        <div class="space-y-2">
+                                            <span class="text-[9px] text-muted-foreground uppercase font-black ml-2 tracking-widest">Mission Briefing</span>
+                                            <textarea v-model="eventForm.description" rows="5" placeholder="Detailed instructions for the citizens..." class="w-full bg-white/5 border border-white/10 rounded-[2rem] p-6 text-foreground text-sm focus:border-primary outline-none resize-none leading-relaxed transition-all"></textarea>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="glass border border-white/5 p-6 rounded-[2rem]">
-                                    <label class="text-[10px] text-primary font-black uppercase tracking-[0.2em] mb-4 block">Visual Assets</label>
-                                    <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                                        <div v-for="(img, idx) in eventForm.existing_images" :key="idx" class="relative min-w-[100px] h-[100px] rounded-xl overflow-hidden border border-white/10 group">
+                                <div class="bg-white/5 border border-white/5 p-8 rounded-[2.5rem] hover:border-primary/20 transition-all duration-500">
+                                    <label class="text-[10px] text-primary font-black uppercase tracking-[0.2em] mb-6 block">Visual Intel (Images)</label>
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                        <div v-for="(img, idx) in eventForm.existing_images" :key="idx" class="relative aspect-square rounded-2xl overflow-hidden border border-white/10 group">
                                             <AppImage :src="img" class="w-full h-full object-cover" />
-                                            <button @click.prevent="removeExistingImage(idx)" class="absolute inset-0 bg-red-600/80 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                <X class="h-4 w-4" />
+                                            <button @click.prevent="removeExistingImage(idx)" class="absolute inset-0 bg-red-600/80 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
+                                                <X class="h-6 w-6" />
                                             </button>
                                         </div>
-                                        <label class="min-w-[100px] h-[100px] rounded-xl border-2 border-dashed border-white/10 hover:border-primary/40 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all glass">
-                                            <Plus class="h-5 w-5 text-foreground/20" />
+                                        <div v-for="(prev, idx) in imagePreviews" :key="'prev-'+idx" class="relative aspect-square rounded-2xl overflow-hidden border border-primary/30 group">
+                                            <img :src="prev" class="w-full h-full object-cover" />
+                                            <div class="absolute inset-0 bg-primary/20 backdrop-blur-[2px] flex items-center justify-center">
+                                                <span class="text-[8px] font-black text-white uppercase bg-primary px-2 py-1 rounded">NEW</span>
+                                            </div>
+                                        </div>
+                                        <label class="aspect-square rounded-2xl border-2 border-dashed border-white/10 hover:border-primary/40 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all bg-white/5 group">
+                                            <Plus class="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                                            <span class="text-[8px] font-black text-muted-foreground uppercase group-hover:text-primary transition-colors">Add Intel</span>
                                             <input type="file" multiple @change="handleImageUpload" class="hidden" accept="image/*" />
                                         </label>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="space-y-6">
-                                <div class="p-6 glass border border-primary/10 rounded-[2rem] bg-primary/5">
-                                    <div class="flex items-center justify-between mb-6">
-                                        <div class="flex items-center gap-3">
-                                            <div class="h-8 w-8 rounded-lg bg-primary/20 grid place-items-center">
-                                                <Ticket class="h-4 w-4 text-primary shadow-neon-sm" />
+                            <!-- Right Column: Settings -->
+                            <div class="space-y-8">
+                                <div class="p-8 bg-primary/5 border border-primary/10 rounded-[2.5rem] relative overflow-hidden group">
+                                    <div class="absolute -top-12 -right-12 h-32 w-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors"></div>
+
+                                    <div class="flex items-center justify-between mb-8 relative z-10">
+                                        <div class="flex items-center gap-4">
+                                            <div class="h-10 w-10 rounded-xl bg-primary/20 grid place-items-center shadow-neon-sm">
+                                                <Ticket class="h-5 w-5 text-primary" />
                                             </div>
-                                            <span class="text-[11px] font-black text-foreground uppercase">VIP Tier</span>
+                                            <span class="text-xs font-black text-foreground uppercase tracking-widest">VIP Pass</span>
                                         </div>
                                         <input type="checkbox" v-model="eventForm.has_vip_pass" class="sr-only peer" id="has-vip">
-                                        <label for="has-vip" class="relative w-10 h-5 glass rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 cursor-pointer"></label>
+                                        <label for="has-vip" class="relative w-12 h-6 bg-white/10 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-6 cursor-pointer"></label>
                                     </div>
 
-                                    <div v-if="eventForm.has_vip_pass" class="space-y-4 animate-in slide-in-from-right-4 duration-300">
+                                    <div v-if="eventForm.has_vip_pass" class="space-y-6 relative z-10 animate-in slide-in-from-top-4 duration-500">
                                         <div class="space-y-2">
-                                            <span class="text-[9px] text-sky-400 font-bold uppercase ml-1">Price (💎)</span>
-                                            <input type="number" v-model="eventForm.diamond_price" class="w-full h-10 glass border border-sky-500/20 rounded-xl px-4 text-foreground outline-none focus:border-sky-400 font-bold" />
+                                            <span class="text-[9px] text-sky-400 font-black uppercase ml-1 tracking-widest">Price (💎)</span>
+                                            <input type="number" v-model="eventForm.diamond_price" class="w-full h-12 bg-white/5 border border-sky-500/20 rounded-2xl px-5 text-foreground outline-none focus:border-sky-400 font-black text-lg" />
                                         </div>
                                         <div class="space-y-2">
-                                            <span class="text-[9px] text-primary font-bold uppercase ml-1">Unlock Reward</span>
-                                            <select v-model="eventForm.reward_type" class="w-full h-10 glass border border-white/10 rounded-xl px-4 text-[10px] text-foreground outline-none focus:border-primary">
-                                                <option value="" class="bg-gaming-dark">None</option>
+                                            <span class="text-[9px] text-primary font-black uppercase ml-1 tracking-widest">Reward Class</span>
+                                            <select v-model="eventForm.reward_type" class="w-full h-12 bg-white/5 border border-white/10 rounded-2xl px-5 text-[10px] text-foreground outline-none focus:border-primary appearance-none">
+                                                <option value="" class="bg-gaming-dark">No Reward</option>
                                                 <option v-for="type in rewardTypes" :key="type.value" :value="type.value" class="bg-gaming-dark">{{ type.label }}</option>
                                             </select>
                                         </div>
                                     </div>
+                                    <p v-else class="text-[9px] text-muted-foreground italic leading-relaxed relative z-10">Enable VIP access to allow citizens to purchase special privileges with their diamonds.</p>
                                 </div>
 
-                                <div class="p-6 glass border border-white/5 rounded-[2rem] space-y-4">
+                                <div class="p-8 bg-white/5 border border-white/5 rounded-[2.5rem] space-y-6">
                                     <div class="flex items-center justify-between">
-                                        <span class="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">Public Status</span>
+                                        <div class="flex items-center gap-3">
+                                            <div class="h-10 w-10 rounded-xl bg-emerald-500/10 grid place-items-center">
+                                                <Eye v-if="eventForm.is_active" class="h-5 w-5 text-emerald-400" />
+                                                <EyeOff v-else class="h-5 w-5 text-red-400" />
+                                            </div>
+                                            <div>
+                                                <p class="text-[10px] font-black text-foreground uppercase tracking-widest">Publicity</p>
+                                                <p class="text-[8px] text-muted-foreground uppercase font-bold">{{ eventForm.is_active ? 'Live Broadcast' : 'Hidden / Draft' }}</p>
+                                            </div>
+                                        </div>
                                         <input type="checkbox" v-model="eventForm.is_active" class="sr-only peer" id="is-active">
-                                        <label for="is-active" class="relative w-10 h-5 glass rounded-full peer peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 cursor-pointer"></label>
+                                        <label for="is-active" class="relative w-12 h-6 bg-white/10 rounded-full peer peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-6 cursor-pointer"></label>
                                     </div>
-                                    <p class="text-[8px] text-muted-foreground italic leading-tight">Broadcast intel to all citizens in real-time.</p>
+                                    <p class="text-[8px] text-muted-foreground italic leading-tight border-t border-white/5 pt-4">Encryption: AES-256 Enabled. Data will be broadcasted to all citizens in real-time upon deployment.</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between pt-6 px-4 border-t border-white/5">
-                            <div class="hidden md:block">
-                                <span class="text-[8px] text-foreground/20 font-mono tracking-tighter uppercase italic">Encryption: AES-256 Enabled</span>
+                        <div class="flex flex-col md:flex-row items-center justify-between gap-6 pt-8 border-t border-white/5">
+                            <div class="flex items-center gap-4">
+                                <div class="h-2 w-2 rounded-full bg-primary animate-pulse shadow-neon"></div>
+                                <span class="text-[9px] text-foreground/40 font-black uppercase tracking-[0.3em]">System Ready for Deployment</span>
                             </div>
-                            <div class="flex gap-4">
-                                <button type="button" @click="showEventModal = false" class="text-[10px] font-black uppercase text-foreground/40 hover:text-foreground transition-all">Cancel</button>
-                                <NeonButton type="submit" variant="primary" :disabled="eventForm.processing" size="sm" class="shadow-neon px-8">
-                                    {{ eventForm.id ? 'Update System' : 'Deploy Event' }}
+                            <div class="flex gap-6 items-center">
+                                <button type="button" @click="showEventModal = false" class="text-[10px] font-black uppercase text-foreground/40 hover:text-foreground transition-all tracking-widest">Abord Mission</button>
+                                <NeonButton type="submit" variant="primary" :disabled="eventForm.processing" class="shadow-neon px-12 h-14 text-[10px] tracking-[0.2em]">
+                                    {{ eventForm.id ? 'UPDATE PROTOCOL' : 'DEPLOY EVENT' }}
                                 </NeonButton>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
-        </Modal>
+        </div>
     </SiteLayout>
 </template>
 

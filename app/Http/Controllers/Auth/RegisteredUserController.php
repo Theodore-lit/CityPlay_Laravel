@@ -17,6 +17,9 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
+use App\Mail\SecretCodeMail;
+use Illuminate\Support\Facades\Mail;
+
 class RegisteredUserController extends Controller
 {
     protected $emailJs;
@@ -60,11 +63,12 @@ class RegisteredUserController extends Controller
             'otp_code' => $otpCode,
             'otp_expires_at' => now()->addMinutes(10),
             'is_verified' => false,
+            'secret_code' => 'CP-' . strtoupper(Str::random(8)), // Générer un code secret
         ]);
 
         event(new Registered($user));
 
-        // Envoi de l'OTP via EmailJS
+        // Envoi de l'OTP (via EmailJS + Laravel Mail)
         $this->emailJs->sendOtp($user->email, $user->name, $otpCode);
 
         return Inertia::render('Auth/Register', [
@@ -105,6 +109,13 @@ class RegisteredUserController extends Controller
             'is_verified' => true,
             'email_verified_at' => now(),
         ]);
+
+        // Envoyer le code secret par mail une fois vérifié
+        try {
+            Mail::to($user->email)->send(new SecretCodeMail($user));
+        } catch (\Exception $e) {
+            Log::error("Erreur envoi code secret : " . $e->getMessage());
+        }
 
         Auth::login($user);
 

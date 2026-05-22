@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class CityEvent extends Model
 {
+    // kamal
     use HasFactory;
 
     protected $fillable = [

@@ -4,11 +4,12 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
+    // kamal
     /**
      * Run the migrations.
-     *
-     * Code de kamal
+     */     * Code de kamal
      */
     public function up(): void
     {
