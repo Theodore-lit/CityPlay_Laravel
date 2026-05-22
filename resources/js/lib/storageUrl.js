@@ -18,8 +18,8 @@ export function storageUrl(path) {
 
     let normalized = trimmed.startsWith('/') ? trimmed.slice(1) : trimmed;
 
-    // Si le chemin contient déjà "storage/", on s'assure qu'il commence par "/"
-    if (normalized.startsWith('storage/')) {
+    // Si le chemin commence par "images/" ou "storage/", on s'assure qu'il commence par "/"
+    if (normalized.startsWith('images/') || normalized.startsWith('storage/')) {
         return `/${normalized}`;
     }
 

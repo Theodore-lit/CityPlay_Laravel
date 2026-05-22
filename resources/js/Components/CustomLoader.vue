@@ -118,9 +118,8 @@ onBeforeUnmount(() => {
             </g>
           </svg>
         </div>
-
         <p class="font-display text-xs font-black uppercase tracking-[0.35em] animate-pulse text-foreground/80">
-          City<span class="text-primary">Play</span>
+          Découvrez le Bénin avec City<span class="text-primary">Play</span>
         </p>
       </div>
     </div>

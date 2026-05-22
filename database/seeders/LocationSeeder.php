@@ -19,8 +19,8 @@ class LocationSeeder extends Seeder
                 [
                     'name' => 'La Statue de l\'Amazone',
                     'description' => 'Fière guerrière de bronze de 30m, symbole du courage féminin et hommage aux Agodjié.',
-                    'latitude' => 6.3482,
-                    'longitude' => 2.4334,
+                    'latitude' => 6.3545,
+                    'longitude' => 2.4377,
                     'category' => 'historique',
                     'images' => ['https://images.unsplash.com/photo-1590603783930-9d93dcf99723?q=80&w=1200'],
                 ],

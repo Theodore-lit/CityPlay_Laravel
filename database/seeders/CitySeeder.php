@@ -19,48 +19,88 @@ class CitySeeder extends Seeder
         $admin = User::where('email', 'admin@cityplay.bj')->first() ?? User::first();
 
         // 1. Cotonou
-        City::updateOrCreate(
-            ['name' => 'Cotonou'],
-            [
-                'description' => 'La capitale économique du Bénin. Signifiant "L\'embouchure du fleuve de la mort" en Fon, c\'est une ville vibrante entre lagune et océan.',
-                'latitude' => 6.3654,
-                'longitude' => 2.4183,
-                'is_active' => true,
-                'creator_id' => $admin->id,
-                'mairie_id' => $mairieCotonou?->id,
-                'opening_hours' => ['start' => '07:00', 'end' => '23:00'],
-                'image_path' => 'https://images.unsplash.com/photo-1590603783930-9d93dcf99723?auto=format&fit=crop&q=80&w=1200',
-            ]
-        );
+        if ($mairieCotonou) {
+            City::updateOrCreate(
+                ['name' => 'Cotonou Vibrante'],
+                [
+                    'description' => 'La métropole bouillonnante du Bénin. Entre le marché Dantokpa et les plages de Fidjrossè, vivez l\'effervescence d\'une ville qui ne dort jamais.',
+                    'latitude' => 6.3654,
+                    'longitude' => 2.4183,
+                    'is_active' => true,
+                    'creator_id' => $admin->id,
+                    'mairie_id' => $mairieCotonou->id,
+                    'opening_hours' => ['start' => '07:00', 'end' => '23:00'],
+                    'image_path' => 'images/cities/city-cotonou.jpg',
+                ]
+            );
+        }
 
         // 2. Ouidah
-        City::updateOrCreate(
-            ['name' => 'Ouidah'],
-            [
-                'description' => 'Cité historique et capitale mondiale du Vodoun. Anciennement appelée Gléhué, elle fut un point central de la traite négrière et de la culture béninoise.',
-                'latitude' => 6.3623,
-                'longitude' => 2.0850,
-                'is_active' => true,
-                'creator_id' => $admin->id,
-                'mairie_id' => $mairieOuidah?->id,
-                'opening_hours' => ['start' => '08:00', 'end' => '19:00'],
-                'image_path' => 'https://images.unsplash.com/photo-1590603783180-8736a6552912?auto=format&fit=crop&q=80&w=1200',
-            ]
-        );
+        if ($mairieOuidah) {
+            City::updateOrCreate(
+                ['name' => 'Ouidah Historique'],
+                [
+                    'description' => 'Capitale mondiale du Vodoun. Parcourez la Route des Esclaves et découvrez les mystères du Temple des Pythons.',
+                    'latitude' => 6.3623,
+                    'longitude' => 2.0850,
+                    'is_active' => true,
+                    'creator_id' => $admin->id,
+                    'mairie_id' => $mairieOuidah->id,
+                    'opening_hours' => ['start' => '08:00', 'end' => '19:00'],
+                    'image_path' => 'images/cities/city-ouidah.jpg',
+                ]
+            );
+        }
 
         // 3. Porto-Novo
-        City::updateOrCreate(
-            ['name' => 'Porto-Novo'],
-            [
-                'description' => 'La capitale administrative aux trois noms (Hogbonou, Adjatchè, Porto-Novo). Célèbre pour son architecture afro-brésilienne.',
-                'latitude' => 6.4969,
-                'longitude' => 2.6289,
-                'is_active' => true,
-                'creator_id' => $admin->id,
-                'mairie_id' => $mairiePorto?->id,
-                'opening_hours' => ['start' => '08:00', 'end' => '20:00'],
-                'image_path' => 'https://images.unsplash.com/photo-1572522085350-997f80598715?auto=format&fit=crop&q=80&w=1200',
-            ]
-        );
+        if ($mairiePorto) {
+            City::updateOrCreate(
+                ['name' => 'Porto-Novo Impériale'],
+                [
+                    'description' => 'La capitale aux trois noms. Admirez l\'architecture afro-brésilienne et les musées royaux de cette cité paisible.',
+                    'latitude' => 6.4969,
+                    'longitude' => 2.6289,
+                    'is_active' => true,
+                    'creator_id' => $admin->id,
+                    'mairie_id' => $mairiePorto->id,
+                    'opening_hours' => ['start' => '08:00', 'end' => '20:00'],
+                    'image_path' => 'images/cities/city-porto-novo.jpg',
+                ]
+            );
+        }
+
+        // 4. Parakou
+        if ($mairieParakou) {
+            City::updateOrCreate(
+                ['name' => 'Parakou la Cité des Princes'],
+                [
+                    'description' => 'Le carrefour du Nord. Découvrez le palais des Kobourou et l\'hospitalité légendaire du peuple Baatonu.',
+                    'latitude' => 9.3372,
+                    'longitude' => 2.6303,
+                    'is_active' => true,
+                    'creator_id' => $admin->id,
+                    'mairie_id' => $mairieParakou->id,
+                    'opening_hours' => ['start' => '08:00', 'end' => '21:00'],
+                    'image_path' => 'images/cities/city-parakou.jpg',
+                ]
+            );
+        }
+
+        // 5. Abomey
+        if ($mairieAbomey) {
+            City::updateOrCreate(
+                ['name' => 'Abomey la Royale'],
+                [
+                    'description' => 'Le berceau des rois. Visitez les palais royaux et revivez l\'épopée des Amazones du Dahomey.',
+                    'latitude' => 7.1855,
+                    'longitude' => 1.9912,
+                    'is_active' => true,
+                    'creator_id' => $admin->id,
+                    'mairie_id' => $mairieAbomey->id,
+                    'opening_hours' => ['start' => '08:00', 'end' => '19:00'],
+                    'image_path' => 'images/cities/city-abomey.jpg',
+                ]
+            );
+        }
     }
 }

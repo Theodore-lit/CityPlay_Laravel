@@ -6,7 +6,7 @@ import AppImage from '@/Components/AppImage.vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import {
   Trophy, Zap, MapPin, Award, Flame, ArrowRight, Crown, Sparkles,
-  Lock, Network, ChevronRight, Cat, Medal,
+  Network, ChevronRight, Cat, Medal,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { cn } from '@/lib/utils';
@@ -31,6 +31,11 @@ const initials = computed(() =>
   (user.value?.name || 'CP').substring(0, 2).toUpperCase()
 );
 
+// Filtrer uniquement les villes qui ne sont pas verrouillées
+const activeCities = computed(() => 
+  (props.cities || []).filter(city => city.mission_status !== 'lock')
+);
+
 const heroStats = computed(() => [
   { icon: Trophy, value: String(props.stats.missions ?? 0), label: 'Missions' },
   { icon: Zap, value: (props.stats.total_xp ?? 0).toLocaleString('fr-FR'), label: 'Total XP' },
@@ -51,18 +56,14 @@ const achievements = [
 ];
 
 const statusLabel = (status) => {
-  if (status === 'lock') return { text: 'Objectifs indisponibles (VERROUILLÉ)', class: 'text-muted-foreground' };
   if (status === 'new') return { text: 'Objectifs disponibles (NOUVEAU)', class: 'text-orange-400' };
   return { text: 'Objectifs disponibles (OK)', class: 'text-emerald-400' };
 };
 
-const cityCardClass = (locked) =>
-  cn(
-    'group relative flex overflow-hidden rounded-[2.5rem] bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-500',
-    locked
-      ? 'cursor-not-allowed opacity-75'
-      : 'hover:border-primary/50 hover:shadow-[0_0_24px_oklch(0.70_0.18_250/0.12)]'
-  );
+const cityCardClass = cn(
+  'group relative flex bg-white/5 rounded-xl backdrop-blur-2xl border hover:fade-in overflow-hidden shadow-3xl transition-all duration-300',
+  'border-primary/20 hover:border-primary/30 hover:shadow-[0_0_40px_oklch(0.70_0.18_250/0.15)]'
+);
 </script>
 
 <template>
@@ -74,18 +75,17 @@ const cityCardClass = (locked) =>
 
       <div class="relative mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-12 py-6 pb-28 md:pb-10 space-y-8">
 
-        <section
-          class="relative overflow-hidden rounded-[2.5rem] bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-500"
-        >
+        <!-- Section Profil / Hero Épique -->
+        <section class="relative bg-white/5 rounded-[2rem] backdrop-blur-xl border border-white/5 overflow-hidden shadow-3xl shadow-[0_0_40px_oklch(0.70_0.18_250/0.15)]">
           <div class="absolute inset-0 grid-bg opacity-[0.06] pointer-events-none" />
           <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/80 to-transparent" />
 
           <div class="relative p-6 md:p-8 lg:p-10">
             <div class="flex flex-col gap-8 lg:flex-row lg:items-center">
+              
+              <!-- Hex Badge de Niveau -->
               <div class="flex shrink-0 justify-center lg:justify-start">
-                <div
-                  class="hex-badge h-28 w-28 md:h-32 md:w-32 flex flex-col items-center justify-center border-2 border-primary/50 bg-primary/10 shadow-[0_0_30px_oklch(0.70_0.18_250/0.35)]"
-                >
+                <div class="hex-badge h-28 w-28 md:h-32 md:w-32 flex flex-col items-center justify-center border-2 border-primary/100 bg-primary/10 shadow-[0_0_30px_oklch(0.70_0.18_250/0.35)]">
                   <span class="font-display text-3xl md:text-4xl font-black text-white tracking-tight">
                     {{ initials }}
                   </span>
@@ -95,6 +95,7 @@ const cityCardClass = (locked) =>
                 </div>
               </div>
 
+              <!-- Infos Joueur & Barre XP -->
               <div class="flex-1 space-y-4 text-center lg:text-left">
                 <div>
                   <p class="text-[10px] font-black uppercase tracking-[0.35em] text-primary/80 mb-1">
@@ -121,15 +122,11 @@ const cityCardClass = (locked) =>
                 </div>
               </div>
 
+              <!-- Bouton d'action principal -->
               <div class="flex justify-center lg:justify-end shrink-0">
-                <Link
-                  :href="route('player.modes')"
-                  class="group relative flex flex-col items-center"
-                >
+                <Link :href="route('player.modes')" class="group relative flex flex-col items-center">
                   <div class="absolute -inset-2 rounded-2xl bg-primary/20 blur-xl opacity-60 group-hover:opacity-100 transition-opacity" />
-                  <div
-                    class="relative flex items-center gap-3 rounded-xl border border-primary/50 bg-primary px-8 py-4 font-display text-lg font-black uppercase tracking-wider text-primary-foreground shadow-neon hover:scale-[1.02] active:scale-[0.98] transition-transform"
-                  >
+                  <div class="relative flex items-center gap-3 rounded-xl border border-primary/50 bg-primary px-8 py-4 font-display text-lg font-black uppercase tracking-wider text-primary-foreground shadow-neon hover:scale-[1.02] active:scale-[0.98] transition-transform">
                     Jouer
                     <ChevronRight class="h-5 w-5 stroke-[3]" />
                   </div>
@@ -140,6 +137,7 @@ const cityCardClass = (locked) =>
               </div>
             </div>
 
+            <!-- Stats rapides de l'agent -->
             <div class="mt-8 pt-6 border-t border-primary/15 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-0 md:divide-x md:divide-primary/15">
               <div
                 v-for="s in heroStats"
@@ -160,7 +158,10 @@ const cityCardClass = (locked) =>
           </div>
         </section>
 
+        <!-- Grille Principale (Objectifs + Succès) -->
         <div class="grid gap-8 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px]">
+          
+          <!-- Liste des Objectifs Disponibles -->
           <section>
             <h2 class="font-display text-sm font-black uppercase tracking-[0.25em] text-foreground mb-5 flex items-center gap-2">
               <MapPin class="h-4 w-4 text-primary" />
@@ -168,65 +169,40 @@ const cityCardClass = (locked) =>
             </h2>
 
             <div class="space-y-4">
-              <template v-for="city in cities" :key="city.id">
-                <Link
-                  v-if="city.mission_status !== 'lock'"
-                  :href="route('player.game', city.id)"
-                  :class="cityCardClass(false)"
-                >
-                  <div class="relative w-36 sm:w-44 shrink-0 overflow-hidden">
-                    <AppImage
-                      :src="city.image_url || city.image_path"
-                      :alt="city.name"
-                      class="h-full w-full object-cover min-h-[100px] transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <!-- <div v-else class="h-full min-h-[100px] w-full bg-muted/40 flex items-center justify-center">
-                      <MapPin class="h-8 w-8 text-muted-foreground/40" />
-                    </div> -->
-                  </div>
-                  <div class="flex flex-1 flex-col justify-center p-4 sm:p-5">
-                    <span class="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-1">Ville</span>
-                    <h3 class="font-display text-base sm:text-lg font-black uppercase text-foreground tracking-tight">{{ city.name }}</h3>
-                    <p :class="cn('mt-2 text-[10px] font-bold uppercase tracking-wide', statusLabel(city.mission_status).class)">
-                      {{ statusLabel(city.mission_status).text }}
-                    </p>
-                  </div>
-                  <ArrowRight class="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/0 group-hover:text-primary transition-all" />
-                </Link>
-
-                <div v-else :class="cityCardClass(true)">
-                  <div class="relative w-36 sm:w-44 shrink-0 overflow-hidden">
-                    <AppImage
-                      :src="city.image_url || city.image_path"
-                      :alt="city.name"
-                      class="h-full w-full object-cover min-h-[100px] grayscale opacity-50"
-                    />
-                    <!-- <div v-else class="h-full min-h-[100px] w-full bg-muted/40 flex items-center justify-center">
-                      <MapPin class="h-8 w-8 text-muted-foreground/40" />
-                    </div> -->
-                    <div class="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-[1px]">
-                      <div class="flex flex-col items-center gap-1">
-                        <Lock class="h-8 w-8 text-white/70" />
-                        <span class="text-[9px] font-black uppercase tracking-widest text-white/60">Verrouillé</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex flex-1 flex-col justify-center p-4 sm:p-5">
-                    <span class="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-1">Ville</span>
-                    <h3 class="font-display text-base sm:text-lg font-black uppercase text-foreground tracking-tight">{{ city.name }}</h3>
-                    <p :class="cn('mt-2 text-[10px] font-bold uppercase tracking-wide', statusLabel(city.mission_status).class)">
-                      {{ statusLabel(city.mission_status).text }}
-                    </p>
-                  </div>
+              <Link
+                v-for="city in activeCities"
+                :key="city.id"
+                :href="route('player.game', city.id)"
+                :class="cityCardClass"
+                
+              >
+                <div class="relative w-36 sm:w-44 shrink-0 overflow-hidden">
+                  <AppImage
+                    :src="city.image_url || city.image_path"
+                    :alt="city.name"
+                    class="h-full w-full object-cover min-h-[100px] transition-transform duration-500 group-hover:scale-105"
+                  />
                 </div>
-              </template>
+                <div class="flex flex-1 flex-col justify-center p-4 sm:p-5">
+                  <span class="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-1">Ville</span>
+                  <h3 class="font-display text-base sm:text-lg font-black uppercase text-text-primary hover:text-foreground tracking-tight">
+                    {{ city.name }}
+                  </h3>
+                  <p :class="cn('mt-2 text-[10px] font-bold uppercase tracking-wide', statusLabel(city.mission_status).class)">
+                    {{ statusLabel(city.mission_status).text }}
+                  </p>
+                </div>
+                <ArrowRight class="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/0 group-hover:text-primary transition-all" />
+              </Link>
 
-              <p v-if="!cities?.length" class="text-sm text-muted-foreground text-center py-8">
-                Aucune ville active pour le moment.
+              <!-- État vide (si aucun objectif actif n'est retourné) -->
+              <p v-if="!activeCities.length" class="text-sm text-muted-foreground text-center py-12 border border-dashed border-muted rounded-xl bg-card/50">
+                Aucun objectif actif ou disponible pour le moment.
               </p>
             </div>
           </section>
 
+          <!-- Section Succès (Barre Latérale) -->
           <section>
             <h2 class="font-display text-sm font-black uppercase tracking-[0.25em] text-foreground mb-5 flex items-center gap-2">
               <Award class="h-4 w-4 text-primary" />
@@ -238,6 +214,7 @@ const cityCardClass = (locked) =>
                 Temple des agents
               </p>
 
+              <!-- Mosaïque Hexagonale des Succès -->
               <div class="hex-grid mx-auto max-w-[280px]">
                 <div
                   v-for="a in achievements"
@@ -271,6 +248,7 @@ const cityCardClass = (locked) =>
                 </div>
               </div>
 
+              <!-- Lien vers l'historique complet -->
               <Link
                 :href="route('player.rewards.index')"
                 class="mt-6 flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-dashed border-primary/30 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-colors"
@@ -279,6 +257,7 @@ const cityCardClass = (locked) =>
                 <ArrowRight class="h-3.5 w-3.5" />
               </Link>
 
+              <!-- Encart Série d'activité -->
               <div class="mt-5 relative overflow-hidden rounded-xl bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 p-5 flex items-center justify-between">
                 <div class="absolute -right-6 -bottom-6 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
                 <div class="relative z-10">
@@ -287,7 +266,7 @@ const cityCardClass = (locked) =>
                     {{ stats.streak_days ?? 0 }}<span class="text-lg not-italic"> j</span>
                   </p>
                 </div>
-                <Flame class="relative z-10 h-14 w-14 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)] animate-pulse" />
+                <Flame class="relative z-10 h-14 w-14 text-white drop-shadow-[0_0_20px_rgba(251,191,36,0.5)] animate-pulse" />
               </div>
             </div>
           </section>
