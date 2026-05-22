@@ -1,4 +1,5 @@
 <script setup>
+// kamal
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import NeonButton from '@/Components/NeonButton.vue';
 import AppImage from '@/Components/AppImage.vue';
@@ -19,12 +20,20 @@ const props = defineProps({
 const showEventModal = ref(false);
 const imagePreviews = ref([]);
 
+/**
+ * Types de récompenses disponibles pour les événements.
+ * Ces lots sont échangeables par les joueurs via leurs diamants.
+ */
 const rewardTypes = [
     { value: 'ticket', label: 'Ticket Entrée' },
     { value: 'meal', label: 'Repas / Snack' },
     { value: 'discount', label: 'Réduction Boutique' },
 ];
 
+/**
+ * Formulaire réactif pour la création et l'édition d'événements.
+ * Utilise useForm d'Inertia pour gérer les états de chargement et les erreurs.
+ */
 const eventForm = useForm({
     id: null,
     title: '',
@@ -39,6 +48,10 @@ const eventForm = useForm({
     existing_images: [],
 });
 
+/**
+ * Ouvre le modal de configuration d'événement.
+ * Initialise les données en cas d'édition d'un événement existant.
+ */
 const openEventModal = (event = null) => {
     if (event) {
         eventForm.id = event.id;
@@ -61,16 +74,26 @@ const openEventModal = (event = null) => {
     showEventModal.value = true;
 };
 
+/**
+ * Gère le téléchargement d'images et génère des prévisualisations locales (blobs).
+ */
 const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     eventForm.images = files;
     imagePreviews.value = files.map(file => URL.createObjectURL(file));
 };
 
+/**
+ * Supprime une image déjà présente sur le serveur lors de l'édition.
+ */
 const removeExistingImage = (index) => {
     eventForm.existing_images.splice(index, 1);
 };
 
+/**
+ * Soumet le formulaire au serveur.
+ * Utilise la méthode POST avec un override _method: PUT pour l'édition (support multipart/form-data).
+ */
 const submitEvent = () => {
     const url = eventForm.id
         ? route('mairie.events.edit', eventForm.id)
@@ -88,6 +111,9 @@ const submitEvent = () => {
     });
 };
 
+/**
+ * Supprime définitivement un événement après confirmation.
+ */
 const deleteEvent = (event) => {
     if (confirm('Supprimer cet événement ?')) {
         eventForm.delete(route('mairie.events.delete', event.id));
@@ -208,12 +234,15 @@ const formatDate = (dateString) => {
             </div>
         </div>
 
-        <Modal :show="showEventModal" @close="showEventModal = false" maxWidth="5xl">
-            <div class="relative overflow-hidden bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[3rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-300">
+        <!-- MODAL EDITOR (Gaming Style) -->
+        <div v-if="showEventModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            <div class="absolute inset-0 bg-gaming-dark/60 backdrop-blur-md" @click="showEventModal = false"></div>
+
+            <div class="relative w-full max-w-5xl bg-white/10 backdrop-blur-2xl border border-white/10 rounded-[3rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-300">
                 <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
 
                 <div class="p-8 md:p-12 relative z-10">
-                    <div class="flex justify-between items-center mb-12">
+                    <div class="flex justify-between items-center mb-12 px-4">
                         <div>
                             <div class="text-[10px] text-primary uppercase tracking-[0.4em] font-black mb-1 neon-text">Mission Protocol</div>
                             <h2 class="font-display text-3xl md:text-4xl text-foreground uppercase italic font-black tracking-tighter">
@@ -233,7 +262,7 @@ const formatDate = (dateString) => {
                                     <label class="text-[10px] text-primary font-black uppercase tracking-[0.2em] mb-6 block">Primary Information</label>
                                     <div class="space-y-6">
                                         <GlowInput v-model="eventForm.title" placeholder="Mission Title..." required />
-                                        
+
                                         <div class="grid md:grid-cols-2 gap-6">
                                             <div class="space-y-2">
                                                 <span class="text-[9px] text-muted-foreground uppercase font-black ml-2 tracking-widest">Operation Timestamp</span>
@@ -280,7 +309,7 @@ const formatDate = (dateString) => {
                             <div class="space-y-8">
                                 <div class="p-8 bg-primary/5 border border-primary/10 rounded-[2.5rem] relative overflow-hidden group">
                                     <div class="absolute -top-12 -right-12 h-32 w-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors"></div>
-                                    
+
                                     <div class="flex items-center justify-between mb-8 relative z-10">
                                         <div class="flex items-center gap-4">
                                             <div class="h-10 w-10 rounded-xl bg-primary/20 grid place-items-center shadow-neon-sm">
@@ -343,7 +372,7 @@ const formatDate = (dateString) => {
                     </form>
                 </div>
             </div>
-        </Modal>
+        </div>
     </SiteLayout>
 </template>
 

@@ -1,4 +1,5 @@
 <script setup>
+// kamal
 import { Link, usePage } from "@inertiajs/vue3";
 import { Compass, Menu, X, User, LogOut, Bell, Settings } from "lucide-vue-next";
 import { ref, computed } from "vue";

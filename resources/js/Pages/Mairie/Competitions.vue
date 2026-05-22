@@ -1,10 +1,11 @@
 <script setup>
+// kamal
 import { ref, computed } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import NeonButton from '@/Components/NeonButton.vue';
 import GlowInput from '@/Components/GlowInput.vue';
-import { 
+import {
     ChevronLeft, Plus, Edit2, Trash2, Calendar, Target, Award, Info, X, Clock, Settings, Trophy, Zap, Heart, Gem
 } from 'lucide-vue-next';
 import { cn } from '@/lib/utils';
@@ -15,13 +16,18 @@ const props = defineProps({
 });
 
 const showModal = ref(false);
+
+/**
+ * Formulaire réactif pour la gestion des compétitions.
+ * Définit les paramètres du défi : type (classement ou fixe), objectif, dates et récompenses.
+ */
 const competitionForm = useForm({
     id: null,
     city_event_id: props.event.id,
     title: '',
     description: '',
-    type: 'fixed', // 'ranking', 'fixed'
-    objective_type: 'xp', // 'xp', 'hearts', 'diamonds'
+    type: 'fixed', // 'ranking' pour un podium, 'fixed' pour un seuil à atteindre
+    objective_type: 'xp', // Ressource à accumuler : 'xp', 'hearts', 'diamonds'
     goal_amount: null,
     ranking_limit: 3,
     start_date: '',
@@ -30,6 +36,10 @@ const competitionForm = useForm({
     is_active: true,
 });
 
+/**
+ * Ouvre le modal d'édition ou de création.
+ * Pré-remplit les champs si une compétition existante est fournie.
+ */
 const openModal = (comp = null) => {
     if (comp) {
         competitionForm.id = comp.id;
@@ -39,7 +49,7 @@ const openModal = (comp = null) => {
         competitionForm.objective_type = comp.objective_type;
         competitionForm.goal_amount = comp.goal_amount;
         competitionForm.ranking_limit = comp.ranking_limit;
-        competitionForm.start_date = comp.start_date.split('.')[0]; 
+        competitionForm.start_date = comp.start_date.split('.')[0];
         competitionForm.end_date = comp.end_date.split('.')[0];
         competitionForm.reward_description = comp.reward_description;
         competitionForm.is_active = !!comp.is_active;
@@ -51,6 +61,9 @@ const openModal = (comp = null) => {
     showModal.value = true;
 };
 
+/**
+ * Soumet le protocole de compétition au serveur.
+ */
 const submit = () => {
     competitionForm.post(route('mairie.competitions.store'), {
         onSuccess: () => {
@@ -60,6 +73,9 @@ const submit = () => {
     });
 };
 
+/**
+ * Supprime le protocole de compétition après confirmation manuelle.
+ */
 const deleteComp = (id) => {
     if (confirm('Supprimer cette compétition ?')) {
         competitionForm.delete(route('mairie.competitions.destroy', id));
@@ -100,7 +116,7 @@ const cardClass = "group relative overflow-hidden rounded-[2.5rem] bg-white/10 b
             <div v-if="competitions.length > 0" class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 <div v-for="comp in competitions" :key="comp.id"
                      :class="cn(cardClass, { 'opacity-50 grayscale': !comp.is_active })">
-                    
+
                     <div class="p-8">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-widest">
@@ -126,7 +142,7 @@ const cardClass = "group relative overflow-hidden rounded-[2.5rem] bg-white/10 b
 
                         <div class="space-y-3 pt-4 border-t border-white/5">
                             <div class="flex items-center gap-2 text-[10px] font-black text-foreground/60 uppercase">
-                                <Calendar class="h-3.5 w-3.5 text-primary" /> 
+                                <Calendar class="h-3.5 w-3.5 text-primary" />
                                 {{ formatDate(comp.start_date) }} - {{ formatDate(comp.end_date) }}
                             </div>
                             <div class="flex items-center gap-2 text-[10px] font-black text-sky-400 uppercase">
@@ -152,7 +168,7 @@ const cardClass = "group relative overflow-hidden rounded-[2.5rem] bg-white/10 b
         <!-- MODAL EDITOR -->
         <div v-if="showModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             <div class="absolute inset-0 bg-gaming-dark/60 backdrop-blur-md" @click="showModal = false"></div>
-            
+
             <div class="relative w-full max-w-4xl bg-white/10 backdrop-blur-2xl border border-white/10 rounded-[3rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-300">
                 <div class="p-8 relative z-10">
                     <div class="flex justify-between items-center mb-10 px-4">
@@ -174,7 +190,7 @@ const cardClass = "group relative overflow-hidden rounded-[2.5rem] bg-white/10 b
                                     <div class="space-y-4">
                                         <GlowInput v-model="competitionForm.title" placeholder="Competition Title..." required />
                                         <textarea v-model="competitionForm.description" placeholder="Description of the challenge..." class="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-foreground outline-none focus:border-primary/50 transition-all resize-none" required></textarea>
-                                        
+
                                         <div class="grid grid-cols-2 gap-4">
                                             <div class="space-y-2">
                                                 <span class="text-[9px] text-muted-foreground font-bold uppercase ml-1">Type de Défi</span>

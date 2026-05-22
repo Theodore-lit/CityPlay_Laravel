@@ -106,13 +106,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::patch('/mairie/city/{city}/toggle', [MairieController::class, 'toggleStatus'])->name('mairie.city.toggle');
 
-        // Mairie Event Routes
+        // Mairie Event Routes - kamal
         Route::get('/mairie/city/{city}/events', [CityEventController::class, 'index'])->name('mairie.cities.events');
         Route::post('/mairie/city/{city}/events', [CityEventController::class, 'store'])->name('mairie.events.store');
         Route::put('/mairie/events/{event}', [CityEventController::class, 'store'])->name('mairie.events.edit');
         Route::delete('/mairie/events/{event}', [CityEventController::class, 'delete'])->name('mairie.events.delete');
 
-        // Mairie Competition Routes
+        // Mairie Competition Routes - kamal
         Route::get('/mairie/events/{event}/competitions', [CompetitionController::class, 'index'])->name('mairie.events.competitions');
         Route::post('/mairie/competitions', [CompetitionController::class, 'store'])->name('mairie.competitions.store');
         Route::delete('/mairie/competitions/{competition}', [CompetitionController::class, 'destroy'])->name('mairie.competitions.destroy');

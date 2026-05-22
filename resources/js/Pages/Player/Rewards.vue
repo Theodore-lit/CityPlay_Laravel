@@ -1,4 +1,5 @@
 <script setup>
+// kamal
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
 import NeonButton from '@/Components/NeonButton.vue';
@@ -21,7 +22,8 @@ const props = defineProps({
     stats: Object,
 });
 
-// Logique d'ouverture de lot
+// Logique d'ouverture de lot (Prizes System)
+// Cette section gère la transition visuelle entre la boîte fermée et le contenu révélé
 const openingPrize = ref(null);
 const showOpeningModal = ref(false);
 const isOpening = ref(false);
@@ -33,11 +35,15 @@ const openPrizeModal = (prize) => {
     prizeOpened.value = prize.is_opened;
 };
 
+/**
+ * Déclenche la séquence d'animation GSAP pour l'ouverture du lot.
+ * On utilise une timeline pour synchroniser les secousses, l'agrandissement et l'explosion.
+ */
 const triggerOpeningAnimation = () => {
     if (isOpening.value) return;
     isOpening.value = true;
     
-    // Séquence GSAP Premium
+    // Séquence GSAP Premium : Secousses suivies d'une disparition en flou
     const tl = gsap.timeline();
     
     tl.to(".prize-box-container", {
@@ -60,18 +66,24 @@ const triggerOpeningAnimation = () => {
         duration: 0.6,
         ease: "power4.in",
         onComplete: () => {
+            // Appel API uniquement APRES la fin de l'animation visuelle
             sendOpenRequest();
         }
     });
 };
 
+/**
+ * Envoie la requête de validation d'ouverture au serveur.
+ * Désactive le loader global d'Inertia pour garder le contrôle sur l'UI gaming.
+ */
 const sendOpenRequest = () => {
     useForm({}).post(route('player.prizes.open', openingPrize.value.id), {
         onSuccess: () => {
+            // On attend que le serveur confirme avant de changer d'état
             isOpening.value = false;
             prizeOpened.value = true;
             
-            // Effets de victoire
+            // Effets de victoire : Confettis et animation d'apparition du lot
             confetti({
                 particleCount: 200,
                 spread: 90,
@@ -79,7 +91,7 @@ const sendOpenRequest = () => {
                 colors: ['#0070ff', '#00f2ff', '#ffffff', '#ffd700']
             });
 
-            // Animation d'apparition du contenu débloqué
+            // Animation d'apparition du contenu débloqué (élastique)
             nextTick(() => {
                 gsap.from(".revealed-content", {
                     y: 40,
@@ -89,7 +101,10 @@ const sendOpenRequest = () => {
                     ease: "elastic.out(1, 0.5)"
                 });
             });
-        }
+        },
+        // IMPORTANT: Désactivation du loader global pour éviter l'interruption visuelle
+        showProgress: false,
+        preserveScroll: true
     });
 };
 

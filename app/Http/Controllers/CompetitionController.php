@@ -12,11 +12,14 @@ use Illuminate\Support\Facades\DB;
 
 class CompetitionController extends Controller
 {
+    // kamal
     /**
      * Liste les compétitions pour un événement donné (Admin/Mairie).
+     * Permet à la mairie de superviser les défis liés à ses événements.
      */
     public function index(CityEvent $event)
     {
+        // Sécurité : Vérifier le rôle de l'utilisateur
         if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
@@ -29,9 +32,11 @@ class CompetitionController extends Controller
 
     /**
      * Enregistre une nouvelle compétition ou met à jour une existante.
+     * Gère les différents types d'objectifs (XP, Coeurs, Diamants) et de classements.
      */
     public function store(Request $request)
     {
+        // Validation stricte des paramètres de compétition
         $validated = $request->validate([
             'id' => 'nullable|exists:competitions,id',
             'city_event_id' => 'required|exists:city_events,id',
@@ -48,9 +53,11 @@ class CompetitionController extends Controller
         ]);
 
         if ($request->id) {
+            // Mise à jour d'un protocole existant
             $competition = Competition::findOrFail($request->id);
             $competition->update($validated);
         } else {
+            // Déploiement d'un nouveau défi
             Competition::create($validated);
         }
 
@@ -58,7 +65,7 @@ class CompetitionController extends Controller
     }
 
     /**
-     * Supprime une compétition.
+     * Supprime une compétition et ses données associées.
      */
     public function destroy(Competition $competition)
     {
@@ -68,6 +75,7 @@ class CompetitionController extends Controller
 
     /**
      * Vue joueur pour les compétitions.
+     * Affiche les défis actifs auxquels le joueur peut participer.
      */
     public function playerIndex()
     {
@@ -77,6 +85,7 @@ class CompetitionController extends Controller
             ->with(['cityEvent.city'])
             ->get()
             ->map(function($comp) use ($user) {
+                // Enrichissement des données avec le statut de participation du joueur
                 $participant = $comp->participants()->where('user_id', $user->id)->first();
                 $comp->is_participating = !!$participant;
                 $comp->progress = $comp->getProgress($user);
@@ -89,16 +98,17 @@ class CompetitionController extends Controller
     }
 
     /**
-     * Affiche les détails d'une compétition (Arène).
+     * Affiche l'arène de compétition (Détails et Classement).
+     * C'est ici que l'utilisateur voit sa progression en temps réel.
      */
     public function show(Competition $competition)
     {
         $user = auth()->user();
         $competition->load(['cityEvent.city']);
-        
+
         $participant = $competition->participants()->where('user_id', $user->id)->first();
-        
-        // Classement des participants
+
+        // Calcul du classement dynamique des participants
         $leaderboard = $competition->participants()
             ->orderByPivot('current_amount', 'desc')
             ->get()
@@ -117,11 +127,12 @@ class CompetitionController extends Controller
 
     /**
      * Inscrit un joueur à une compétition.
+     * Initialise le score à zéro dans la table pivot.
      */
     public function join(Competition $competition)
     {
         $user = auth()->user();
-        
+
         if (!$competition->participants()->where('user_id', $user->id)->exists()) {
             $competition->participants()->attach($user->id, ['current_amount' => 0]);
         }
@@ -132,52 +143,52 @@ class CompetitionController extends Controller
 
     /**
      * "Charge" l'objectif pour augmenter son score.
+     * Logique de victoire : Vérifie si l'objectif fixe est atteint pour générer un lot (UserPrize).
      */
     public function charge(Request $request, Competition $competition)
     {
         $user = auth()->user();
-        $amountToAdd = $request->input('amount', 1); // Montant à charger
+        $amountToAdd = $request->input('amount', 1);
 
-        // Vérifier si l'utilisateur a assez de ressources
-        $type = $competition->objective_type; // 'xp', 'hearts', 'diamonds'
-        
+        // Vérification de la disponibilité des ressources du joueur
+        $type = $competition->objective_type;
+
         if ($user->$type < $amountToAdd) {
             return back()->with('error', "Ressources insuffisantes ({$type}) pour charger l'objectif.");
         }
 
         DB::transaction(function () use ($user, $competition, $amountToAdd, $type) {
-            // Déduire les ressources de l'utilisateur
+            // Déduction des ressources et mise à jour du score de compétition
             $user->decrement($type, $amountToAdd);
 
-            // Augmenter le score dans la compétition
             $participant = $competition->participants()->where('user_id', $user->id)->first();
             $newAmount = $participant->pivot->current_amount + $amountToAdd;
-            
+
             $competition->participants()->updateExistingPivot($user->id, [
                 'current_amount' => $newAmount
             ]);
 
-            // Vérifier si l'objectif est atteint (pour le type 'fixed')
+            // LOGIQUE DE VICTOIRE : Déclenchée quand l'objectif fixe est atteint
             if ($competition->type === 'fixed' && $newAmount >= $competition->goal_amount && !$participant->pivot->is_winner) {
                 $competition->participants()->updateExistingPivot($user->id, ['is_winner' => true]);
-                
-                // Créer le lot (prize)
+
+                // CRÉATION DU LOT (UserPrize) : La récompense physique/virtuelle à ouvrir
                 UserPrize::create([
                     'user_id' => $user->id,
                     'competition_id' => $competition->id,
                     'title' => "Victoire : {$competition->title}",
                     'description' => "Vous avez atteint l'objectif de {$competition->goal_amount} {$competition->objective_type} !",
                     'reward_type' => 'victory_pack',
-                    'reward_value' => 100, // Valeur arbitraire
+                    'reward_value' => 100,
                     'qr_code_data' => "COMP-{$competition->id}-USER-{$user->id}-" . uniqid(),
                 ]);
 
-                // Envoyer une notification de félicitations
+                // Notification système pour alerter le joueur
                 \App\Models\Notification::create([
                     'user_id' => $user->id,
                     'type' => 'reward',
                     'message' => "Félicitations ! Vous avez remporté la compétition '{$competition->title}'. Votre lot vous attend dans votre coffre.",
-                    'link' => route('player.rewards'),
+                    'link' => route('player.rewards.index'),
                     'read_at' => null,
                 ]);
             }

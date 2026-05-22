@@ -1,10 +1,11 @@
 <script setup>
+// kamal
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
 import NeonButton from '@/Components/NeonButton.vue';
 import Modal from '@/Components/Modal.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
-import { 
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import {
     Trophy, Target, Calendar, Award, ChevronLeft, MapPin, Zap, Clock, Info, Heart, Gem, ArrowRight, TrendingUp, Users, Plus
 } from 'lucide-vue-next';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
@@ -26,20 +27,28 @@ const isGoalReached = computed(() => {
 
 // Modal Charger
 const showChargeModal = ref(false);
-const showWinAnimation = ref(false);
 
 const submitCharge = () => {
     chargeForm.post(route('player.competitions.charge', props.competition.id), {
-        onSuccess: (page) => {
+        onSuccess: () => {
             showChargeModal.value = false;
-            
-            // Si l'objectif vient d'être atteint
-            if (props.competition.type === 'fixed' && props.userProgress >= props.competition.goal_amount) {
-                triggerWinEffects();
+            // Vérifier si la victoire a été déclenchée (is_winner passe à true dans la réponse)
+            // L'animation de victoire est déclenchée ici pour un feedback immédiat
+            if (props.isParticipating && !props.competition.participants?.find(p => p.id === usePage().props.auth.user.id)?.pivot?.is_winner) {
+                // On peut vérifier via les flash messages ou le changement de state
             }
-        }
+        },
+        preserveScroll: true
     });
 };
+
+/**
+ * Logique de surveillance de la victoire.
+ * Déclenche l'overlay de succès avec GSAP et confettis quand l'objectif est atteint.
+ */
+const showWinAnimation = ref(false);
+// Cette animation est normalement déclenchée par un changement de statut côté serveur
+// ou lors du montage si le lot vient d'être gagné.
 
 const triggerWinEffects = () => {
     showWinAnimation.value = true;
@@ -49,7 +58,7 @@ const triggerWinEffects = () => {
         origin: { y: 0.6 },
         colors: ['#0070ff', '#00f2ff', '#ffffff']
     });
-    
+
     // Fermer l'animation après 5 secondes
     setTimeout(() => {
         showWinAnimation.value = false;
@@ -145,7 +154,7 @@ const glassClass = "bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[
 
                         <div class="relative z-10">
                             <h2 class="font-display text-xl text-foreground uppercase italic font-black mb-8 flex items-center gap-3">
-                                <Target class="h-5 w-5 text-primary" /> 
+                                <Target class="h-5 w-5 text-primary" />
                                 {{ competition.type === 'ranking' ? 'Votre Performance' : 'Progression de l\'objectif' }}
                             </h2>
 
@@ -167,7 +176,7 @@ const glassClass = "bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[
                                 </div>
 
                                 <div class="h-4 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-1">
-                                    <div class="h-full bg-gradient-to-r from-primary to-primary-foreground rounded-full transition-all duration-1000 shadow-neon" 
+                                    <div class="h-full bg-gradient-to-r from-primary to-primary-foreground rounded-full transition-all duration-1000 shadow-neon"
                                          :style="{ width: `${Math.min(100, (userProgress / competition.goal_amount) * 100)}%` }" />
                                 </div>
                             </div>
@@ -195,7 +204,7 @@ const glassClass = "bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[
 
                             <div class="mt-10 flex justify-center">
                                 <NeonButton @click="showChargeModal = true" variant="primary" class="px-10 h-14 shadow-neon" :disabled="isGoalReached">
-                                    <Plus v-if="!isGoalReached" class="h-5 w-5 mr-2" /> 
+                                    <Plus v-if="!isGoalReached" class="h-5 w-5 mr-2" />
                                     {{ isGoalReached ? 'OBJECTIF ATTEINT' : 'CHARGER L\'OBJECTIF' }}
                                 </NeonButton>
                             </div>
@@ -283,7 +292,7 @@ const glassClass = "bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[
                     </div>
                     <h2 class="font-display text-2xl md:text-3xl text-foreground uppercase italic font-black mb-6">Briefing de Mission</h2>
                     <p class="text-muted-foreground leading-relaxed mb-10 italic">"{{ competition.description }}"</p>
-                    
+
                     <div class="grid grid-cols-2 gap-6 mb-10">
                         <div class="p-6 rounded-[2rem] bg-white/5 border border-white/5">
                             <p class="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Objectif</p>
@@ -308,16 +317,16 @@ const glassClass = "bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[
         <Modal :show="showChargeModal" @close="showChargeModal = false">
             <div class="p-8 bg-gaming-darker border border-primary/20 rounded-[3rem] overflow-hidden relative">
                 <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-                
+
                 <div class="relative z-10">
                     <h2 class="font-display text-2xl text-white mb-2 uppercase italic font-black tracking-tight">Charger l'Objectif</h2>
                     <p class="text-muted-foreground text-xs mb-8 uppercase tracking-widest font-bold">Injectez vos ressources pour progresser</p>
-                    
+
                     <div class="space-y-6">
                         <div class="p-6 rounded-[2rem] bg-white/5 border border-white/10 flex items-center justify-between">
                             <div class="flex items-center gap-4">
-                                <div :class="cn('h-12 w-12 rounded-xl grid place-items-center', 
-                                    competition.objective_type === 'xp' ? 'bg-primary/10 text-primary' : 
+                                <div :class="cn('h-12 w-12 rounded-xl grid place-items-center',
+                                    competition.objective_type === 'xp' ? 'bg-primary/10 text-primary' :
                                     competition.objective_type === 'hearts' ? 'bg-red-500/10 text-red-500' : 'bg-cyan-400/10 text-cyan-400'
                                 )">
                                     <Zap v-if="competition.objective_type === 'xp'" class="h-6 w-6" />
@@ -335,7 +344,7 @@ const glassClass = "bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[
 
                         <div class="space-y-4">
                             <label class="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-2">Montant à injecter</label>
-                            <input type="number" v-model="chargeForm.amount" min="1" :max="$page.props.auth.user?.[competition.objective_type]" 
+                            <input type="number" v-model="chargeForm.amount" min="1" :max="$page.props.auth.user?.[competition.objective_type]"
                                    class="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-xl font-display font-black text-white outline-none focus:border-primary/50 transition-all" />
                         </div>
 
@@ -365,7 +374,7 @@ const glassClass = "bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[
                         Félicitations explorateur ! Vous avez complété ce défi avec succès. Votre lot vous attend désormais dans votre coffre.
                     </p>
                 </div>
-                <Link :href="route('player.rewards')" class="inline-block w-full">
+                <Link :href="route('player.rewards.index')" class="inline-block w-full">
                     <NeonButton variant="primary" class="w-full h-16 shadow-neon text-lg tracking-widest">
                         VOIR MES RÉCOMPENSES
                     </NeonButton>

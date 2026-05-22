@@ -2,11 +2,16 @@
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { 
+import {
     ShoppingBag, Heart, Gem, Zap, ChevronLeft, Sparkles, Package, Star
 } from 'lucide-vue-next';
 import NeonButton from '@/Components/NeonButton.vue';
+import { cn } from '@/lib/utils';
 
+/**
+ * Configuration des articles de la boutique.
+ * Permet l'achat de ressources vitales (Cœurs, Diamants) via les points XP accumulés.
+ */
 const items = [
     { name: "Pack de Cœurs", icon: Heart, price: 500, currency: "XP", value: "1 Vie", color: "text-destructive" },
     { name: "Diamants", icon: Gem, price: 1000, currency: "XP", value: "10 Diamants", color: "text-sky-400" },
@@ -32,7 +37,7 @@ const items = [
             <div class="grid gap-8 md:grid-cols-3">
                 <div v-for="item in items" :key="item.name"
                      class="group relative overflow-hidden rounded-[2.5rem] bg-white/15 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-8 transition-all duration-500 hover:border-primary/40 text-center">
-                    
+
                     <div :class="cn('h-20 w-20 mx-auto rounded-[2rem] bg-white/5 border border-white/10 grid place-items-center mb-6 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-sm', item.color)">
                         <component :is="item.icon" class="h-10 w-10 animate-pulse-soft" />
                     </div>

@@ -12,7 +12,7 @@ class UserSeeder extends Seeder
     {
         // Super Admin
         User::updateOrCreate(
-            ['email' => 'admin@cityplay.com'],
+            ['email' => 'deenabiala86@gmail.com'],
             [
                 'name' => 'Super Admin',
                 'password' => Hash::make('password'),

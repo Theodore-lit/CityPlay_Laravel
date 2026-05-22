@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Competition extends Model
 {
+    // kamal
     use HasFactory;
 
     protected $fillable = [

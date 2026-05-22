@@ -1,4 +1,5 @@
 <script setup>
+// kamal
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
 import AppImage from '@/Components/AppImage.vue';
@@ -271,7 +272,7 @@ const cityCardClass = (locked) =>
               </div>
 
               <Link
-                :href="route('player.rewards')"
+                :href="route('player.rewards.index')"
                 class="mt-6 flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-dashed border-primary/30 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-colors"
               >
                 Voir les archives

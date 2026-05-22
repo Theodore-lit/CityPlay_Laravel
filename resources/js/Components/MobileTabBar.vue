@@ -1,4 +1,5 @@
 <script setup>
+// kamal
 import { Link, usePage } from '@inertiajs/vue3';
 import { LayoutDashboard, Map, Gamepad2, Trophy, Gift } from 'lucide-vue-next';
 import { computed } from 'vue';
