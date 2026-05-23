@@ -6,18 +6,20 @@ import {
   Settings, Activity, ArrowRight, Plus, Info
 } from 'lucide-vue-next';
 
+import { ref, onMounted, computed } from 'vue';
+
 const props = defineProps({
     city: Object,
     auth: Object,
 });
 
-const menus = [
+const menus = computed(() => [
   { 
     title: 'Lieux & Énigmes', 
     description: 'Gérez les secteurs et les défis de votre ville.', 
     icon: MapPin, 
-    to: route('mairie.cities.show', props.city.id),
-    count: props.city.locations_count,
+    to: props.city?.id ? route('mairie.cities.show', props.city.id) : '#',
+    count: props.city?.locations_count,
     color: 'text-electric',
     bg: 'bg-electric/10'
   },
@@ -25,8 +27,8 @@ const menus = [
     title: 'Événements Phares', 
     description: 'Annoncez les grands moments à venir.', 
     icon: Calendar, 
-    to: route('mairie.cities.events', props.city.id),
-    count: props.city.events_count,
+    to: props.city?.id ? route('mairie.cities.events', props.city.id) : '#',
+    count: props.city?.events_count,
     color: 'text-accent',
     bg: 'bg-accent/10'
   },
@@ -34,8 +36,8 @@ const menus = [
     title: 'Quiz & Savoir', 
     description: 'Testez les connaissances des explorateurs.', 
     icon: Brain, 
-    to: route('admin.cities.quizzes', props.city.id),
-    count: props.city.quizzes_count,
+    to: props.city?.id ? route('admin.cities.quizzes', props.city.id) : '#',
+    count: props.city?.quizzes_count,
     color: 'text-warning',
     bg: 'bg-warning/10'
   },
@@ -43,11 +45,11 @@ const menus = [
     title: 'Configuration', 
     description: 'Paramètres généraux de la ville.', 
     icon: Settings, 
-    to: route('mairie.cities.show', props.city.id), // Redirige vers showCity pour l'instant
+    to: props.city?.id ? route('mairie.cities.show', props.city.id) : '#', 
     color: 'text-muted-foreground',
     bg: 'bg-white/5'
   }
-];
+]);
 </script>
 
 <template>

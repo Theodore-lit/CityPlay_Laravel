@@ -18,9 +18,11 @@ import {
     Medal,
     CheckCircle2,
     Lock,
+    BookOpen,
 } from "lucide-vue-next";
 import { ref, onMounted, computed, nextTick } from "vue";
 import gsap from "gsap";
+import Modal from "@/Components/Modal.vue";
 
 const props = defineProps({
     city: Object,
@@ -28,10 +30,13 @@ const props = defineProps({
     config: Object,
     completedSession: Object,
 });
+console.log(props.locations)
 
 const isLoading = ref(true);
 const canPlay = ref(true);
 const searchQuery = ref("");
+const showHistoryModal = ref(false);
+const selectedLocation = ref(null);
 
 const filteredLocations = computed(() => {
     if (!searchQuery.value) return props.locations;
@@ -88,6 +93,11 @@ const selectEnigma = (location, enigma) => {
 
 const goBack = () => {
     router.get(route("player.adventure.setup", props.city.id));
+};
+
+const openHistory = (location) => {
+    selectedLocation.value = location;
+    showHistoryModal.value = true;
 };
 
 const getDifficultyColor = (diff) => {
@@ -301,42 +311,46 @@ const formatTime = (seconds) => {
                     class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
                 >
                     <div
-                        v-for="location in filteredLocations"
+                        v-for="(location,index) in filteredLocations"
                         :key="location.id"
-                        class="enigma-card group relative overflow-hidden rounded-2xl glass-strong border border-white/10 transition-all duration-500 hover:border-electric/40"
+                        :class="[
+                            'enigma-card group relative overflow-hidden rounded-2xl glass-strong border transition-all duration-500',
+                            location.user_progress?.[0]?.is_discovered 
+                                ? 'border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.2)]' 
+                                : 'border-white/10 hover:border-electric/40'
+                        ]"
                     >
-                        <!-- Image de fond floue -->
+                        <!-- Image de fond -->
                         <div
-                            class="absolute inset-0 group-hover:opacity-20 transition-all duration-500"
+                            :class="[
+                                'absolute inset-0 transition-all duration-500',
+                                location.user_progress?.[0]?.is_discovered ? 'opacity-100 group-hover:opacity-90' : 'opacity-50 group-hover:opacity-70'
+                            ]"
                         >
                             <AppImage
                                 :src="
-                                    location.location_images?.[0]
-                                        ?.image_path || location.cover_image
+                                    location.enigmas[0]?.image_url
+                                        || location.enigmas[0]?.image_path || location.cover_image
                                 "
                                 fallback="/images/placeholders/location.jpg"
-                                class="w-full h-full object-cover hover:scale-85"
+                                class="w-full h-full object-cover group-hover:scale-110"
                             />
                         </div>
 
-                        <!-- GROS CADENAS CENTRAL SI DÉCOUVERT -->
-                        <div 
-                            v-if="location.user_progress?.[0]?.is_discovered"
-                            class="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
-                        >
-                            <div class="bg-black/40 backdrop-blur-md p-6 rounded-full border border-success/50 shadow-neon-success animate-fade-up">
-                                <Lock class="h-16 w-16 text-success drop-shadow-neon" />
-                            </div>
-                        </div>
-
+                        <!-- Gradient plus doux pour meilleure visibilité -->
                         <div
-                            class="absolute inset-0 bg-gradient-to-t from-gaming-dark via-gaming-dark/80 to-transparent"
+                            class="absolute inset-0 bg-gradient-to-t from-gaming-dark via-gaming-dark/40 to-transparent"
                         />
 
                         <div class="relative p-6 h-full flex flex-col">
                             <div class="flex justify-between items-start mb-4">
                                 <div
-                                    class="h-10 w-10 rounded-xl bg-electric/10 border border-electric/20 flex items-center justify-center text-electric shadow-neon-sm relative"
+                                    :class="[
+                                        'h-10 w-10 rounded-xl border flex items-center justify-center shadow-neon-sm relative',
+                                        location.user_progress?.[0]?.is_discovered 
+                                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-500' 
+                                            : 'bg-electric/10 border-electric/20 text-electric'
+                                    ]"
                                 >
                                     <Zap
                                         v-if="config.transport === 'moto'"
@@ -350,13 +364,12 @@ const formatTime = (seconds) => {
                                 </div>
                                 <div
                                     v-if="location.user_progress?.[0]?.stars"
-                                    class="flex items-center gap-1.5 text-warning bg-black/40 px-2 py-1 rounded-lg backdrop-blur-sm"
+                                    class="flex items-center gap-1.5 text-warning bg-black/60 px-2 py-1 rounded-lg backdrop-blur-sm border border-white/10"
                                 >
                                     <Star
-                                        v-for="i in location.user_progress[0]
-                                            .stars"
+                                        v-for="i in 3"
                                         :key="i"
-                                        class="h-3 w-3 fill-current"
+                                        :class="['h-3 w-3', i <= location.user_progress[0].stars ? 'fill-current' : 'opacity-20']"
                                     />
                                     <span class="text-[10px] font-black ml-1"
                                         >{{
@@ -366,26 +379,32 @@ const formatTime = (seconds) => {
                                 </div>
                                 <div
                                     v-else
-                                    class="flex items-center gap-1 text-warning"
+                                    class="flex items-center gap-1 text-warning bg-black/40 px-2 py-1 rounded-lg backdrop-blur-sm"
                                 >
                                     <Star class="h-4 w-4 fill-current" />
                                     <span class="text-xs font-black"
-                                        >150 PX</span
+                                        >{{location.enigmas[0]?.reward_coins}} PX</span
                                     >
                                 </div>
                             </div>
 
                             <h3
-                                class="font-display text-xl text-white group-hover:text-electric transition-colors mb-2 uppercase tracking-wide"
+                            
+                                :class="[
+                                    'font-display text-xl group-hover:text-electric transition-colors mb-2 uppercase tracking-wide',
+                                    location.user_progress?.[0]?.is_discovered ? 'text-amber-500' : 'text-white'
+                                ]"
                             >
                                 Mission :
                                 {{
-                                    location.enigmas[0]?.title || location.name
+                                    location.user_progress?.[0]
+                                                ?.is_discovered ? location.name :
+                                    location.enigmas[0]?.title || index + 1
                                 }}
                             </h3>
 
                             <p
-                                class="text-xs text-muted-foreground line-clamp-2 mb-6 flex-grow"
+                                class="text-xs text-white/70 line-clamp-2 mb-6 flex-grow font-medium"
                             >
                                 {{
                                     location.enigmas[0]?.content?.substring(
@@ -396,11 +415,11 @@ const formatTime = (seconds) => {
                             </p>
 
                             <div
-                                class="flex items-center justify-between pt-4 border-t border-white/5 mt-auto"
+                                class="flex items-center justify-between pt-4 border-t border-white/10 mt-auto"
                             >
                                 <div class="flex flex-col gap-1">
                                     <div
-                                        class="flex items-center gap-2 text-[10px] text-muted-foreground font-bold uppercase tracking-widest"
+                                        class="flex items-center gap-2 text-[10px] text-white/50 font-bold uppercase tracking-widest"
                                     >
                                         <Clock class="h-3.5 w-3.5" /> 15-30 MIN
                                     </div>
@@ -409,39 +428,48 @@ const formatTime = (seconds) => {
                                             location.user_progress?.[0]
                                                 ?.is_discovered
                                         "
-                                        class="text-[9px] text-success font-black uppercase tracking-tighter flex items-center gap-1"
+                                        class="text-[9px] text-amber-500 font-black uppercase tracking-tighter flex items-center gap-1"
                                     >
                                         <CheckCircle2 class="h-3 w-3" />
-                                        COMPLÉTÉE
+                                        SÉCURISÉ
                                     </div>
                                 </div>
 
-                                <button
-                                v-if="!location.user_progress?.[0]
-                                            ?.is_discovered"
-                                    @click="
-                                        selectEnigma(
-                                            location,
-                                            location.enigmas[0],
-                                        )
-                                    "
-                                    :disabled="location.user_progress?.[0]
-                                            ?.is_discovered"
-                                    :class="[
-                                        'px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-neon hover:scale-105 active:scale-95 transition-all',
-                                        location.user_progress?.[0]
-                                            ?.is_discovered
-                                            ? 'bg-white/10 text-white border border-white/20 hover:bg-electric hover:text-white'
-                                            : 'bg-electric text-white',
-                                    ]"
-                                >
-                                    {{
-                                        location.user_progress?.[0]
-                                            ?.is_discovered
-                                            ? "Validé"
-                                            : "DÉMARRER"
-                                    }}
-                                </button>
+                                <div class="flex gap-2">
+                                    <button
+                                        v-if="location.user_progress?.[0]?.is_discovered"
+                                        @click="openHistory(location)"
+                                        class="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"
+                                        title="Lire l'histoire"
+                                    >
+                                        <BookOpen class="h-4 w-4" />
+                                    </button>
+                                    
+                                    <button
+                                        @click="
+                                            selectEnigma(
+                                                location,
+                                                location.enigmas[0],
+                                            )
+                                        "
+                                            :disabled="location.user_progress?.[0]
+                                                    ?.is_discovered"
+                                        :class="[
+                                            'px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-neon ',
+                                            location.user_progress?.[0]
+                                                ?.is_discovered
+                                                ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30'
+                                                : 'bg-electric text-white hover:scale-105 active:scale-95 transition-all',
+                                        ]"
+                                    >
+                                        {{
+                                            location.user_progress?.[0]
+                                                ?.is_discovered
+                                                ? "Découvert"
+                                                : "DÉMARRER"
+                                        }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -472,6 +500,54 @@ const formatTime = (seconds) => {
                 </div>
             </div>
         </div>
+
+        <!-- MODAL HISTOIRE -->
+        <Modal :show="showHistoryModal" @close="showHistoryModal = false">
+            <div class="p-8 bg-gaming-darker border border-amber-500/30 rounded-[2.5rem] max-w-2xl mx-auto relative overflow-hidden">
+                <!-- Background Glow -->
+                <div class="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
+                
+                <div class="relative z-10 space-y-6">
+                    <!-- Image du lieu -->
+                    <div class="relative h-48 md:h-64 w-full rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+                        <AppImage
+                            :src="selectedLocation?.location_images?.[0]?.image_path || selectedLocation?.cover_image"
+                            fallback="/images/placeholders/location.jpg"
+                            class="w-full h-full object-cover"
+                        />
+                        <div class="absolute inset-0 bg-gradient-to-t from-gaming-darker via-transparent to-transparent"></div>
+                    </div>
+
+                    <div class="flex items-center gap-4 mb-2">
+                        <div class="h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-neon-sm">
+                            <BookOpen class="h-7 w-7" />
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-amber-500 font-black uppercase tracking-[0.3em]">Chroniques de la Cité</div>
+                            <h2 class="font-display text-3xl text-white uppercase italic font-black">{{ selectedLocation?.name }}</h2>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 text-white/80 leading-relaxed text-sm">
+                        <p class="font-bold text-amber-500/80 italic">" {{ selectedLocation?.description }} "</p>
+                        <div class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent my-6"></div>
+                        <div class="bg-white/5 p-6 rounded-3xl border border-white/5 prose prose-invert max-w-none">
+                            {{ selectedLocation?.history }}
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <button 
+                            @click="showHistoryModal = false"
+                            class="w-full py-4 rounded-2xl bg-amber-500 text-black font-display font-bold text-lg tracking-widest hover:scale-105 active:scale-95 transition-all shadow-neon"
+                        >
+                            FERMER LES ARCHIVES
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Modal>
+
         <MobileTabBar />
     </SiteLayout>
 </template>
@@ -486,7 +562,10 @@ const formatTime = (seconds) => {
     box-shadow: 0 0 15px rgba(0, 112, 255, 0.2);
 }
 .glass-strong {
-    background: rgba(15, 15, 25, 0.92);
+    background: rgba(10, 10, 18, 0.95);
     backdrop-filter: blur(40px);
+}
+.shadow-neon-success {
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.2);
 }
 </style>
