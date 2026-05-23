@@ -19,6 +19,7 @@ class Location extends Model
         'city_id',
         'name',
         'description',
+        'history',
         'category',
         'popularity',
         'latitude',

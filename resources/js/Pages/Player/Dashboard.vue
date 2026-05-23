@@ -172,7 +172,7 @@ const cityCardClass = cn(
               <Link
                 v-for="city in activeCities"
                 :key="city.id"
-                :href="route('player.game', city.id)"
+                :href="route('player.adventure.setup', city.id)"
                 :class="cityCardClass"
                 
               >
