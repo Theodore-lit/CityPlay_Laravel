@@ -30,7 +30,7 @@
   --muted: oklch(0.90 0.01 240);
   --muted-foreground: oklch(0.40 0.02 240);
  
-  --border: oklch(0.20 0.04 240 / 0.15); /* Bordures visibles */
+  --border: oklch(19.973% 0.03974 239.912 / 0.068); /* Bordures visibles */
   --input: #ffffff;
   --input-border: oklch(0.20 0.04 240 / 0.2);
  
@@ -45,7 +45,7 @@
 /* STYLE SOMBRE : Futuriste Haute Visibilité */
 html.dark, .dark {
   --background: oklch(42.249% 0.12054 253.227 / 0.116); /* Noir profond */
-  --foreground: oklch(0.98 0.01 240); /* Blanc éclatant */
+  --foreground: oklch(98.128% 0.0101 238.855); /* Blanc éclatant */
  
   --primary: oklch(0.70 0.18 250); /* Cyan électrique */
   --primary-foreground: #000000;
@@ -102,13 +102,14 @@ html.dark, .dark {
   }
  
   /* Image de fond globale au premier plan */
+  /* background-image: url('../images/bg.png'); */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
     z-index: 10000; /* Premier plan */
     pointer-events: none; /* Ne bloque pas les clics */
-    background-image: url('../images/bg.png');
+    background-image: url('../images/image.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -122,8 +123,8 @@ html.dark, .dark {
   }
  
   .light body::before {
-    opacity: 0.25; /* Augmenté pour moins de blancheur, plus de présence de l'image */
-    filter: brightness(0.9) saturate(1.1); /* Légèrement plus de contraste pour la netteté */
+    opacity: 0.3; /* Augmenté pour moins de blancheur, plus de présence de l'image */
+    /* filter: brightness(0.9) saturate(1.1); Légèrement plus de contraste pour la netteté */
   }
  
   body {
