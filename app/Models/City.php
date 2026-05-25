@@ -1,0 +1,106 @@
+<?php
+
+namespace App\Models;
+
+use App\Support\StorageUrl;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+/**
+ * Modèle représentant une Ville dans le jeu.
+ * Géré principalement par les mairies ou administrateurs.
+ */
+class City extends Model
+{
+    use HasFactory;
+
+    /**
+     * Attributs assignables en masse.
+     */
+    protected $fillable = [
+        'name',             // Nom de la ville (ex: Cotonou Vibrante)
+        'description',      // Description textuelle pour les joueurs
+        'latitude',         // Centre de la ville (lat)
+        'longitude',        // Centre de la ville (lng)
+        'radius_meters',    // Rayon de jeu autorisé
+        'image_path',       // Chemin vers l'image de couverture
+        'latitude',
+        'longitude',
+        'radius_meters',
+        'is_active',        // Statut d'activation de la ville
+        'start_date',       // Date de début de l'événement
+        'end_date',         // Date de fin de l'événement
+        'opening_hours',    // Horaires de jeu autorisés (JSON)
+        'forbidden_zones',  // Zones hors-jeu (JSON)
+        'creator_id',       // ID de l'utilisateur (mairie/admin) créateur
+        'mairie_id',        // ID de l'utilisateur (mairie)
+    ];
+
+    /**
+     * Casts des attributs pour faciliter la manipulation.
+     */
+    protected $casts = [
+        'opening_hours' => 'array',
+        'forbidden_zones' => 'array',
+        'is_active' => 'boolean',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
+    ];
+
+    protected $appends = [
+        'image_url',
+    ];
+
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::get(fn () => StorageUrl::url($this->image_path));
+    }
+
+    /**
+     * Relation : Une ville appartient à un créateur (User).
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'creator_id');
+    }
+    public function mairie()
+    {
+        return $this->belongsTo(User::class, 'mairie_id');
+    }
+
+    /**
+     * Relation : Une ville contient plusieurs lieux (Locations).
+     */
+    public function locations()
+    {
+        return $this->hasMany(Location::class);
+    }
+
+    /**
+     * Relation : Une ville contient plusieurs quiz.
+     */
+    public function quizzes()
+    {
+        return $this->hasMany(Quiz::class);
+    }
+
+    /**
+     * Relation avec les événements de la ville.
+     * kamal
+     */
+    public function events()
+    {
+        return $this->hasMany(CityEvent::class);
+    }
+
+    /**
+     * Relation : Une ville peut avoir plusieurs sessions de jeu actives ou passées.
+     */
+    public function gameSessions()
+    {
+        return $this->hasMany(GameSession::class);
+    }
+}

@@ -1,0 +1,74 @@
+<script setup>
+import Navbar from '@/Components/Navbar.vue';
+import Footer from '@/Components/Footer.vue';
+import { ref, onMounted, computed } from 'vue';
+import { Sun, Moon, Settings } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
+
+const props = defineProps({
+  hideFooter: {
+    type: Boolean,
+    default: false,
+  }
+});
+
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+
+const isDark = ref(true);
+
+const updateDOM = (dark) => {
+  if (dark) {
+    document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('light');
+  } else {
+    document.documentElement.classList.add('light');
+    document.documentElement.classList.remove('dark');
+  }
+};
+
+const toggleTheme = () => {
+  isDark.value = !isDark.value;
+  updateDOM(isDark.value);
+  localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
+};
+
+onMounted(() => {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'light') {
+    isDark.value = false;
+  }
+  updateDOM(isDark.value);
+});
+</script>
+
+<template>
+  <div class="min-h-screen flex flex-col transition-colors duration-500 bg-background text-foreground">
+    <Navbar />
+
+    <!-- Settings Floating Button -->
+    <Link
+      v-if="user?.role === 'joueur'"
+      :href="route('player.hub')"
+      class="fixed right-6 bottom-40 md:bottom-26 z-[60] h-12 w-12 rounded-full bg-card border border-border flex items-center justify-center text-primary shadow-lg hover:scale-110 transition-all"
+      title="Paramètres & Hub"
+    >
+      <Settings class="h-5 w-5" />
+    </Link>
+
+    <!-- Theme Toggle Floating Button -->
+    <button
+      @click="toggleTheme"
+      class="fixed right-6 bottom-24 md:bottom-10 z-[60] h-12 w-12 rounded-full bg-card border border-border flex items-center justify-center text-primary shadow-lg hover:scale-110 transition-all"
+      aria-label="Changer le thème"
+    >
+      <Sun v-if="isDark" class="h-5 w-5" />
+      <Moon v-else class="h-5 w-5" />
+    </button>
+
+    <main class="flex-1">
+      <slot />
+    </main>
+    <!-- <Footer v-if="!hideFooter" /> -->
+  </div>
+</template>
