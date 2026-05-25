@@ -213,7 +213,7 @@ const formatTime = (seconds) => {
                 <!-- STATS BLOCK (Si session terminée) -->
                 <div
                     v-if="!canPlay && completedSession"
-                    class="stats-block mb-10 glass-strong rounded-[2.5rem] border border-electric/30 p-8 md:p-12 relative overflow-hidden"
+                    class="stats-block mb-10 bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-[2.5rem] border border-white/20 p-8 md:p-12 relative overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]"
                 >
                     <div
                         class="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-electric/10 blur-3xl"
@@ -247,7 +247,7 @@ const formatTime = (seconds) => {
                             class="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full md:w-auto"
                         >
                             <div
-                                class="p-6 rounded-3xl bg-white/5 border border-white/10 text-center group hover:border-electric/30 transition-all"
+                                class="p-6 rounded-3xl bg-gradient-to-br from-white/15 to-white/5 border border-white/20 text-center group hover:border-electric/30 transition-all backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]"
                             >
                                 <Trophy
                                     class="h-6 w-6 text-warning mx-auto mb-2"
@@ -264,7 +264,7 @@ const formatTime = (seconds) => {
                                 </div>
                             </div>
                             <div
-                                class="p-6 rounded-3xl bg-white/5 border border-white/10 text-center group hover:border-electric/30 transition-all"
+                                class="p-6 rounded-3xl bg-gradient-to-br from-white/15 to-white/5 border border-white/20 text-center group hover:border-electric/30 transition-all backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]"
                             >
                                 <Clock
                                     class="h-6 w-6 text-electric mx-auto mb-2"
@@ -285,7 +285,7 @@ const formatTime = (seconds) => {
                                 </div>
                             </div>
                             <div
-                                class="p-6 rounded-3xl bg-white/5 border border-white/10 text-center group hover:border-electric/30 transition-all col-span-2 sm:col-span-1"
+                                class="p-6 rounded-3xl bg-gradient-to-br from-white/15 to-white/5 border border-white/20 text-center group hover:border-electric/30 transition-all backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] col-span-2 sm:col-span-1"
                             >
                                 <Medal
                                     class="h-6 w-6 text-success mx-auto mb-2"
@@ -314,10 +314,10 @@ const formatTime = (seconds) => {
                         v-for="(location,index) in filteredLocations"
                         :key="location.id"
                         :class="[
-                            'enigma-card group relative overflow-hidden rounded-2xl glass-strong border transition-all duration-500',
+                            'enigma-card group relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-500',
                             location.user_progress?.[0]?.is_discovered 
-                                ? 'border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.2)]' 
-                                : 'border-white/10 hover:border-electric/40'
+                                ? 'bg-gradient-to-br from-amber-500/15 to-amber-500/5 border-amber-500/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]' 
+                                : 'bg-gradient-to-br from-white/15 to-white/5 border-white/20 hover:border-electric/40 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]'
                         ]"
                     >
                         <!-- Image de fond -->
@@ -477,7 +477,7 @@ const formatTime = (seconds) => {
 
                 <div
                     v-else
-                    class="flex flex-col items-center justify-center py-20 glass rounded-[2rem] border border-white/5"
+                    class="flex flex-col items-center justify-center py-20 bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-[2rem] border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]"
                 >
                     <div
                         class="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center mb-6"
@@ -503,19 +503,19 @@ const formatTime = (seconds) => {
 
         <!-- MODAL HISTOIRE -->
         <Modal :show="showHistoryModal" @close="showHistoryModal = false">
-            <div class="p-8 bg-gaming-darker border border-amber-500/30 rounded-[2.5rem] max-w-2xl mx-auto relative overflow-hidden">
+            <div class="p-8 bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl border border-white/20 rounded-[2.5rem] max-w-2xl mx-auto relative overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
                 <!-- Background Glow -->
-                <div class="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
+                <div class="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-electric/10 blur-3xl" />
                 
                 <div class="relative z-10 space-y-6">
                     <!-- Image du lieu -->
-                    <div class="relative h-48 md:h-64 w-full rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+                    <div class="relative h-48 md:h-64 w-full rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
                         <AppImage
                             :src="selectedLocation?.location_images?.[0]?.image_path || selectedLocation?.cover_image"
                             fallback="/images/placeholders/location.jpg"
                             class="w-full h-full object-cover"
                         />
-                        <div class="absolute inset-0 bg-gradient-to-t from-gaming-darker via-transparent to-transparent"></div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-gaming-dark via-transparent to-transparent"></div>
                     </div>
 
                     <div class="flex items-center gap-4 mb-2">
@@ -531,7 +531,7 @@ const formatTime = (seconds) => {
                     <div class="space-y-4 text-white/80 leading-relaxed text-sm">
                         <p class="font-bold text-amber-500/80 italic">" {{ selectedLocation?.description }} "</p>
                         <div class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent my-6"></div>
-                        <div class="bg-white/5 p-6 rounded-3xl border border-white/5 prose prose-invert max-w-none">
+                        <div class="bg-white/5 p-6 rounded-3xl border border-white/10 prose prose-invert max-w-none">
                             {{ selectedLocation?.history }}
                         </div>
                     </div>

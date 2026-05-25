@@ -68,7 +68,7 @@ const players = computed(() => {
           <div
             v-if="players[pos]"
             :class="cn(
-              'relative glass-strong rounded-[2rem] p-4 md:p-8 text-center hover-game group border-white/10 transition-all duration-700',
+              'relative bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-[2rem] p-4 md:p-8 text-center hover-game group border-white/20 transition-all duration-700 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]',
               pos === 0 ? 'h-64 md:h-80 border-yellow-500/40 shadow-[0_0_40px_rgba(234,179,8,0.15)]' : 'h-52 md:h-64',
               pos === 1 ? 'border-slate-400/20' : '',
               pos === 2 ? 'border-orange-600/20' : ''
@@ -115,7 +115,7 @@ const players = computed(() => {
         </template>
       </div>
 
-      <div class="rounded-[2.5rem] glass-strong divide-y divide-white/5 overflow-hidden border border-white/5">
+      <div class="rounded-[2.5rem] bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl divide-y divide-white/10 overflow-hidden border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
         <div v-for="(p, i) in players.slice(3)" :key="p.name"
              class="flex items-center gap-6 p-5 hover:bg-primary/5 transition-all group relative">
 

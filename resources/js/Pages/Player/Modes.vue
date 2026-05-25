@@ -32,7 +32,7 @@ const selectMode = (mode) => {
         <!-- MODE QUIZ -->
         <div 
           @click="selectMode('quiz')"
-          class="group relative overflow-hidden rounded-[2rem] glass-strong p-6 md:p-8 cursor-pointer border-white/20 hover-game flex flex-col justify-between"
+          class="group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl p-6 md:p-8 cursor-pointer border border-white/20 hover:border-primary/40 hover-game flex flex-col justify-between shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all"
         >
           <div class="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-primary/20 blur-[60px] group-hover:bg-primary/30 transition-colors" />
           <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
@@ -69,7 +69,7 @@ const selectMode = (mode) => {
         <!-- MODE AVENTURE -->
         <div 
           @click="selectMode('aventure')"
-          class="group relative overflow-hidden rounded-[2rem] glass-strong p-6 md:p-8 cursor-pointer border-white/20 hover-game flex flex-col justify-between"
+          class="group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl p-6 md:p-8 cursor-pointer border border-white/20 hover:border-accent/40 hover-game flex flex-col justify-between shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all"
         >
           <div class="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-accent/20 blur-[60px] group-hover:bg-accent/30 transition-colors" />
           <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />

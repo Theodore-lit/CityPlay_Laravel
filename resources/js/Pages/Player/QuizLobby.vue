@@ -39,8 +39,8 @@ const isQuizCompleted = (quizId) => {
                     :key="key"
                     @click="levelInfo.unlocked ? activeLevel = key : null"
                     :class="[
-                        'relative p-6 rounded-2xl border transition-all duration-300 flex flex-col items-center gap-3 overflow-hidden group',
-                        activeLevel === key ? 'border-electric bg-electric/10 shadow-neon' : 'border-white/10 bg-gaming-surface hover:border-electric/40',
+                        'relative p-6 rounded-2xl border backdrop-blur-xl transition-all duration-300 flex flex-col items-center gap-3 overflow-hidden group',
+                        activeLevel === key ? 'bg-gradient-to-br from-electric/20 to-electric/5 border-electric/50 shadow-[0_0_20px_rgba(0,255,200,0.2)]' : 'bg-gradient-to-br from-white/15 to-white/5 border-white/20 hover:border-electric/40 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]',
                         !levelInfo.unlocked ? 'opacity-60 cursor-not-allowed grayscale' : 'cursor-pointer'
                     ]"
                 >
@@ -79,7 +79,7 @@ const isQuizCompleted = (quizId) => {
                 <div 
                     v-for="quiz in quizzes[activeLevel]" 
                     :key="quiz.id"
-                    class="glass-strong rounded-2xl p-5 border border-white/5 flex flex-col justify-between group hover:border-electric/30 transition-all"
+                    class="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-2xl p-5 border border-white/20 flex flex-col justify-between group hover:border-electric/40 transition-all shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]"
                 >
                     <div>
                         <div class="flex justify-between items-start mb-4">
@@ -115,10 +115,10 @@ const isQuizCompleted = (quizId) => {
                 </div>
 
                 <!-- Empty State -->
-                <div v-if="quizzes[activeLevel].length === 0" class="col-span-full py-20 text-center glass rounded-3xl border border-dashed border-white/10">
+                <div v-if="quizzes[activeLevel].length === 0" class="col-span-full py-20 text-center bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-3xl border border-dashed border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
                     <div class="text-4xl mb-4">📭</div>
                     <div class="text-white font-display text-xl">Aucun quiz disponible pour ce niveau</div>
-                    <p class="text-gray-500 mt-2">Revenez plus tard pour de nouveaux défis !</p>
+                    <p class="text-gray-400 mt-2">Revenez plus tard pour de nouveaux défis !</p>
                 </div>
             </div>
         </div>
