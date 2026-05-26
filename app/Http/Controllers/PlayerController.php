@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\City;
+use App\Models\Enigma;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
@@ -26,7 +27,7 @@ class PlayerController extends Controller
             ->map(function ($city, $index) use ($user) {
                 // Compte les lieux découverts par l'utilisateur dans cette ville
                 $discoveredInCity = \App\Models\UserLocationProgress::where('user_id', $user->id)
-                    ->whereHas('location', fn ($q) => $q->where('city_id', $city->id))
+                    ->whereHas('location', fn($q) => $q->where('city_id', $city->id))
                     ->where('is_discovered', true)
                     ->count();
 
@@ -253,10 +254,10 @@ class PlayerController extends Controller
         }
 
         $cities = $query->with(['events', 'locations' => function ($query) use ($user) {
-                $query->with(['userProgress' => function ($q) use ($user) {
-                    $q->where('user_id', $user->id);
-                }]);
-            }])
+            $query->with(['userProgress' => function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            }]);
+        }])
             ->get()
             ->map(function ($city) use ($user) {
                 // Calcul de la progression dans la ville (Lieux découverts / Total)
@@ -467,10 +468,12 @@ class PlayerController extends Controller
     /**
      * Point d'entrée principal du mode de jeu (Aventure ou Quiz dans une ville).
      */
-    public function game(City $city)
+    public function game(City $city, Request $request)
     {
         $user = auth()->user();
         $mode = session('game_mode', 'aventure');
+        $requestedLocationId = $request->input('location_id');
+        $enigmaId = $request->input('enigma_id');
 
         // GESTION DU MODE QUIZ DANS UNE VILLE
         if ($mode === 'quiz') {
@@ -515,9 +518,40 @@ class PlayerController extends Controller
             ->where('status', 'in_progress')
             ->where(function ($query) use ($user) {
                 $query->where('user_id', $user->id)
-                      ->orWhereIn('team_id', $user->teams->pluck('id'));
+                    ->orWhereIn('team_id', $user->teams->pluck('id'));
             })
+            ->where('current_enigma_id', $enigmaId)
+            ->where('current_location_id', $requestedLocationId)
             ->first();
+
+        // Si un location_id différent est demandé, mettre à jour la session
+        if ($requestedLocationId && (!$session || $session->current_location_id != $requestedLocationId)) {
+            $requestedLocation = $city->locations()->find($requestedLocationId);
+            if ($requestedLocation) {
+                $firstEnigma = $requestedLocation->enigmas()->first();
+
+                if ($session) {
+                    // Mettre à jour la session existante
+                    $session->update([
+                        'current_location_id' => $requestedLocationId,
+                        'current_enigma_id' => $firstEnigma?->id,
+                    ]);
+                } else {
+                    // Créer une nouvelle session pour ce location
+                    $session = \App\Models\GameSession::create([
+                        'user_id' => $user->id,
+                        'city_id' => $city->id,
+                        'team_id' => null,
+                        'start_time' => now(),
+                        'status' => 'in_progress',
+                        'discovery_sequence' => [$requestedLocationId],
+                        'current_location_id' => $requestedLocationId,
+                        'current_enigma_id' => $firstEnigma?->id,
+                        'lobby_session_id' => \Illuminate\Support\Str::uuid(),
+                    ]);
+                }
+            }
+        }
 
         // Position des membres de l'équipe si applicable
         $teamPositions = [];
@@ -563,9 +597,11 @@ class PlayerController extends Controller
         return Inertia::render('Player/Game', [
             'city' => $city,
             'locations' => $locations,
+            'enigmaId' => $enigmaId,
             'gameMode' => session('game_mode', 'aventure'),
             'currentSession' => $session,
             'initialTeamPositions' => $teamPositions,
+            'lobbySessionId' => $session?->lobby_session_id
         ]);
     }
 
@@ -605,11 +641,11 @@ class PlayerController extends Controller
             ->get();
 
         // Filtrage des lieux ayant des énigmes correspondant à la difficulté
-        $availableLocations = $city->locations()->whereHas('enigmas', function($q) use ($difficulty) {
+        $availableLocations = $city->locations()->whereHas('enigmas', function ($q) use ($difficulty) {
             $q->where('difficulty', $difficulty);
-        })->with(['enigmas' => function($q) use ($difficulty) {
+        })->with(['enigmas' => function ($q) use ($difficulty) {
             $q->where('difficulty', $difficulty);
-        }, 'userProgress' => function($q) use ($user) {
+        }, 'userProgress' => function ($q) use ($user) {
             $q->where('user_id', $user->id);
         }])->get();
 
@@ -831,10 +867,9 @@ class PlayerController extends Controller
                 }
             }
         }
-
     }
 
-        // $user->addReward('xp', $xpToAward);
+    // $user->addReward('xp', $xpToAward);
     public function markNotificationRead(\App\Models\Notification $notification)
     {
         if ($notification->user_id !== auth()->id()) {
@@ -858,7 +893,7 @@ class PlayerController extends Controller
             ->where('role', 'joueur')
             ->whereDoesntHave('locationProgress', function ($query) use ($locationId) {
                 $query->where('location_id', $locationId)
-                      ->where('is_discovered', true);
+                    ->where('is_discovered', true);
             })
             ->select('id', 'name', 'xp')
             ->get();
@@ -946,21 +981,21 @@ class PlayerController extends Controller
             ->with(['currentLocation', 'city'])
             ->firstOrFail();
 
-            $shareLink = URL::temporarySignedRoute(
-    'mission.join-link', 
-    now()->addMinutes(30), // Durée de validité (ex: 30 minutes)
-    ['lobbySessionId' => $lobbySessionId]
-);
+        $shareLink = URL::temporarySignedRoute(
+            'mission.join-link',
+            now()->addMinutes(30), // Durée de validité (ex: 30 minutes)
+            ['lobbySessionId' => $lobbySessionId]
+        );
 
-$invitedUserId = $request->input('user_id');
-    if ($invitedUserId) {
-        $invitedUser = User::findOrFail($invitedUserId);
-        (new \App\Notifications\MissionInvitation($user, $lobbySessionId, $lobbySession->currentLocation, $lobbySession->city))->send($invitedUser);
-        return back()->with('success', "{$invitedUser->name} a été invité !");
-    }
+        $invitedUserId = $request->input('user_id');
+        if ($invitedUserId) {
+            $invitedUser = User::findOrFail($invitedUserId);
+            (new \App\Notifications\MissionInvitation($user, $lobbySessionId, $lobbySession->currentLocation, $lobbySession->city))->send($invitedUser);
+            return back()->with('success', "{$invitedUser->name} a été invité !");
+        }
 
-    // 2. On passe le lien à la vue du lobby si on veut juste l'afficher
-    return view('player.mission-lobby-view', compact('lobbySession', 'shareLink'));
+        // 2. On passe le lien à la vue du lobby si on veut juste l'afficher
+        return view('player.mission-lobby-view', compact('lobbySession', 'shareLink'));
     }
 
     /**
@@ -974,11 +1009,11 @@ $invitedUserId = $request->input('user_id');
         // Vérifier que la session existe
         $existingSession = \App\Models\GameSession::where('lobby_session_id', $lobbySessionId)->firstOrFail();
 
-    //     // Si vous n'utilisez pas le middleware 'signed', vous pouvez faire la vérification ici :
-    // if (! $request->hasValidSignature()) {
-    //     return redirect()->route('player.dashboard')
-    //         ->with('error', 'Désolé, ce lien d\'invitation CityPlay a expiré ! Demandez un nouveau lien à l\'hôte.');
-    // }
+        //     // Si vous n'utilisez pas le middleware 'signed', vous pouvez faire la vérification ici :
+        // if (! $request->hasValidSignature()) {
+        //     return redirect()->route('player.dashboard')
+        //         ->with('error', 'Désolé, ce lien d\'invitation CityPlay a expiré ! Demandez un nouveau lien à l\'hôte.');
+        // }
 
         // Créer une session pour l'utilisateur courant avec le même lobby_session_id
         $session = \App\Models\GameSession::create([
