@@ -5,7 +5,8 @@ import NeonButton from "@/Components/NeonButton.vue";
 import AppImage from "@/Components/AppImage.vue";
 import GlowInput from "@/Components/GlowInput.vue";
 import GpsSearchInput from "@/Components/GpsSearchInput.vue";
-import { Head, Link, useForm } from "@inertiajs/vue3";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
+import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import {
     MapPin,
     Plus,
@@ -37,6 +38,8 @@ const showImageModal = ref(false);
 const selectedLocation = ref(null);
 const showEnigmaModal = ref(false);
 const showCityModal = ref(false);
+const showDeleteLocationConfirm = ref(false);
+const locationToDelete = ref(null);
 
 const cityForm = useForm({
     name: props.city.name,
@@ -244,6 +247,22 @@ const addIndex = () => {
 
 const removeIndex = (index) => {
     enigmaForm.indices.splice(index, 1);
+};
+
+const prepareDeleteLocation = (location) => {
+    locationToDelete.value = location;
+    showDeleteLocationConfirm.value = true;
+};
+
+const executeDeleteLocation = () => {
+    if (locationToDelete.value) {
+        router.delete(route('mairie.locations.delete', locationToDelete.value.id), {
+            onSuccess: () => {
+                showDeleteLocationConfirm.value = false;
+                locationToDelete.value = null;
+            }
+        });
+    }
 };
 
 console.log(props.city)
@@ -539,6 +558,7 @@ console.log(props.city)
                                             <ImageIcon class="h-4 w-4" />
                                         </button>
                                         <button
+                                            @click="prepareDeleteLocation(loc)"
                                             class="h-11 w-11 rounded-xl glass border-destructive/20 text-destructive hover:bg-destructive hover:text-white transition-all grid place-items-center"
                                         >
                                             <Trash2 class="h-4 w-4" />
@@ -1215,7 +1235,7 @@ console.log(props.city)
             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gaming-darker/80 backdrop-blur-md"
         >
             <div
-                class="glass-strong rounded-3xl p-8 w-full max-w-md border border-electric/20 animate-fade-up"
+                class="glass-strong rounded-3xl p-8 w-full max-md border border-electric/20 animate-fade-up"
             >
                 <h2 class="font-display text-2xl text-white mb-6">
                     Modifier la Ville
@@ -1297,6 +1317,17 @@ console.log(props.city)
                 </form>
             </div>
         </div>
+
+        <!-- DELETE CONFIRMATION MODAL -->
+        <ConfirmModal 
+            :show="showDeleteLocationConfirm"
+            title="Supprimer ce lieu ?"
+            message="Êtes-vous sûr de vouloir supprimer ce secteur ? Toutes les énigmes et images associées seront définitivement perdues."
+            variant="danger"
+            confirmText="Supprimer"
+            @close="showDeleteLocationConfirm = false"
+            @confirm="executeDeleteLocation"
+        />
     </SiteLayout>
 </template>
 

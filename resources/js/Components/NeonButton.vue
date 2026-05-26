@@ -31,6 +31,9 @@ const variants = {
     outline: 'border-2 border-primary/40 text-primary hover:bg-primary/5 hover-game',
     ghost: 'text-foreground/80 hover:text-primary hover:bg-primary/5',
     purple: 'bg-gradient-accent text-white shadow-purple hover:shadow-purple-hover hover-game',
+
+    danger: 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:bg-red-600 transition-all',
+
 };
 
 const sizes = {
@@ -45,12 +48,12 @@ const computedClasses = computed(() => cn(base, sizes[props.size], variants[prop
 </script>
 
 <template>
-    <Link v-if="href" :href="href" :class="computedClasses">
+    <Link v-if="href" :href="href" :class="computedClasses" v-bind="$attrs">
         <span class="relative z-10 flex items-center gap-2">
             <slot />
         </span>
     </Link>
-    <button v-else :class="computedClasses" :disabled="disabled">
+    <button v-else :class="computedClasses" :disabled="disabled" v-bind="$attrs">
         <span class="relative z-10 flex items-center gap-2">
             <slot />
         </span>

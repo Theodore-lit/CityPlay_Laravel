@@ -4,13 +4,15 @@ import MobileTabBar from '@/Components/MobileTabBar.vue';
 import NeonButton from '@/Components/NeonButton.vue';
 import GlowInput from '@/Components/GlowInput.vue';
 import Modal from '@/Components/Modal.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { cn } from '@/lib/utils';
 import {
   Brain, Plus, Trash2, Edit2, ChevronLeft, HelpCircle,
   Clock, Zap, Save, X, CheckCircle2
 } from 'lucide-vue-next';
+
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
 const props = defineProps({
     city: Object,
@@ -21,6 +23,8 @@ const backRoute = computed(() => {
     return route('mairie.city.hub', props.city.id);
 });
 
+
+
 // Quiz Form
 const showQuizModal = ref(false);
 const editingQuiz = ref(null);
@@ -29,6 +33,7 @@ const quizForm = useForm({
     title: '',
     description: '',
     category: 'Histoire',
+    // difficulty:'easy',
     xp_reward: 250,
     time_limit: 60,
 });
@@ -71,10 +76,25 @@ const submitQuiz = () => {
     });
 };
 
-const deleteQuiz = (id) => {
-    if (confirm('Supprimer ce quiz et toutes ses questions ?')) {
-        useForm({}).delete(route('admin.quizzes.delete', id));
-    }
+// const deleteQuiz = (id) => {
+//     if (confirm('Supprimer ce quiz et toutes ses questions ?')) {
+//         useForm({}).delete(route('admin.quizzes.delete', id));
+//     }
+// };
+
+//Modal de confirmation 
+const showDeleteConfirm = ref(false);
+const quizToDelete = ref(null);
+
+const prepareDelete = (id) => {
+    quizToDelete.value = id;
+    showDeleteConfirm.value = true;
+};
+
+const executeDelete = () => {
+    router.delete(route('admin.quizzes.delete', quizToDelete.value), {
+        onSuccess: () => { showDeleteConfirm.value = false; }
+    });
 };
 
 const openQuestionModal = (quiz, question = null) => {
@@ -103,10 +123,21 @@ const submitQuestion = () => {
     });
 };
 
-const deleteQuestion = (id) => {
-    if (confirm('Supprimer cette question ?')) {
-        useForm({}).delete(route('admin.questions.delete', id));
-    }
+const showDeleteQuestionConfirm=ref(false);
+const questionToDelete=ref(null);
+
+const prepareDeleteQuestion = (id) => {
+    // if (confirm('Supprimer cette question ?')) {
+    //     useForm({}).delete(route('admin.questions.delete', id));
+    // }
+    questionToDelete.value = id;
+    showDeleteQuestionConfirm.value = true; 
+};
+
+const executeDeleteQuestion = () => {
+    router.delete(route('admin.questions.delete', questionToDelete.value), {
+        onSuccess: () => { showDeleteQuestionConfirm.value = false; }
+    });
 };
 </script>
 
@@ -156,7 +187,7 @@ const deleteQuestion = (id) => {
                 <button @click="openQuizModal(quiz)" class="h-11 w-11 rounded-xl glass border-white/10 text-muted-foreground hover:text-white transition-all grid place-items-center">
                     <Edit2 class="h-4 w-4" />
                 </button>
-                <button @click="deleteQuiz(quiz.id)" class="h-11 w-11 rounded-xl glass border-destructive/20 text-destructive hover:bg-destructive hover:text-white transition-all grid place-items-center">
+                <button @click="prepareDelete(quiz.id)" class="h-11 w-11 rounded-xl glass border-destructive/20 text-destructive hover:bg-destructive hover:text-white transition-all grid place-items-center">
                     <Trash2 class="h-4 w-4" />
                 </button>
             </div>
@@ -188,7 +219,7 @@ const deleteQuestion = (id) => {
                         <button @click="openQuestionModal(quiz, q)" class="h-8 w-8 rounded-lg glass border-white/5 text-muted-foreground hover:text-electric transition-all grid place-items-center">
                             <Edit2 class="h-3.5 w-3.5" />
                         </button>
-                        <button @click="deleteQuestion(q.id)" class="h-8 w-8 rounded-lg glass border-destructive/10 text-destructive/60 hover:text-destructive transition-all grid place-items-center">
+                        <button @click="prepareDeleteQuestion(q.id)" class="h-8 w-8 rounded-lg glass border-destructive/10 text-destructive/60 hover:text-destructive transition-all grid place-items-center">
                             <Trash2 class="h-3.5 w-3.5" />
                         </button>
                     </div>
@@ -209,6 +240,29 @@ const deleteQuestion = (id) => {
         </div>
       </div>
     </div>
+
+    
+<!-- test -->
+    <ConfirmModal 
+    :show="showDeleteConfirm"
+    title="Supprimer ce quiz ?"
+    message="Cette action est irréversible et supprimera toutes les questions associées."
+    variant="danger"
+    confirmText="Supprimer définitivement"
+    @close="showDeleteConfirm = false"
+    @confirm="executeDelete"
+   
+/>
+
+<ConfirmModal 
+    :show="showDeleteQuestionConfirm"
+    title="Supprimer cette question ?"
+    message="Voulez-vous vraiment retirer cette question du quiz ?"
+    variant="danger"
+    confirmText="Supprimer"
+    @close="showDeleteQuestionConfirm = false"
+    @confirm="executeDeleteQuestion"
+/>
 
     <!-- QUIZ MODAL -->
     <Modal :show="showQuizModal" @close="showQuizModal = false">

@@ -6,6 +6,7 @@ import AppImage from '@/Components/AppImage.vue';
 import { firstStorageUrl } from '@/lib/storageUrl';
 import GlowInput from '@/Components/GlowInput.vue';
 import Modal from '@/Components/Modal.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import {
     Plus, ChevronLeft, Trash2, Image as ImageIcon,
@@ -18,6 +19,8 @@ const props = defineProps({
 });
 
 const showEventModal = ref(false);
+const showDeleteConfirm = ref(false);
+const eventToDelete = ref(null);
 const imagePreviews = ref([]);
 
 /**
@@ -115,8 +118,18 @@ const submitEvent = () => {
  * Supprime définitivement un événement après confirmation.
  */
 const deleteEvent = (event) => {
-    if (confirm('Supprimer cet événement ?')) {
-        eventForm.delete(route('mairie.events.delete', event.id));
+    eventToDelete.value = event;
+    showDeleteConfirm.value = true;
+};
+
+const executeDelete = () => {
+    if (eventToDelete.value) {
+        eventForm.delete(route('mairie.events.delete', eventToDelete.value.id), {
+            onSuccess: () => {
+                showDeleteConfirm.value = false;
+                eventToDelete.value = null;
+            }
+        });
     }
 };
 
@@ -233,6 +246,17 @@ const formatDate = (dateString) => {
                 <NeonButton @click="openEventModal()" variant="primary" class="mt-8 shadow-neon">INITIATE EVENT</NeonButton>
             </div>
         </div>
+
+        <!-- DELETE CONFIRMATION MODAL -->
+        <ConfirmModal 
+            :show="showDeleteConfirm"
+            title="Supprimer l'événement ?"
+            message="Êtes-vous sûr de vouloir supprimer cet événement ? Toutes les compétitions liées seront également supprimées."
+            variant="danger"
+            confirmText="Supprimer"
+            @close="showDeleteConfirm = false"
+            @confirm="executeDelete"
+        />
 
         <!-- MODAL EDITOR (Gaming Style) -->
         <div v-if="showEventModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">

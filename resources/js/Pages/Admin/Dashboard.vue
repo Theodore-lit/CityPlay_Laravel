@@ -6,7 +6,7 @@ import GlowInput from '@/Components/GlowInput.vue';
 import GpsSearchInput from '@/Components/GpsSearchInput.vue';
 import Pagination from '@/Components/Pagination.vue';
 import AppImage from '@/Components/AppImage.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import {
   Users, Map, Target, TrendingUp, Activity, DollarSign,
   Plus, Settings, Building2, Brain, ChevronRight, LayoutDashboard, ShieldCheck, Zap,
@@ -14,6 +14,8 @@ import {
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import { cn } from '@/lib/utils';
+
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
 const props = defineProps({
     cities: Object,
@@ -99,11 +101,20 @@ const submitMairie = () => {
     });
 };
 
+const showUserConfirm=ref(false);
+const userToToggle=ref(null);
+
 const toggleUser = (userId) => {
-    if (confirm('Êtes-vous sûr de vouloir changer le statut de cet utilisateur ? S\'il est désactivé, il ne pourra plus se connecter.')) {
-        useForm({}).patch(route('admin.users.toggle', userId));
-    }
-};
+    // if (confirm('Êtes-vous sûr de vouloir changer le statut de cet utilisateur ? S\'il est désactivé, il ne pourra plus se connecter.')) {
+    //     useForm({}).patch(route('admin.users.toggle', userId));
+    // }
+    userToToggle.value=userId;
+    showUserConfirm.value=true;
+const executeUser = () => {
+     router.patch(route('admin.users.toggle', userToToggle.value), {
+        onSuccess: () => { showUserConfirm.value = false; }
+     });
+};}
 
 const copyShareLink = async (city) => {
     const shareData = {
@@ -487,6 +498,18 @@ const copyShareLink = async (city) => {
             </form>
         </div>
     </div>
+
+
+     <ConfirmModal 
+    :show="showUserConfirm"
+    title="Supprimer ce quiz ?"
+    message="Êtes-vous sûr de vouloir changer le statut de cet utilisateur ? S'il est désactivé, il ne pourra plus se connecter."
+    variant="danger"
+    confirmText="Bannir"
+    @close="showUserConfirm = false"
+    @confirm="executeUser"
+   
+/>
 
     <!-- <MobileTabBar /> -->
   </SiteLayout>
