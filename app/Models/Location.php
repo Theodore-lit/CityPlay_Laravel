@@ -25,6 +25,8 @@ class Location extends Model
         'latitude',
         'longitude',
         'radius_meters',
+        'reward_xp_arrival',
+        'reward_xp_enigma',
         'average_time_minutes',
         'images',
         'is_secret',

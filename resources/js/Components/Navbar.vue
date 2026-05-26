@@ -77,6 +77,10 @@ const isActive = (routeName) => route().current(routeName);
 const notifications = computed(() => page.props.auth.notifications || []); // Liste des notifications non lues
 const showNotifications = ref(false); // Toggle du menu notifications
 
+const missionInvitations = computed(() =>
+    notifications.value.filter(n => n.data?.type === 'mission_invitation')
+);
+
 /**
  * Marque une notification comme lue via une requête serveur.
  */

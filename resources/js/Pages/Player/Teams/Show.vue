@@ -66,7 +66,7 @@ const startQuest = (cityId) => {
             <div class="grid gap-8 lg:grid-cols-3">
                 <!-- TEAM INFO -->
                 <div class="lg:col-span-1 space-y-6">
-                    <div class="glass-strong rounded-3xl p-8 border border-white/10 relative overflow-hidden">
+                    <div class="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/20 relative overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
                         <div class="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-electric/10 blur-3xl" />
 
                         <div class="relative">
@@ -74,7 +74,7 @@ const startQuest = (cityId) => {
                                 <Users class="h-10 w-10 text-electric-foreground" />
                             </div>
                             <h1 class="font-display text-3xl text-white">{{ team.name }}</h1>
-                            
+
                             <div class="mt-4 flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
                                 <div>
                                     <div class="text-[10px] text-muted-foreground uppercase font-black">Code d'invitation</div>
@@ -104,7 +104,7 @@ const startQuest = (cityId) => {
                     </div>
 
                     <!-- MEMBRES -->
-                    <div class="glass-strong rounded-3xl p-6 border border-white/10">
+                    <div class="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
                         <h2 class="font-display text-xl text-white mb-4">Membres</h2>
                         <div class="space-y-3">
                             <div v-for="member in team.members" :key="member.id" class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
@@ -131,20 +131,20 @@ const startQuest = (cityId) => {
                             <Play class="h-6 w-6 text-electric" /> Lancer une Quête en Équipe
                         </h2>
                         <div class="grid gap-4 md:grid-cols-2">
-                            <div v-for="city in availableCities" :key="city.id" class="glass-strong rounded-2xl overflow-hidden border border-white/10 group">
+                            <div v-for="city in availableCities" :key="city.id" class="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/20 group shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
                                 <div class="p-6">
                                     <div class="flex justify-between items-start mb-4">
                                         <h3 class="font-display text-xl text-white">{{ city.name }}</h3>
                                         <MapPin class="h-5 w-5 text-electric" />
                                     </div>
                                     <p class="text-sm text-muted-foreground line-clamp-2 mb-6">{{ city.description }}</p>
-                                    
+
                                     <div class="flex gap-2">
                                         <NeonButton @click="startQuest(city.id)" class="flex-1" :disabled="startQuestForm.processing">
                                             Démarrer l'Aventure
                                         </NeonButton>
-                                        <button 
-                                            @click="copyGameLink(city.id)" 
+                                        <button
+                                            @click="copyGameLink(city.id)"
                                             class="h-12 w-12 rounded-xl glass border-white/10 flex items-center justify-center text-white hover:border-electric/50 transition-all"
                                             title="Lien de partage de la partie"
                                         >
@@ -163,7 +163,7 @@ const startQuest = (cityId) => {
                             <Trophy class="h-6 w-6 text-purple-neon" /> Historique de l'Équipe
                         </h2>
                         <div v-if="team.game_sessions?.length > 0" class="space-y-4">
-                            <div v-for="session in team.game_sessions" :key="session.id" class="glass-strong rounded-2xl p-5 border border-white/10 flex items-center justify-between">
+                            <div v-for="session in team.game_sessions" :key="session.id" class="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-2xl p-5 border border-white/20 flex items-center justify-between shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
                                 <div class="flex items-center gap-4">
                                     <div class="h-12 w-12 rounded-xl bg-purple-neon/10 border border-purple-neon/20 grid place-items-center text-purple-neon">
                                         <MapPin class="h-6 w-6" />
@@ -179,7 +179,7 @@ const startQuest = (cityId) => {
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="p-12 text-center glass-strong rounded-3xl border border-white/10 text-muted-foreground italic">
+                        <div v-else class="p-12 text-center bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-3xl border border-white/20 text-muted-foreground italic shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
                             Aucune quête terminée par cette équipe pour le moment.
                         </div>
                     </section>
