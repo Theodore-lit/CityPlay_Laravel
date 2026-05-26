@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Mission Lobby - Gestion de l'attente des joueurs avant le lancement d'une mission.
+ * Permet l'invitation de joueurs et le lancement synchronisé.
+ *
+ * Auteur: Kamal
+ */
 import { ref, computed, onMounted } from 'vue';
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
@@ -33,15 +39,21 @@ const showInviteModal = ref(false);
 const loading = ref(false);
 const invitedUsers = ref([]);
 
+/**
+ * Filtre les utilisateurs disponibles pour ne pas afficher ceux déjà présents kamal
+ */
 const availableUsers = computed(() => {
     return invitedUsers.value.filter(u => !props.players.some(p => p.id === u.id));
 });
 
+/**
+ * Charge la liste des joueurs disponibles (qui n'ont pas encore fait la mission) kamal
+ */
 const loadAvailableUsers = async () => {
     try {
         loading.value = 'searching';
-        
-        // Correction : On passe les IDs en paramètres d'URL car le GET n'accepte pas de body
+
+        // Correction : On passe les IDs en paramètres d'URL car le GET n'accepte pas de body kamal
         const url = new URL(route('api.available-players'));
         if (props.city?.id) url.searchParams.append('city_id', props.city.id);
         if (props.location?.id) url.searchParams.append('location_id', props.location.id);
@@ -66,6 +78,9 @@ const loadAvailableUsers = async () => {
     }
 };
 
+/**
+ * Envoie une invitation à un joueur spécifique kamal
+ */
 const invitePlayer = (userId) => {
     loading.value = userId;
     router.post(route('player.mission-lobby.invite', props.lobbySessionId), {
@@ -77,6 +92,9 @@ const invitePlayer = (userId) => {
     });
 };
 
+/**
+ * Démarre officiellement la mission pour tous les joueurs du lobby kamal
+ */
 const startMission = () => {
     loading.value = true;
     router.post(route('player.mission-lobby.start', props.lobbySessionId), {}, {
@@ -86,6 +104,9 @@ const startMission = () => {
     });
 };
 
+/**
+ * Retourne à la configuration de l'aventure kamal
+ */
 const goBack = () => {
     if (props.city?.id) {
         router.get(route('player.adventure.setup', props.city.id));
@@ -114,7 +135,7 @@ onMounted(() => {
                 <div>
                     <div class="text-[10px] text-primary uppercase tracking-[0.4em] font-black mb-1">🎮 MISSION LOBBY</div>
                     <h1 class="font-display text-4xl text-foreground uppercase italic font-black">
-                        {{ location?.name || 'Mission' }}
+
                         <span class="text-white/40">{{ city?.name || '' }}</span>
                     </h1>
                 </div>
@@ -125,7 +146,7 @@ onMounted(() => {
                     <MapPin class="h-6 w-6 text-primary" />
                     <div>
                         <p class="text-xs text-white/60 uppercase font-black tracking-widest">Lieu de la mission</p>
-                        <p class="text-2xl font-black text-foreground">{{ location.name }}</p>
+                        <p class="text-2xl font-black text-foreground">À découvrir</p>
                     </div>
                 </div>
                 <p class="text-white/70 mb-6">{{ location.description }}</p>

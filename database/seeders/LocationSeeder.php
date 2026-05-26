@@ -31,6 +31,8 @@ class LocationSeeder extends Seeder
                     'latitude' => 6.3482,
                     'longitude' => 2.4334,
                     'radius_meters' => 100,
+                    'reward_xp_arrival' => 200,
+                    'reward_xp_enigma' => 300,
                     'status' => 'active',
                     'images' => [
                         'images/locations/cotonou/amazone-1.jpg',

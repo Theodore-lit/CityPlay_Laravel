@@ -109,6 +109,7 @@ class PlayerController extends Controller
 
     /**
      * Permet au joueur d'acheter un cœur supplémentaire en échange de 500 XP.
+     * Kamal
      */
     public function buyHeart(Request $request)
     {
@@ -123,6 +124,7 @@ class PlayerController extends Controller
 
     /**
      * Permet au joueur d'utiliser un indice pour 50 XP.
+     * Kamal
      */
     public function useHint(Request $request)
     {
@@ -135,9 +137,8 @@ class PlayerController extends Controller
     }
 
     /**
-     * Purchase a compass for 1000 XP. The front-end will use this
-     * to unlock a visual compass. We only deduct XP here and return
-     * a JSON response so the front-end can react optimistically.
+     * Achat d'une boussole visuelle pour 1000 XP.
+     * Kamal
      */
     public function purchaseCompass(Request $request)
     {
@@ -151,17 +152,25 @@ class PlayerController extends Controller
         return back()->with('error', 'XP insuffisants.');
     }
 
+    /**
+     * Permet d'acheter un pack de 10 diamants contre 1000 XP.
+     * Kamal
+     */
     public function buyDiamonds(Request $request)
     {
         $user = auth()->user();
         if ($user->xp >= 1000) {
             $user->decrement('xp', 1000);
-            $user->increment('diamonds', 10);
-            return back()->with('success', '10 diamants ajoutés !');
+            $user->increment('diamonds', 1);
+            return back()->with('success', '1 diamants ajoutés !');
         }
         return back()->with('error', 'XP insuffisants.');
     }
 
+    /**
+     * Active le passe exploration pour 24 heures contre 2000 XP.
+     * Kamal
+     */
     public function buyExplorerPass(Request $request)
     {
         $user = auth()->user();
@@ -173,17 +182,24 @@ class PlayerController extends Controller
         return back()->with('error', 'XP insuffisants.');
     }
 
+    /**
+     * Active le boost multiplicateur x2 pour 1 heure contre 10 diamants.
+     * Kamal
+     */
     public function buyXpBoost(Request $request)
     {
         $user = auth()->user();
-        if ($user->xp >= 500) {
-            $user->decrement('xp', 500);
-            $user->increment('xp', 250);
-            return back()->with('success', 'Boost XP activé ! (+250 XP)');
-        }
-        return back()->with('error', 'XP insuffisants.');
-    }
+        if ($user->diamonds >= 10) {
+            $user->decrement('diamonds', 10);
 
+            // On active le boost pour 1 heure
+            $user->boost_expires_at = now()->addHour();
+            $user->save();
+
+            return back()->with('success', 'Boost Multiplicateur x2 activé pour 1 heure !');
+        }
+        return back()->with('error', 'Diamants insuffisants (10 requis).');
+    }
 
     /**
      * Recommencer un quiz en payant 1 cœur.
@@ -280,22 +296,40 @@ class PlayerController extends Controller
     }
 
     /**
-     * Affiche le classement mondial des joueurs par XP.
+     * Affiche le classement mondial des joueurs par XP kamal.
      */
     public function leaderboard()
     {
-        $topPlayers = \App\Models\User::where('role', 'joueur')
+        $today = now()->toDateString();
+
+        $topPlayersGlobal = \App\Models\User::where('role', 'joueur')
             ->orderBy('xp', 'desc')
             ->take(10)
             ->get();
 
+        $topPlayersDaily = \App\Models\User::where('role', 'joueur')
+            ->leftJoin('daily_xp_earnings', function ($join) use ($today) {
+                $join->on('users.id', '=', 'daily_xp_earnings.user_id')
+                    ->where('daily_xp_earnings.date', '=', $today);
+            })
+            ->orderBy('daily_xp_earnings.xp_earned', 'desc')
+            ->select('users.*', 'daily_xp_earnings.xp_earned as daily_xp')
+            ->take(10)
+            ->get()
+            ->map(function ($user) {
+                $user->xp = $user->daily_xp ?? 0;
+                return $user;
+            });
+
         return Inertia::render('Player/Leaderboard', [
-            'topPlayers' => $topPlayers
+            'topPlayersGlobal' => $topPlayersGlobal,
+            'topPlayersDaily' => $topPlayersDaily
         ]);
     }
 
     /**
-     * Affiche la page des récompenses (Lots gagnés).
+     * Redirige vers l'index des récompenses.
+     * Kamal
      */
     public function rewards()
     {
@@ -303,7 +337,7 @@ class PlayerController extends Controller
     }
 
     /**
-     * Affiche le Hub (Settings/Raccourcis) du joueur.
+     * Affiche le Hub (Paramètres/Raccourcis) du joueur kamal.
      */
     public function hub()
     {
@@ -311,7 +345,8 @@ class PlayerController extends Controller
     }
 
     /**
-     * Affiche la boutique (Shop).
+     * Affiche la boutique (Shop) avec le solde du joueur.
+     * Kamal
      */
     public function shop()
     {
@@ -390,13 +425,13 @@ class PlayerController extends Controller
             'xp_earned' => $xpEarned,
         ]);
 
-        // Mise à jour des XP globaux du joueur
+        // Mise à jour des XP globaux du joueur avec prise en compte du boost
         $user = auth()->user();
-        $user->increment('xp', $xpEarned);
+        $totalXp = $user->addReward('xp', $xpEarned);
 
         return redirect()
             ->route('player.quiz.result', $quiz)
-            ->with('success', "Quiz terminé ! Vous avez gagné $xpEarned XP.")
+            ->with('success', "Quiz terminé ! Vous avez gagné $totalXp XP.")
             ->with('quiz_result', [
                 'score' => $score,
                 'total' => $total,
@@ -428,9 +463,6 @@ class PlayerController extends Controller
         ]);
     }
 
-    /**
-     * Point d'entrée principal du mode de jeu (Aventure ou Quiz dans une ville).
-     */
     /**
      * Point d'entrée principal du mode de jeu (Aventure ou Quiz dans une ville).
      */
@@ -513,7 +545,7 @@ class PlayerController extends Controller
             if (!$location->is_discovered && !$location->is_current_target) {
                 $location->display_name = "???";
                 $location->display_description = "Zone inconnue";
-                $location->status = 'locked'; 
+                $location->status = 'locked';
             } elseif (!$location->is_discovered && $location->is_current_target) {
                 $location->display_name = "Prochaine destination";
                 $location->display_description = "Résolvez l'énigme pour localiser";
@@ -564,11 +596,20 @@ class PlayerController extends Controller
             ->where('status', 'completed')
             ->first();
 
+        // Récupération des sessions non terminées (en cours ou en attente) kamal
+        $unfinishedSessions = \App\Models\GameSession::where('city_id', $city->id)
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['in_progress', 'waiting'])
+            ->with(['currentLocation', 'currentEnigma'])
+            ->get();
+
         // Filtrage des lieux ayant des énigmes correspondant à la difficulté
         $availableLocations = $city->locations()->whereHas('enigmas', function($q) use ($difficulty) {
             $q->where('difficulty', $difficulty);
         })->with(['enigmas' => function($q) use ($difficulty) {
             $q->where('difficulty', $difficulty);
+        }, 'userProgress' => function($q) use ($user) {
+            $q->where('user_id', $user->id);
         }])->get();
 
         // Filtrage géographique basé sur le mode de transport
@@ -583,10 +624,23 @@ class PlayerController extends Controller
             });
         }
 
+        // Marquer les lieux qui ont une session en cours kamal
+        $availableLocations = $availableLocations->map(function ($location) use ($unfinishedSessions) {
+            $session = $unfinishedSessions->firstWhere('current_location_id', $location->id);
+            $location->unfinished_session = $session;
+            return $location;
+        });
+
+        // Trier pour mettre les sessions non terminées en premier (Besoins Kamal)
+        $availableLocations = $availableLocations->sortByDesc(function ($location) {
+            return $location->unfinished_session ? 1 : 0;
+        });
+
         return Inertia::render('Player/ExplorerLobby', [
             'city' => $city,
             'locations' => $availableLocations->values(),
             'completedSession' => $completedSession,
+            'unfinishedSessions' => $unfinishedSessions,
             'config' => [
                 'transport' => $transport,
                 'difficulty' => $difficulty,
@@ -670,14 +724,9 @@ class PlayerController extends Controller
                 'current_enigma_id' => $siteEnigma->id ?? $session->current_enigma_id
             ]);
 
-            // Attribution des XP pour la localisation réussie
-            $difficulty = $request->input('difficulty', 'easy');
-            $xp = 100;
-            if ($difficulty === 'medium') $xp = 250;
-            if ($difficulty === 'hard') $xp = 500;
-
-            $user->xp += $xp;
-            $user->save();
+            // Attribution des XP pour la localisation réussie (Valeur définie par la mairie)
+            $xp = $location->reward_xp_arrival ?? 100;
+            $user->addReward('xp', $xp);
         }
 
         return back()->with('success', 'Lieu localisé ! Allez-y maintenant.');
@@ -690,9 +739,11 @@ class PlayerController extends Controller
     {
         $user = auth()->user();
         $stars = $request->input('stars', 1);
-        $xp = $request->input('xp', 250);
         $teamId = $request->input('team_id');
         $duration = $request->input('duration', 0); // Durée en secondes envoyée par le front
+
+        // XP de résolution d'énigme défini par la mairie
+        $xpToAward = $location->reward_xp_enigma ?? 150;
 
         // Mark as discovered for the user
         \App\Models\UserLocationProgress::updateOrCreate(
@@ -712,66 +763,83 @@ class PlayerController extends Controller
 
         $session = $session->first();
 
-        if ($session && $session->discovery_sequence) {
-            $sequence = $session->discovery_sequence;
-            $currentIndex = array_search($location->id, $sequence);
+        if ($session) {
+            // Récupération des récompenses de l'énigme actuelle avant de passer à la suivante
+            if ($session->current_enigma_id) {
+                $enigma = \App\Models\Enigma::find($session->current_enigma_id);
+                if ($enigma) {
+                    if ($enigma->reward_hearts > 0) {
+                        $user->addReward('hearts', $enigma->reward_hearts);
+                    }
+                    if ($enigma->reward_coins > 0) { // On utilise reward_coins comme XP ou diamonds selon le cas, ici le user a dit XP
+                        $user->addReward('xp', $enigma->reward_coins);
+                    }
+                }
+            }
 
-            if ($currentIndex !== false && isset($sequence[$currentIndex + 1])) {
-                $nextLocationId = $sequence[$currentIndex + 1];
-                $nextEnigma = \App\Models\Enigma::where('location_id', $nextLocationId)
-                    ->where('is_site_specific', false)
-                    ->first();
+            if ($session->discovery_sequence) {
+                $sequence = $session->discovery_sequence;
+                $currentIndex = array_search($location->id, $sequence);
 
-                $session->update([
-                    'current_location_id' => $nextLocationId,
-                    'current_enigma_id' => $nextEnigma->id ?? \App\Models\Enigma::where('location_id', $nextLocationId)->first()->id ?? null
-                ]);
-            } else {
-                // End of city!
-                $winnerId = null;
-                $diamondBonus = 0;
-
-                // Si c'est une session multijoueur, vérifier si quelqu'un d'autre a déjà terminé
-                if ($session->lobby_session_id) {
-                    $existingWinner = \App\Models\GameSession::where('lobby_session_id', $session->lobby_session_id)
-                        ->where('status', 'completed')
-                        ->where('winner_id', '!=', null)
+                if ($currentIndex !== false && isset($sequence[$currentIndex + 1])) {
+                    $nextLocationId = $sequence[$currentIndex + 1];
+                    $nextEnigma = \App\Models\Enigma::where('location_id', $nextLocationId)
+                        ->where('is_site_specific', false)
                         ->first();
 
-                    if (!$existingWinner) {
-                        // Ce joueur est le premier à terminer!
+                    $session->update([
+                        'current_location_id' => $nextLocationId,
+                        'current_enigma_id' => $nextEnigma->id ?? \App\Models\Enigma::where('location_id', $nextLocationId)->first()->id ?? null
+                    ]);
+                } else {
+                    // End of city!
+                    $winnerId = null;
+                    $diamondBonus = 0;
+
+                    // Si c'est une session multijoueur, vérifier si quelqu'un d'autre a déjà terminé
+                    if ($session->lobby_session_id) {
+                        $existingWinner = \App\Models\GameSession::where('lobby_session_id', $session->lobby_session_id)
+                            ->where('status', 'completed')
+                            ->where('winner_id', '!=', null)
+                            ->first();
+
+                        if (!$existingWinner) {
+                            // Ce joueur est le premier à terminer!
+                            $winnerId = $user->id;
+                            $diamondBonus = 10;
+                            $user->addReward('diamonds', 10);
+                        }
+                    } else {
+                        // Session solo - le joueur gagne automatiquement
                         $winnerId = $user->id;
                         $diamondBonus = 10;
-                        $user->increment('diamonds', 10);
+                        $user->addReward('diamonds', 10);
                     }
-                } else {
-                    // Session solo - le joueur gagne automatiquement
-                    $winnerId = $user->id;
-                    $diamondBonus = 10;
-                    $user->increment('diamonds', 10);
+
+                    $session->update([
+                        'status' => 'completed',
+                        'end_time' => now(),
+                        'date_completion' => now(),
+                        'total_time' => $duration,
+                        'final_score' => $user->xp + $xpToAward,
+                        'items_found' => count($sequence),
+                        'winner_id' => $winnerId,
+                    ]);
+
+                    $message = $diamondBonus > 0 ? "Félicitations ! Vous êtes vainqueur et gagnez des diamants !" : "Lieu terminé ! Une autre équipe a remporté le bonus.";
+                    return back()->with('success', $message);
                 }
-
-                $session->update([
-                    'status' => 'completed',
-                    'end_time' => now(),
-                    'date_completion' => now(),
-                    'total_time' => $duration,
-                    'final_score' => $user->xp + $xp,
-                    'items_found' => count($sequence),
-                    'winner_id' => $winnerId,
-                ]);
-
-                $message = $diamondBonus > 0 ? "Félicitations ! Vous êtes vainqueur et gagnez 10 diamants !" : "Lieu terminé ! Une autre équipe a remporté le bonus.";
-                return back()->with('success', $message);
             }
         }
 
-        $user->xp += $xp;
-        $user->save();
+        $user->addReward('xp', $xpToAward);
 
         return back()->with('success', 'Félicitations ! Lieu découvert.');
     }
 
+    /**
+     * Marque une notification comme lue.
+     */
     public function markNotificationRead(\App\Models\Notification $notification)
     {
         if ($notification->user_id !== auth()->id()) {
@@ -785,6 +853,7 @@ class PlayerController extends Controller
 
     /**
      * Récupère les joueurs disponibles pour une mission.
+     * Kamal
      */
     public function getAvailablePlayers(Request $request)
     {
@@ -806,6 +875,7 @@ class PlayerController extends Controller
 
     /**
      * Affiche le lobby d'attente pour une session multijoueur.
+     * Kamal
      */
     public function showMissionLobby($lobbySessionId)
     {
@@ -871,6 +941,7 @@ class PlayerController extends Controller
 
     /**
      * Inviter un joueur à rejoindre la session de mission.
+     * Kamal
      */
     public function invitePlayer(Request $request, $lobbySessionId)
     {
@@ -891,6 +962,7 @@ class PlayerController extends Controller
 
     /**
      * Rejoindre une session de mission existante.
+     * Kamal
      */
     public function joinMissionLobby(Request $request, $lobbySessionId)
     {
@@ -916,6 +988,7 @@ class PlayerController extends Controller
 
     /**
      * Démarre la mission avec les joueurs rassemblés.
+     * Kamal
      */
     public function startMissionWithPlayers(Request $request, $lobbySessionId)
     {
