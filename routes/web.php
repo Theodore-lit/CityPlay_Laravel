@@ -59,6 +59,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/player/update-position', [PlayerController::class, 'updatePosition'])->name('player.update-position');
         Route::get('/api/missions/{city}', [PlayerController::class, 'getMissionDetails'])->name('api.missions.show');
         Route::get('/api/available-players', [PlayerController::class, 'getAvailablePlayers'])->name('api.available-players');
+        Route::get('/mission/join/{lobbySessionId}', [PlayerController::class, 'joinMissionLobby'])
+    ->name('mission.join-link')->middleware('signed');
 
         // Team Routes
         Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');

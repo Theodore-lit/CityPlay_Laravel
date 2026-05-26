@@ -8,15 +8,11 @@ import MapComponent from "@/Components/MapComponent.vue";
 import Modal from "@/Components/Modal.vue";
 import {
     MapPin,
-    QrCode,
     Navigation,
-    Sparkles,
     Lock,
     Target,
-    Zap,
     ChevronLeft,
     Star,
-    Heart,
     Clock,
     Play,
     Info,
@@ -26,8 +22,6 @@ import {
     Pause,
     HelpCircle,
     Eye,
-    XCircle,
-    ArrowRight,
 } from "lucide-vue-next";
 import { cn } from "@/lib/utils";
 
