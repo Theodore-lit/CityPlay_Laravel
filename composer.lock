@@ -448,6 +448,7 @@
             "time": "2026-03-20T21:10:52+00:00"
         },
         {
+<<<<<<< HEAD
             "name": "clue/redis-protocol",
             "version": "v0.3.2",
             "source": {
@@ -578,6 +579,8 @@
             "time": "2025-01-03T16:18:33+00:00"
         },
         {
+=======
+>>>>>>> origin/develop1
             "name": "danharrin/date-format-converter",
             "version": "v0.3.1",
             "source": {
@@ -1056,6 +1059,7 @@
             "time": "2025-03-06T22:45:56+00:00"
         },
         {
+<<<<<<< HEAD
             "name": "evenement/evenement",
             "version": "v3.0.2",
             "source": {
@@ -1103,6 +1107,8 @@
             "time": "2023-08-08T05:53:35+00:00"
         },
         {
+=======
+>>>>>>> origin/develop1
             "name": "filament/actions",
             "version": "v4.11.3",
             "source": {
@@ -2553,6 +2559,7 @@
             "time": "2026-04-20T16:07:33+00:00"
         },
         {
+<<<<<<< HEAD
             "name": "laravel/reverb",
             "version": "v1.10.2",
             "source": {
@@ -2632,6 +2639,8 @@
             "time": "2026-05-10T15:47:52+00:00"
         },
         {
+=======
+>>>>>>> origin/develop1
             "name": "laravel/sanctum",
             "version": "v4.3.2",
             "source": {
@@ -5134,6 +5143,7 @@
             "time": "2026-03-22T23:03:24+00:00"
         },
         {
+<<<<<<< HEAD
             "name": "pusher/pusher-php-server",
             "version": "7.2.8",
             "source": {
@@ -5194,6 +5204,8 @@
             "time": "2026-05-18T13:11:36+00:00"
         },
         {
+=======
+>>>>>>> origin/develop1
             "name": "ralouphie/getallheaders",
             "version": "3.0.3",
             "source": {
@@ -5392,6 +5404,7 @@
             "time": "2025-12-14T04:43:48+00:00"
         },
         {
+<<<<<<< HEAD
             "name": "ratchet/rfc6455",
             "version": "v0.4.0",
             "source": {
@@ -5981,6 +5994,8 @@
             "time": "2024-06-11T12:45:25+00:00"
         },
         {
+=======
+>>>>>>> origin/develop1
             "name": "ryangjchandler/blade-capture-directive",
             "version": "v1.1.1",
             "source": {

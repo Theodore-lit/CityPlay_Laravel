@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
+use phpDocumentor\Reflection\Location;
 
 #[Fillable(['name', 'email', 'otp_code', 'otp_expires_at', 'is_verified', 'password', 'role', 'secret_code', 'coins', 'hearts', 'xp', 'level', 'avatar', 'is_active', 'last_activity_at', 'deactivate_on_logout', 'latitude', 'longitude'])]
 #[Hidden(['password', 'remember_token', 'otp_code'])]
@@ -31,7 +32,6 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'deactivate_on_logout' => 'boolean',
             'password' => 'hashed',
-            'is_active' => 'boolean',
             'expired_at' => 'datetime',
             'last_active_at' => 'datetime',
             'boost_expires_at' => 'datetime',

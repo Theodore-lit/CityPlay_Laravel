@@ -1049,6 +1049,38 @@ const outGame = () => {
             </div>
         </div>
 
+        <!-- Modal Out -->
+        <div
+            v-if="outModal"
+            class="fixed inset-0 z-[200] flex items-center justify-center p-4"
+        >
+            <!-- Backdrop très fort -->
+            <div class="absolute inset-0 bg-black/85 backdrop-blur-3xl"></div>
+
+            <div
+                class="relative max-w-md w-full p-8 md:p-10 rounded-3xl border border-electric/30 bg-gaming-darker/95 backdrop-blur-2xl shadow-2xl text-center"
+            >
+                <h3
+                    class="text-4xl font-display font-black text-red-500 tracking-wider mb-2"
+                >
+                    Voulez-vous Quitter la partie ??
+                </h3>
+                <div class="flex gap-4 justify-center">
+                <button
+                    @click="resumeGame"
+                    class="w-full py-4 rounded-2xl bg-electric border-gay-300 text-primary font-display font-bold text-lg tracking-widest hover:scale-105 active:scale-95 transition-all"
+                >
+                    Annuler
+                </button>
+                <button
+                    @click="goBackToLobby()"
+                    class="w-full py-4 rounded-2xl animate-pulse bg-red-500/20 text-red-500 border border-red-500/30 font-display font-bold text-lg tracking-widest hover:scale-105 active:scale-95 transition-all"
+                >
+                    Quitter
+                </button>
+                </div>
+            </div>
+        </div>
         <!-- Modal Pause -->
         <div
             v-if="pauseModal"
@@ -1113,5 +1145,19 @@ const outGame = () => {
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
+}
+
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.fade-scale-enter-from,
+.fade-scale-leave-to {
+    opacity: 0;
+    transform: scale(0.9);
+}
+
+.drop-shadow-neon {
+    filter: drop-shadow(0 0 8px rgba(0, 112, 255, 0.5));
 }
 </style>

@@ -410,7 +410,6 @@ const formatTime = (seconds) => {
                             </div>
 
                             <h3
-
                                 :class="[
                                     'font-display text-xl group-hover:text-electric transition-colors mb-2 uppercase tracking-wide',
                                     location.user_progress?.[0]?.is_discovered ? 'text-amber-500' : 'text-white'
@@ -465,7 +464,6 @@ const formatTime = (seconds) => {
                                     >
                                         <BookOpen class="h-4 w-4" />
                                     </button>
-
                                     <button
                                         @click="
                                             selectEnigma(

@@ -581,7 +581,7 @@ class PlayerController extends Controller
 
     /**
      * Initialise le Lobby de l'explorateur en filtrant les énigmes par distance et difficulté.
-     */
+     */  // Theodore
     public function startSoloQuest(Request $request, City $city)
     {
         $user = auth()->user();
@@ -769,7 +769,6 @@ class PlayerController extends Controller
                 $enigma = \App\Models\Enigma::find($session->current_enigma_id);
                 if ($enigma) {
                     if ($enigma->reward_hearts > 0) {
-                        $user->addReward('hearts', $enigma->reward_hearts);
                     }
                     if ($enigma->reward_coins > 0) { // On utilise reward_coins comme XP ou diamonds selon le cas, ici le user a dit XP
                         $user->addReward('xp', $enigma->reward_coins);
@@ -832,14 +831,9 @@ class PlayerController extends Controller
             }
         }
 
-        $user->addReward('xp', $xpToAward);
-
-        return back()->with('success', 'Félicitations ! Lieu découvert.');
     }
 
-    /**
-     * Marque une notification comme lue.
-     */
+        // $user->addReward('xp', $xpToAward);
     public function markNotificationRead(\App\Models\Notification $notification)
     {
         if ($notification->user_id !== auth()->id()) {

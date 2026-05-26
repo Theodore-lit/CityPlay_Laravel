@@ -74,7 +74,7 @@ const startQuest = (cityId) => {
                                 <Users class="h-10 w-10 text-electric-foreground" />
                             </div>
                             <h1 class="font-display text-3xl text-white">{{ team.name }}</h1>
-                            
+
                             <div class="mt-4 flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
                                 <div>
                                     <div class="text-[10px] text-muted-foreground uppercase font-black">Code d'invitation</div>
@@ -138,13 +138,13 @@ const startQuest = (cityId) => {
                                         <MapPin class="h-5 w-5 text-electric" />
                                     </div>
                                     <p class="text-sm text-muted-foreground line-clamp-2 mb-6">{{ city.description }}</p>
-                                    
+
                                     <div class="flex gap-2">
                                         <NeonButton @click="startQuest(city.id)" class="flex-1" :disabled="startQuestForm.processing">
                                             Démarrer l'Aventure
                                         </NeonButton>
-                                        <button 
-                                            @click="copyGameLink(city.id)" 
+                                        <button
+                                            @click="copyGameLink(city.id)"
                                             class="h-12 w-12 rounded-xl glass border-white/10 flex items-center justify-center text-white hover:border-electric/50 transition-all"
                                             title="Lien de partage de la partie"
                                         >

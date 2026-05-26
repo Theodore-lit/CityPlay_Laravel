@@ -73,7 +73,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/player/competitions/{competition}', [CompetitionController::class, 'show'])->name('player.competitions.show');
         Route::post('/player/competitions/{competition}/join', [CompetitionController::class, 'join'])->name('player.competitions.join');
         Route::post('/player/competitions/{competition}/charge', [CompetitionController::class, 'charge'])->name('player.competitions.charge');
-        
+
         Route::get('/player/hub', [PlayerController::class, 'hub'])->name('player.hub');
         Route::get('/player/shop', [PlayerController::class, 'shop'])->name('player.shop');
         Route::post('/player/buy-heart', [PlayerController::class, 'buyHeart'])->name('player.buy.heart');
@@ -138,7 +138,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/player/purchase-compass', [PlayerController::class, 'purchaseCompass'])->name('player.purchase-compass');
         Route::post('/player/quiz/{quiz}/retry', [PlayerController::class, 'retryQuiz'])->name('player.quiz.retry');
         Route::post('/notifications/{notification}/read', [PlayerController::class, 'markNotificationRead'])->name('notifications.read');
-        
+
         // Rewards & Prizes
         Route::post('/player/prizes/{prize}/open', [RewardsController::class, 'openPrize'])->name('player.prizes.open');
     });
