@@ -134,13 +134,10 @@ const mapPoints = [
 
       <div class="mt-6 relative h-44 md:h-56 rounded-2xl glass-strong overflow-hidden border border-electric/10">
         <!-- BENIN FLAG BACKGROUND (Animated) Theodore -->
-        <div class="absolute inset-0 flex opacity-[0.08] pointer-events-none animate-flag-wave">
-            <div class="w-[40%] h-full bg-[rgba(0,190,100,1)]"></div> <!-- Vert -->
-            <div class="w-[60%] h-full flex flex-col">
-                <div class="h-1/2 bg-[rgba(255,228,45,1)]"></div> <!-- Jaune -->
-                <div class="h-1/2 bg-[rgba(232,28,48,1)]"></div> <!-- Rouge -->
-            </div>
-        </div>
+        <div class="absolute inset-0 z-[0] flex opacity-[0.18] pointer-events-none animate-flag-wave">
+    <div class="w-[40%] h-full bg-[rgba(0,190,100,1)]"></div> <div class="w-[60%] h-full flex flex-col">
+        <div class="h-1/2 bg-[rgba(255,228,45,1)]"></div> <div class="h-1/2 bg-[rgba(232,28,48,1)]"></div> </div>
+</div>
 
         <div class="absolute inset-0 grid-bg opacity-30" />
         <div class="absolute inset-0">
@@ -160,7 +157,7 @@ const mapPoints = [
           v-for="(c, i) in filteredCities"
           :key="c.id"
           :href="gameMode === 'aventure' ? route('player.adventure.setup', c.id) : route('player.game', c.id)"
-          class="group relative overflow-hidden rounded-[2.5rem] bg-white/15 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover-lift block aspect-[4/5] animate-fade-up transition-all duration-500 hover:border-primary/40"
+          class="group relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover-lift block aspect-[4/5] animate-fade-up transition-all duration-500 hover:border-primary/40"
           :class="{ 'grayscale-[0.8] opacity-80': c.has_completed_adventure }"
           :style="{ animationDelay: `${i * 60}ms` }"
         >
@@ -233,7 +230,7 @@ const mapPoints = [
             v-for="event in allEvents"
             :key="event.id"
             @click="openEventModal(event)"
-            class="glass-strong group relative overflow-hidden rounded-[2.5rem] border border-white/5 cursor-pointer transition-all duration-500 hover:border-accent/30"
+            class="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl group relative overflow-hidden rounded-[2.5rem] border border-white/20 cursor-pointer transition-all duration-500 hover:border-accent/40 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]"
           >
             <div class="relative aspect-video overflow-hidden bg-black">
               <img

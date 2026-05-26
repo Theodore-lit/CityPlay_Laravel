@@ -9,7 +9,7 @@ import AppImage from '@/Components/AppImage.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import {
   Users, Map, Target, TrendingUp, Activity, DollarSign,
-  Plus, Settings, Building2, Brain, ChevronRight, LayoutDashboard, ShieldCheck, Zap,
+  Plus, Settings, Building2, Brain, ChevronRight, LayoutDashboard, ShieldCheck, Zap, Edit2,
   Share2, Ban, CheckCircle, MapPin
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
@@ -105,11 +105,27 @@ const toggleUser = (userId) => {
     }
 };
 
+// Toast theo
+const toast = ref({ show: false, message: "", type: "info" });
+
+const showToast = (message, type = "info") => {
+    toast.value = { show: true, message, type };
+    setTimeout(() => {
+        toast.value.show = false;
+    }, 3000);
+};
+
+const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast("Lien copié dans le presse-papier !", "success");
+    });
+};
+
 const copyShareLink = async (city) => {
     const shareData = {
-        title: `Aventure CityPlay : ${city.name}`,
-        text: `Rejoins-moi pour explorer ${city.name} et résoudre des énigmes passionnantes sur CityPlay !`,
-        url: `${window.location.origin}/player/game/${city.id}`
+        title: `CityPlay Exploration`,
+        text: `Rejoins-nous pour explorer le Bénin et résoudre des énigmes passionnantes sur CityPlay !`,
+        url: `${window.location.origin}/modes`
     };
 
     try {
@@ -117,7 +133,7 @@ const copyShareLink = async (city) => {
             await navigator.share(shareData);
         } else {
             await navigator.clipboard.writeText(shareData.url);
-            alert('Lien de jeu copié (votre navigateur ne supporte pas le partage direct).');
+            showToast('Lien de jeu copié (votre navigateur ne supporte pas le partage direct).');
         }
     } catch (err) {
         console.error('Erreur lors du partage :', err);
@@ -136,7 +152,35 @@ const copyShareLink = async (city) => {
   <Head title="Super Admin — CityPlay" />
 
   <SiteLayout>
+
+<!-- TOAST -->
+            <Transition name="toast">
+                <div
+                    v-if="toast.show"
+                    :class="
+                        cn(
+                            'absolute top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl border backdrop-blur-xl shadow-2xl flex items-center gap-3 min-w-[280px]',
+                            toast.type === 'success'
+                                ? 'bg-success/10 border-success/30 text-success'
+                                : toast.type === 'error'
+                                  ? 'bg-destructive/10 border-destructive/30 text-destructive'
+                                  : 'bg-warning/10 border-warning/30 text-warning',
+                        )
+                    "
+                >
+                    <component
+                        :is="toast.type === 'success' ? CheckCircle2 : Info"
+                        class="h-5 w-5"
+                    />
+                    <span class="text-xs font-bold uppercase tracking-widest">{{
+                        toast.message
+                    }}</span>
+                </div>
+            </Transition>
+
     <div class="mx-auto max-w-7xl px-4 sm:px-6 py-10 pb-28 md:pb-12">
+
+
       <div class="flex items-center justify-between flex-wrap gap-4 mb-8">
         <div>
           <div class="text-xs text-electric uppercase tracking-widest font-bold">Quartier Général</div>

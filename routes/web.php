@@ -50,10 +50,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/player/adventure/setup/{city}', [PlayerController::class, 'adventureSetup'])->name('player.adventure.setup');
         Route::get('/player/adventure/solo/{city}', [PlayerController::class, 'startSoloQuest'])->name('player.adventure.solo');
         Route::post('/player/adventure/launch/{city}', [PlayerController::class, 'launchAdventure'])->name('player.adventure.launch');
+        Route::get('/player/mission-lobby/{lobbySessionId}', [PlayerController::class, 'showMissionLobby'])->name('player.mission-lobby');
+        Route::post('/player/mission-lobby/{lobbySessionId}/invite', [PlayerController::class, 'invitePlayer'])->name('player.mission-lobby.invite');
+        Route::post('/player/mission-lobby/{lobbySessionId}/join', [PlayerController::class, 'joinMissionLobby'])->name('player.mission-lobby.join');
+        Route::post('/player/mission-lobby/{lobbySessionId}/start', [PlayerController::class, 'startMissionWithPlayers'])->name('player.mission-lobby.start');
         Route::post('/player/location/{location}/unlock', [PlayerController::class, 'unlockLocation'])->name('player.unlock-location');
         Route::post('/player/location/{location}/complete', [PlayerController::class, 'completeLocation'])->name('player.complete-location');
         Route::post('/player/update-position', [PlayerController::class, 'updatePosition'])->name('player.update-position');
         Route::get('/api/missions/{city}', [PlayerController::class, 'getMissionDetails'])->name('api.missions.show');
+        Route::get('/api/available-players', [PlayerController::class, 'getAvailablePlayers'])->name('api.available-players');
+        Route::get('/mission/join/{lobbySessionId}', [PlayerController::class, 'joinMissionLobby'])
+    ->name('mission.join-link')->middleware('signed');
 
         // Team Routes
         Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
@@ -68,9 +75,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/player/competitions/{competition}', [CompetitionController::class, 'show'])->name('player.competitions.show');
         Route::post('/player/competitions/{competition}/join', [CompetitionController::class, 'join'])->name('player.competitions.join');
         Route::post('/player/competitions/{competition}/charge', [CompetitionController::class, 'charge'])->name('player.competitions.charge');
-        
+
         Route::get('/player/hub', [PlayerController::class, 'hub'])->name('player.hub');
         Route::get('/player/shop', [PlayerController::class, 'shop'])->name('player.shop');
+        Route::post('/player/buy-heart', [PlayerController::class, 'buyHeart'])->name('player.buy.heart');
+        Route::post('/player/buy-diamonds', [PlayerController::class, 'buyDiamonds'])->name('player.buy.diamonds');
+        Route::post('/player/buy-explorer-pass', [PlayerController::class, 'buyExplorerPass'])->name('player.buy.explorer-pass');
+        Route::post('/player/buy-xp-boost', [PlayerController::class, 'buyXpBoost'])->name('player.buy.xp-boost');
         Route::get('/city/{city}/events/{event}', [CityEventController::class, 'show'])->name('mairie.events.show');
     });
 
@@ -125,9 +136,11 @@ Route::middleware('auth')->group(function () {
         Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
         Route::post('/player/buy-heart', [PlayerController::class, 'buyHeart'])->name('player.buy.heart');
         Route::post('/player/use-hint', [PlayerController::class, 'useHint'])->name('player.use-hint');
+        // Achat d'une boussole (coûte 1000 XP)
+        Route::post('/player/purchase-compass', [PlayerController::class, 'purchaseCompass'])->name('player.purchase-compass');
         Route::post('/player/quiz/{quiz}/retry', [PlayerController::class, 'retryQuiz'])->name('player.quiz.retry');
         Route::post('/notifications/{notification}/read', [PlayerController::class, 'markNotificationRead'])->name('notifications.read');
-        
+
         // Rewards & Prizes
         Route::post('/player/prizes/{prize}/open', [RewardsController::class, 'openPrize'])->name('player.prizes.open');
     });

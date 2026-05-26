@@ -30,6 +30,8 @@ class GameSession extends Model
         'total_time',
         'items_found',
         'date_completion',
+        'winner_id',
+        'lobby_session_id',
     ];
 
     /**
@@ -83,7 +85,24 @@ class GameSession extends Model
     }
 
     /**
-     * Relation : Historique des réponses fournies durant cette session.
+     * Relation : L'utilisateur qui a gagné cette session.
+     */
+    public function winner()
+    {
+        return $this->belongsTo(User::class, 'winner_id');
+    }
+
+    /**
+     * Relation : Tous les joueurs participants à cette session multijoueur.
+     */
+    public function players()
+    {
+        return $this->hasMany(GameSession::class, 'lobby_session_id', 'lobby_session_id')
+                    ->where('id', '!=', $this->id);
+    }
+
+    /**
+     * Relation : Les réponses aux énigmes.
      */
     public function enigmaResponses()
     {

@@ -54,7 +54,7 @@ const joinTeam = () => {
             <div class="grid gap-8 lg:grid-cols-3">
                 <!-- ACTIONS -->
                 <div class="lg:col-span-1 space-y-6">
-                    <div class="glass-strong rounded-3xl p-6 border border-white/10">
+                    <div class="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
                         <h2 class="font-display text-xl text-white mb-4 flex items-center gap-2">
                             <Plus class="h-5 w-5 text-electric" /> Créer une équipe
                         </h2>
@@ -76,7 +76,7 @@ const joinTeam = () => {
                         </form>
                     </div>
 
-                    <div class="glass-strong rounded-3xl p-6 border border-white/10">
+                    <div class="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
                         <h2 class="font-display text-xl text-white mb-4 flex items-center gap-2">
                             <UserPlus class="h-5 w-5 text-purple-neon" /> Rejoindre une équipe
                         </h2>
@@ -107,7 +107,7 @@ const joinTeam = () => {
                             <Users class="h-6 w-6 text-electric" /> Mes Équipes
                         </h2>
                         <div v-if="myTeams.length > 0" class="grid gap-4 md:grid-cols-2">
-                            <Link v-for="team in myTeams" :key="team.id" :href="route('teams.show', team.id)" class="group block glass-strong rounded-2xl p-5 border border-white/10 hover:border-electric/40 transition-all">
+                            <Link v-for="team in myTeams" :key="team.id" :href="route('teams.show', team.id)" class="group block bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-2xl p-5 border border-white/20 hover:border-electric/40 transition-all shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <h3 class="font-bold text-lg text-white group-hover:text-electric transition-colors">{{ team.name }}</h3>
@@ -125,7 +125,7 @@ const joinTeam = () => {
                                 </div>
                             </Link>
                         </div>
-                        <div v-else class="p-8 text-center glass-strong rounded-3xl border border-white/10 text-muted-foreground">
+                        <div v-else class="p-8 text-center bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-3xl border border-white/20 text-muted-foreground shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
                             <Info class="h-8 w-8 mx-auto mb-3 opacity-20" />
                             Vous ne faites partie d'aucune équipe pour le moment.
                         </div>
@@ -135,7 +135,7 @@ const joinTeam = () => {
                     <section>
                         <h2 class="font-display text-2xl text-white mb-4">Équipes Populaires</h2>
                         <div class="grid gap-4 md:grid-cols-2">
-                            <div v-for="team in allTeams" :key="team.id" class="glass-strong rounded-2xl p-5 border border-white/10">
+                            <div v-for="team in allTeams" :key="team.id" class="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-2xl p-5 border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
                                 <div class="flex justify-between items-center">
                                     <div>
                                         <h3 class="font-bold text-white">{{ team.name }}</h3>
