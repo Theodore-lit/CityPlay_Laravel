@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Interface d'administration d'une ville (Mairie).
+ * Permet la gestion des lieux, énigmes et récompenses.
+ *
+ * Kamal: Ajout des champs de récompenses XP par lieu.
+ */
 import SiteLayout from "@/Layouts/SiteLayout.vue";
 import MobileTabBar from "@/Components/MobileTabBar.vue";
 import NeonButton from "@/Components/NeonButton.vue";
@@ -38,6 +44,9 @@ const selectedLocation = ref(null);
 const showEnigmaModal = ref(false);
 const showCityModal = ref(false);
 
+/**
+ * Formulaire de modification de la ville kamal
+ */
 const cityForm = useForm({
     name: props.city.name,
     description: props.city.description,
@@ -47,12 +56,18 @@ const cityForm = useForm({
     image: null,
 });
 
+/**
+ * Mise à jour des coordonnées lors de la sélection GPS kamal
+ */
 const onCitySelect = (data) => {
     cityForm.name = data.name;
     cityForm.latitude = data.lat;
     cityForm.longitude = data.lon;
 };
 
+/**
+ * Soumission des modifications de la ville kamal
+ */
 const submitCity = () => {
     cityForm.post(route("mairie.cities.update", props.city.id), {
         forceFormData: true,
@@ -62,32 +77,23 @@ const submitCity = () => {
     });
 };
 
+/**
+ * Formulaire de gestion d'un lieu kamal
 const locationForm = useForm({
-    id: null,
-    name: '',
     latitude: '',
     longitude: '',
     radius_meters: 5000,
+    reward_xp_arrival: 0, // Kamal
+    reward_xp_enigma: 0,  // Kamal
     description: '',
     history: '',
     category: 'culture',
     image: null,
 });
 
-// const submitLocation = () => {
-//     const url = locationForm.id
-//         ? route('mairie.locations.update', locationForm.id)
-//         : route('mairie.locations.store', props.city.id);
-
-//     locationForm.post(url, {
-//         forceFormData: true,
-//         onSuccess: () => {
-//             showLocationModal.value = false;
-//             locationForm.reset();
-//         }
-//     });
-// };
-
+/**
+ * Soumission d'une énigme kamal
+ */
 const submitEnigma = () => {
     enigmaForm.post(route("mairie.enigmas.store", selectedLocation.value.id), {
         forceFormData: true,
@@ -98,12 +104,18 @@ const submitEnigma = () => {
     });
 };
 
+/**
+ * Sélection d'un lieu via la recherche GPS kamal
+ */
 const onLocationSelect = (data) => {
     locationForm.name = data.name;
     locationForm.latitude = data.lat;
     locationForm.longitude = data.lon;
 };
 
+/**
+ * Gestion des images des lieux kamal
+ */
 const imageForm = useForm({
     image: null,
 });
@@ -123,6 +135,9 @@ const submitImage = () => {
     });
 };
 
+/**
+ * Formulaire de gestion d'une énigme kamal
+ */
 const enigmaForm = useForm({
     id: null,
     title: "",
@@ -135,9 +150,12 @@ const enigmaForm = useForm({
     type: "text",
     image: null,
     is_site_specific: false,
-    questions: [], // New: multiple questions
+    questions: [], // Questions à choix multiples kamal
 });
 
+/**
+ * Gestion dynamique des questions de l'énigme kamal
+ */
 const addQuestion = () => {
     enigmaForm.questions.push({
         question_text: "",
@@ -169,6 +187,9 @@ const setCorrectOption = (qIndex, oIndex) => {
     });
 };
 
+/**
+ * Soumission du formulaire de lieu kamal
+ */
 const submitLocation = () => {
     const url = locationForm.id
         ? route("mairie.locations.update", locationForm.id)
@@ -182,6 +203,9 @@ const submitLocation = () => {
     });
 };
 
+/**
+ * Ouvre le modal de création/édition de lieu kamal
+ */
 const openLocationModal = (location = null) => {
     if (location) {
         locationForm.id = location.id;
@@ -192,6 +216,8 @@ const openLocationModal = (location = null) => {
         locationForm.latitude = location.latitude;
         locationForm.longitude = location.longitude;
         locationForm.radius_meters = location.radius_meters;
+        locationForm.reward_xp_arrival = location.reward_xp_arrival || 0;
+        locationForm.reward_xp_enigma = location.reward_xp_enigma || 0;
     } else {
         locationForm.reset();
         locationForm.id = null;
@@ -199,6 +225,9 @@ const openLocationModal = (location = null) => {
     showLocationModal.value = true;
 };
 
+/**
+ * Ouvre le modal de création/édition d'énigme kamal
+ */
 const openEnigmaModal = (location, enigma = null) => {
     selectedLocation.value = location;
     if (enigma) {
@@ -217,7 +246,7 @@ const openEnigmaModal = (location, enigma = null) => {
         enigmaForm.is_site_specific = enigma.is_site_specific;
         enigmaForm.image = null;
 
-        // Load questions
+        // Chargement des questions kamal
         if (enigma.questions && enigma.questions.length > 0) {
             enigmaForm.questions = enigma.questions.map((q) => ({
                 question_text: q.question_text,

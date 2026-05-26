@@ -42,12 +42,18 @@ const showInviteModal = ref(false);
 const loading = ref(false);
 const invitedUsers = ref([]);
 
+/**
+ * Filtre les utilisateurs disponibles pour ne pas afficher ceux déjà présents kamal
+ */
 const availableUsers = computed(() => {
     return invitedUsers.value.filter(
         (u) => !props.players.some((p) => p.id === u.id),
     );
 });
 
+/**
+ * Charge la liste des joueurs disponibles (qui n'ont pas encore fait la mission) kamal
+ */
 const loadAvailableUsers = async () => {
     try {
         loading.value = "searching";
@@ -141,6 +147,9 @@ const invitePlayer = (userId) => {
     );
 };
 
+/**
+ * Démarre officiellement la mission pour tous les joueurs du lobby kamal
+ */
 const startMission = () => {
     loading.value = true;
     router.post(
@@ -154,6 +163,9 @@ const startMission = () => {
     );
 };
 
+/**
+ * Retourne à la configuration de l'aventure kamal
+ */
 const goBack = () => {
     if (props.city?.id) {
         router.get(route("player.adventure.setup", props.city.id));

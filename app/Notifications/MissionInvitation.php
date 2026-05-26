@@ -27,7 +27,7 @@ class MissionInvitation
         Notification::create([
             'user_id' => $notifiable->id,
             'type' => 'mission_invitation',
-            'message' => "{$this->inviter->name} vous invite à explorer {$this->location->name} à {$this->city->name}",
+            'message' => "{$this->inviter->name} vous invite à une mission à {$this->city->name}",
             'link' => route('player.mission-lobby', $this->lobbySessionId),
         ]);
     }

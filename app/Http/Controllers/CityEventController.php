@@ -10,10 +10,11 @@ use Inertia\Inertia;
 
 class CityEventController extends Controller
 {
-    // kamal
     /**
      * Affiche la liste des événements pour une mairie donnée.
      * Logique liée à l'administration des événements par la mairie.
+     *
+     * Kamal
      */
     public function index(City $city)
     {
@@ -32,65 +33,68 @@ class CityEventController extends Controller
     /**
      * Crée ou met à jour un événement.
      * Gère la persistance des données et le stockage des fichiers médias.
+     *
+     * Kamal
      */
-public function store(Request $request, $id) // On prend l'ID brut pour rester flexible
-{
-    // 1. Validation des données entrantes (titre, date, prix en diamants, etc.) kamal
-    $validated = $request->validate([
-        'id' => 'nullable|exists:city_events,id',
-        'title' => 'required|string|max:255',
-        'description' => 'required|string',
-        'event_date' => 'required|date',
-        'location_name' => 'nullable|string|max:255',
-        'images' => 'nullable|array',
-        'images.*' => 'nullable|image|max:2048',
-        'existing_images' => 'nullable|array',
-        'diamond_price' => 'nullable|integer|min:0',
-        'has_vip_pass' => 'boolean',
-        'reward_type' => 'nullable|string',
-        'is_active' => 'boolean',
-    ]);
+    public function store(Request $request, $id) // On prend l'ID brut pour rester flexible
+    {
+        // 1. Validation des données entrantes (titre, date, prix en diamants, etc.) kamal
+        $validated = $request->validate([
+            'id' => 'nullable|exists:city_events,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'event_date' => 'required|date',
+            'location_name' => 'nullable|string|max:255',
+            'images' => 'nullable|array',
+            'images.*' => 'nullable|image|max:2048',
+            'existing_images' => 'nullable|array',
+            'diamond_price' => 'nullable|integer|min:0',
+            'has_vip_pass' => 'boolean',
+            'reward_type' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
 
-    // 2. Logique de récupération ou d'instanciation du modèle CityEvent kamal
-    if ($request->has('id') && $request->id) {
-        // Mode ÉDITION : Récupération de l'existant
-        $event = CityEvent::findOrFail($request->id);
-    } else {
-        // Mode CRÉATION : Nouvelle instance rattachée à la ville spécifiée
-        $city = City::findOrFail($id);
-        $event = new CityEvent(['city_id' => $city->id]);
-    }
-
-    // 3. Gestion des images : mix entre les images existantes conservées et les nouvelles téléchargées kamal
-    $images = StorageUrl::diskPaths($validated['existing_images'] ?? []);
-
-    if ($request->hasFile('images')) {
-        foreach ($request->file('images') as $image) {
-            // Stockage physique des images dans le dossier public/events
-            $images[] = $image->store('events', 'public');
+        // 2. Logique de récupération ou d'instanciation du modèle CityEvent kamal
+        if ($request->has('id') && $request->id) {
+            // Mode ÉDITION : Récupération de l'existant
+            $event = CityEvent::findOrFail($request->id);
+        } else {
+            // Mode CRÉATION : Nouvelle instance rattachée à la ville spécifiée
+            $city = City::findOrFail($id);
+            $event = new CityEvent(['city_id' => $city->id]);
         }
+
+        // 3. Gestion des images : mix entre les images existantes conservées et les nouvelles téléchargées kamal
+        $images = StorageUrl::diskPaths($validated['existing_images'] ?? []);
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                // Stockage physique des images dans le dossier public/events
+                $images[] = $image->store('events', 'public');
+            }
+        }
+
+        // 4. Remplissage des attributs et sauvegarde en base de données
+        $event->fill([
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'event_date' => $validated['event_date'],
+            'location_name' => $validated['location_name'],
+            'images' => $images,
+            'diamond_price' => $validated['diamond_price'] ?? 0,
+            'has_vip_pass' => $validated['has_vip_pass'] ?? false,
+            'reward_type' => $validated['reward_type'],
+            'is_active' => $validated['is_active'] ?? true,
+        ]);
+
+        $event->save();
+
+        return redirect()->back()->with('success', 'Système mis à jour avec succès.');
     }
-
-    // 4. Remplissage des attributs et sauvegarde en base de données
-    $event->fill([
-        'title' => $validated['title'],
-        'description' => $validated['description'],
-        'event_date' => $validated['event_date'],
-        'location_name' => $validated['location_name'],
-        'images' => $images,
-        'diamond_price' => $validated['diamond_price'] ?? 0,
-        'has_vip_pass' => $validated['has_vip_pass'] ?? false,
-        'reward_type' => $validated['reward_type'],
-        'is_active' => $validated['is_active'] ?? true,
-    ]);
-
-    $event->save();
-
-    return redirect()->back()->with('success', 'Système mis à jour avec succès.');
-}
 
     /**
      * Supprime un événement du système.
+     * Kamal
      */
     public function delete(CityEvent $event)
     {
@@ -106,6 +110,7 @@ public function store(Request $request, $id) // On prend l'ID brut pour rester f
     /**
      * Affiche les détails d'un événement spécifique.
      * Utilisé pour la vue publique ou détaillée côté mairie.
+     * Kamal
      */
     public function show(City $city, CityEvent $event)
     {

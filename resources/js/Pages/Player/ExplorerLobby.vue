@@ -29,6 +29,7 @@ const props = defineProps({
     locations: Array,
     config: Object,
     completedSession: Object,
+    unfinishedSessions: Array, // Kamal
 });
 console.log(props.locations)
 
@@ -84,6 +85,18 @@ onMounted(() => {
 
 const selectEnigma = (location, enigma) => {
     if (!canPlay.value) return;
+
+    // Si une session est déjà en cours pour ce lieu, on la reprend kamal
+    if (location.unfinished_session) {
+        const session = location.unfinished_session;
+        if (session.status === 'waiting' && session.lobby_session_id) {
+            router.get(route('player.mission-lobby', session.lobby_session_id));
+        } else {
+            router.get(route('player.game', props.city.id));
+        }
+        return;
+    }
+
     router.post(route("player.adventure.launch", props.city.id), {
         location_id: location.id,
         enigma_id: enigma.id,
@@ -315,16 +328,24 @@ const formatTime = (seconds) => {
                         :key="location.id"
                         :class="[
                             'enigma-card group relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-500',
-                            location.user_progress?.[0]?.is_discovered 
-                                ? 'bg-gradient-to-br from-amber-500/15 to-amber-500/5 border-amber-500/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]' 
-                                : 'bg-gradient-to-br from-white/15 to-white/5 border-white/20 hover:border-electric/40 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]'
+                            location.unfinished_session
+                                ? 'bg-gradient-to-br from-electric/20 to-electric/5 border-electric/40 shadow-neon-sm'
+                                : location.user_progress?.[0]?.is_discovered
+                                    ? 'bg-gradient-to-br from-amber-500/15 to-amber-500/5 border-amber-500/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]'
+                                    : 'bg-gradient-to-br from-white/15 to-white/5 border-white/20 hover:border-electric/40 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]'
                         ]"
                     >
+                        <!-- Badge Session en cours kamal -->
+                        <div v-if="location.unfinished_session" class="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-3 py-1 rounded-full bg-electric text-white text-[10px] font-black uppercase tracking-widest shadow-neon animate-pulse">
+                            <RefreshCw class="h-3 w-3 animate-spin" />
+                            En cours
+                        </div>
+
                         <!-- Image de fond -->
                         <div
                             :class="[
                                 'absolute inset-0 transition-all duration-500',
-                                location.user_progress?.[0]?.is_discovered ? 'opacity-100 group-hover:opacity-90' : 'opacity-50 group-hover:opacity-70'
+                                (location.user_progress?.[0]?.is_discovered || location.unfinished_session) ? 'opacity-100 group-hover:opacity-90' : 'opacity-50 group-hover:opacity-70'
                             ]"
                         >
                             <AppImage
@@ -347,8 +368,8 @@ const formatTime = (seconds) => {
                                 <div
                                     :class="[
                                         'h-10 w-10 rounded-xl border flex items-center justify-center shadow-neon-sm relative',
-                                        location.user_progress?.[0]?.is_discovered 
-                                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-500' 
+                                        location.user_progress?.[0]?.is_discovered
+                                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
                                             : 'bg-electric/10 border-electric/20 text-electric'
                                     ]"
                                 >
@@ -389,7 +410,6 @@ const formatTime = (seconds) => {
                             </div>
 
                             <h3
-                            
                                 :class="[
                                     'font-display text-xl group-hover:text-electric transition-colors mb-2 uppercase tracking-wide',
                                     location.user_progress?.[0]?.is_discovered ? 'text-amber-500' : 'text-white'
@@ -444,7 +464,6 @@ const formatTime = (seconds) => {
                                     >
                                         <BookOpen class="h-4 w-4" />
                                     </button>
-                                    
                                     <button
                                         @click="
                                             selectEnigma(
@@ -452,22 +471,22 @@ const formatTime = (seconds) => {
                                                 location.enigmas[0],
                                             )
                                         "
-                                            :disabled="location.user_progress?.[0]
-                                                    ?.is_discovered"
+                                        :disabled="location.user_progress?.[0]?.is_discovered"
                                         :class="[
-                                            'px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-neon ',
-                                            location.user_progress?.[0]
-                                                ?.is_discovered
+                                            'px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-neon flex items-center gap-1.5 transition-all duration-300',
+                                            location.user_progress?.[0]?.is_discovered
                                                 ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30'
-                                                : 'bg-electric text-white hover:scale-105 active:scale-95 transition-all',
+                                                : 'bg-electric text-white hover:scale-105 active:scale-95',
                                         ]"
                                     >
                                         {{
-                                            location.user_progress?.[0]
-                                                ?.is_discovered
+                                            location.user_progress?.[0]?.is_discovered
                                                 ? "Découvert"
+                                                : location.unfinished_session
+                                                ? "REPRENDRE"
                                                 : "DÉMARRER"
                                         }}
+                                        <ArrowRight v-if="!location.user_progress?.[0]?.is_discovered" class="h-3 w-3" />
                                     </button>
                                 </div>
                             </div>
@@ -506,7 +525,7 @@ const formatTime = (seconds) => {
             <div class="p-8 bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl border border-white/20 rounded-[2.5rem] max-w-2xl mx-auto relative overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
                 <!-- Background Glow -->
                 <div class="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-electric/10 blur-3xl" />
-                
+
                 <div class="relative z-10 space-y-6">
                     <!-- Image du lieu -->
                     <div class="relative h-48 md:h-64 w-full rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
@@ -537,7 +556,7 @@ const formatTime = (seconds) => {
                     </div>
 
                     <div class="pt-4">
-                        <button 
+                        <button
                             @click="showHistoryModal = false"
                             class="w-full py-4 rounded-2xl bg-amber-500 text-black font-display font-bold text-lg tracking-widest hover:scale-105 active:scale-95 transition-all shadow-neon"
                         >

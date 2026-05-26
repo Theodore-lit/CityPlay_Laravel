@@ -68,6 +68,7 @@ class RewardsController extends Controller
     /**
      * Ouvre un lot (prize) gagné.
      * Change le statut du lot pour permettre l'accès au contenu (QR Code, etc.)
+     * Kamal
      */
     public function openPrize(\App\Models\UserPrize $prize)
     {
@@ -87,12 +88,25 @@ class RewardsController extends Controller
             'opened_at' => now(),
         ]);
 
-        return back()->with('success', 'Lot ouvert avec succès !');
+        // Attribution de la récompense réelle si définie
+        $user = auth()->user();
+        $message = 'Lot ouvert avec succès !';
+
+        if ($prize->reward_type === 'diamonds' && $prize->reward_value > 0) {
+            $total = $user->addReward('diamonds', $prize->reward_value);
+            $message = "Lot ouvert ! Vous avez gagné $total diamants 💎";
+        } elseif ($prize->reward_type === 'xp' && $prize->reward_value > 0) {
+            $total = $user->addReward('xp', $prize->reward_value);
+            $message = "Lot ouvert ! Vous avez gagné $total XP ⚡";
+        }
+
+        return back()->with('success', $message);
     }
 
     /**
      * Permet au joueur de convertir ses Points (xp) en Diamants.
      * Logique d'économie interne : Taux actuel 1000 xp = 1 Diamant.
+     * Kamal
      */
     public function convertCoinsToDiamonds(Request $request)
     {
@@ -124,6 +138,7 @@ class RewardsController extends Controller
     /**
      * Gère l'achat d'un pass d'événement (VIP, Repas, etc.) avec des diamants.
      * Crée un EventRedemption unique servant de preuve d'achat.
+     * Kamal
      */
     public function buyEventPass(Request $request, CityEvent $event)
     {
@@ -174,6 +189,7 @@ class RewardsController extends Controller
 
     /**
      * Affiche les détails d'un pass spécifique (Code QR / Code de validation).
+     * Kamal
      */
     public function showPass(EventRedemption $redemption)
     {
