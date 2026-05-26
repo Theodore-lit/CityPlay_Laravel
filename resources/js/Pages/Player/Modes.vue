@@ -24,7 +24,7 @@ const selectMode = (mode) => {
       </div>
 
       <div class="text-center max-w-2xl mx-auto">
-        <div class="text-[10px] text-primary uppercase tracking-[0.3em] font-black mb-2 animate-pulse">Choisissez votre destinée</div>
+        <div class="text-[10px] text-primary uppercase tracking-[0.3em] font-black mb-2 animate-pulse">Choisissez votre mode de découverte</div>
         <h1 class="font-display text-3xl md:text-5xl neon-text uppercase tracking-tight">VOTRE <span class="text-primary">MISSION</span></h1>
       </div>
 

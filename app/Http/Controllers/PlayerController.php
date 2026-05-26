@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 
 class PlayerController extends Controller
 {
@@ -880,13 +881,21 @@ class PlayerController extends Controller
             ->with(['currentLocation', 'city'])
             ->firstOrFail();
 
-        $invitedUserId = $request->input('user_id');
+            $shareLink = URL::temporarySignedRoute(
+    'mission.join-link', 
+    now()->addMinutes(30), // Durée de validité (ex: 30 minutes)
+    ['lobbySessionId' => $lobbySessionId]
+);
+
+$invitedUserId = $request->input('user_id');
+    if ($invitedUserId) {
         $invitedUser = User::findOrFail($invitedUserId);
-
-        // Créer une notification
         (new \App\Notifications\MissionInvitation($user, $lobbySessionId, $lobbySession->currentLocation, $lobbySession->city))->send($invitedUser);
+        return back()->with('success', "{$invitedUser->name} a été invité !");
+    }
 
-        return back()->with('success', "{$invitedUser->name} a été invité à rejoindre la mission !");
+    // 2. On passe le lien à la vue du lobby si on veut juste l'afficher
+    return view('player.mission-lobby-view', compact('lobbySession', 'shareLink'));
     }
 
     /**
@@ -898,6 +907,12 @@ class PlayerController extends Controller
 
         // Vérifier que la session existe
         $existingSession = \App\Models\GameSession::where('lobby_session_id', $lobbySessionId)->firstOrFail();
+
+    //     // Si vous n'utilisez pas le middleware 'signed', vous pouvez faire la vérification ici :
+    // if (! $request->hasValidSignature()) {
+    //     return redirect()->route('player.dashboard')
+    //         ->with('error', 'Désolé, ce lien d\'invitation CityPlay a expiré ! Demandez un nouveau lien à l\'hôte.');
+    // }
 
         // Créer une session pour l'utilisateur courant avec le même lobby_session_id
         $session = \App\Models\GameSession::create([
