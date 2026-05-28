@@ -134,13 +134,10 @@ const mapPoints = [
 
       <div class="mt-6 relative h-44 md:h-56 rounded-2xl glass-strong overflow-hidden border border-electric/10">
         <!-- BENIN FLAG BACKGROUND (Animated) Theodore -->
-        <div class="absolute inset-0 flex opacity-[0.08] pointer-events-none animate-flag-wave">
-            <div class="w-[40%] h-full bg-[rgba(0,190,100,1)]"></div> <!-- Vert -->
-            <div class="w-[60%] h-full flex flex-col">
-                <div class="h-1/2 bg-[rgba(255,228,45,1)]"></div> <!-- Jaune -->
-                <div class="h-1/2 bg-[rgba(232,28,48,1)]"></div> <!-- Rouge -->
-            </div>
-        </div>
+        <div class="absolute inset-0 z-[0] flex opacity-[0.18] pointer-events-none animate-flag-wave">
+    <div class="w-[40%] h-full bg-[rgba(0,190,100,1)]"></div> <div class="w-[60%] h-full flex flex-col">
+        <div class="h-1/2 bg-[rgba(255,228,45,1)]"></div> <div class="h-1/2 bg-[rgba(232,28,48,1)]"></div> </div>
+</div>
 
         <div class="absolute inset-0 grid-bg opacity-30" />
         <div class="absolute inset-0">

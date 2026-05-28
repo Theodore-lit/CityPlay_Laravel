@@ -92,7 +92,7 @@ const selectEnigma = (location, enigma) => {
         if (session.status === 'waiting' && session.lobby_session_id) {
             router.get(route('player.mission-lobby', session.lobby_session_id));
         } else {
-            router.get(route('player.game', props.city.id));
+            router.get(route('player.game', { city: props.city.id, location_id: location.id, enigma_id: enigma.id }));
         }
         return;
     }

@@ -72,8 +72,6 @@ class DatabaseSeeder extends Seeder
                     'total_hearts' => 3,
                     'current_enigma_id' => $enigma->id,
                     'start_time' => now()->subMinutes(rand(10, 60)),
-                    'winner_id' => null,
-                    'lobby_session_id' => null,
                 ]);
             }
         }
@@ -98,8 +96,6 @@ class DatabaseSeeder extends Seeder
                     'total_hearts' => 3,
                     'current_enigma_id' => $enigma->id,
                     'start_time' => now()->subMinutes(rand(30, 120)),
-                    'winner_id' => null,
-                    'lobby_session_id' => null,
                 ]);
             }
         }
