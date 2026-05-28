@@ -297,4 +297,25 @@ class MairieController extends Controller
 
         return redirect()->back()->with('success', 'Image du lieu mise à jour.');
     }
+
+
+    public function deleteLocation(\App\Models\Location $location)
+    {
+        // Security check for Mairie
+        if (auth()->user()->role !== 'mairie' && auth()->user()->role !== 'super_admin') {
+            abort(403);
+        }
+
+        // Delete images if exist
+        if (!empty($location->images) && is_array($location->images)) {
+            foreach (StorageUrl::diskPaths($location->images) as $oldPath) {
+                Storage::disk('public')->delete($oldPath);
+            }
+        }
+
+        $location->delete();
+
+        return redirect()->back()->with('success', 'Secteur supprimé avec succès.');
+    }
+
 }

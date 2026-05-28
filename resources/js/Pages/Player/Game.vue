@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
+import { throttle } from "lodash"; // Kamal: Import pour limiter les appels serveur
 import SiteLayout from "@/Layouts/SiteLayout.vue";
 import MobileTabBar from "@/Components/MobileTabBar.vue";
 import NeonButton from "@/Components/NeonButton.vue";
@@ -32,12 +33,8 @@ const props = defineProps({
     currentSession: Object,
     initialTeamPositions: Array,
     auth: Object,
-    lobbySessionId: {
-        type: String,
-        required: true,
-    },
+    lobbySessionId: String,
 });
-console.log(props.lobbySessionId);
 
 // --- BOUSSOLE (Compass) ---
 const compassUnlocked = ref(
@@ -112,8 +109,8 @@ const selectedLocation = ref(null);
 const currentRiddle = ref(null);
 const riddleAnswer = ref("");
 const isQuestionnaireActive = ref(false);
-//Persistance des données //Theo
-const storageKey = `cityplay_progress_aventure_${props.currentSession?.id || "game"}`;
+//Persistance des données (Kamal : Ajout de l'ID utilisateur pour éviter les conflits de session)
+const storageKey = `cityplay_progress_u${props.auth?.user?.id}_s${props.currentSession?.id || "game"}`;
 const savedData = JSON.parse(localStorage.getItem(storageKey)) || null;
 
 // initialiser
@@ -148,16 +145,30 @@ const isAnyOverlayActive = computed(() => {
     );
 });
 
+// Kamal: Envoi de la position au serveur avec throttle (toutes les 2 secondes max)
+const sendPositionToServer = throttle((lat, lng) => {
+    if (!props.currentSession?.team_id) return;
+
+    axios.post(route('player.update-position'), {
+        lat,
+        lng,
+        team_id: props.currentSession.team_id
+    }).catch(err => console.error("Erreur sync position:", err));
+}, 2000);
+
 const updateGPS = () => {
     if ("geolocation" in navigator) {
         navigator.geolocation.watchPosition(
             (position) => {
-                // console.log(position.coords.latitude);
-                // console.log(position.coords.longitude);
+                const { latitude, longitude } = position.coords;
                 userPosition.value = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
+                    lat: latitude,
+                    lng: longitude,
                 };
+
+                // Diffusion aux autres membres de l'équipe kamal
+                sendPositionToServer(latitude, longitude);
+
                 // Mettre à jour l'angle de la boussole si nécessaire
                 if (currentTarget.value) {
                     needleAngle.value = calculateBearing(
@@ -171,7 +182,11 @@ const updateGPS = () => {
             (err) => {
                 console.error("Erreur GPS:", err);
             },
-            { enableHighAccuracy: true },
+            {
+                enableHighAccuracy: true,
+                maximumAge: 0, // Kamal: Forcer la récupération d'une position fraîche
+                timeout: 5000
+            },
         );
     }
 };
@@ -187,12 +202,12 @@ const rawDistance = computed(() => {
     );
 });
 
-const distanceToClosest = computed(() => {
-    if (rawDistance.value === null) return "---";
+// Kamal: Forcer la mise à jour de la distance dans le template
+const distanceDisplay = computed(() => {
+    if (rawDistance.value === null) return "Calcul en cours...";
     const dist = rawDistance.value;
-    return dist > 1000
-        ? (dist / 1000).toFixed(1) + "km"
-        : Math.round(dist) + "m";
+    if (dist > 1000) return (dist / 1000).toFixed(1) + " km";
+    return Math.round(dist) + " m";
 });
 
 const isNearLocation = computed(() => {
@@ -282,7 +297,7 @@ const runConfetti = () => {
 const togglePause = () => {
     // On inverse l'état de la pause
     isPaused.value = !isPaused.value;
-    
+
     // La modal doit correspondre EXACTEMENT à l'état de la pause
     pauseModal.value = isPaused.value;
 };
@@ -330,14 +345,13 @@ const verifyPosition = () => {
         setTimeout(() => {
             selectedLocation.value = currentTarget.value;
             riddleType.value = "site";
-            const locWithEnigmas = props.locations.find(
-                (l) => l.id === selectedLocation.value.id,
-            );
+
+            // Kamal: Récupérer les questions de l'énigme active
             const questions = activeEnigma.value?.questions || [];
-            // currentRiddle.value =
-            //     enigmas.find((e) => e.is_site_specific) || enigmas[0];
+            currentRiddle.value = activeEnigma.value;
 
             if (questions?.length > 0) {
+                questionnaireAnswers.value = new Array(questions.length).fill(null);
                 startQuestionnaire();
             } else {
                 // Enigme sans questions : valide directement et affiche succès
@@ -346,12 +360,12 @@ const verifyPosition = () => {
         }, 800);
     } else {
         const distMsg =
-            distanceToClosest.value !== "---"
-                ? ` (${distanceToClosest.value})`
+            distanceDisplay.value !== "Calcul en cours..."
+                ? ` (${distanceDisplay.value})`
                 : "";
         showGameToast(
             `Signal trop faible. Rapprochez-vous du point cible.${distMsg}`,
-            "warning",
+            "error",
         );
     }
 };
@@ -423,8 +437,8 @@ const handleSuccess = () => {
         route("player.complete-location", selectedLocation.value.id),
         {
             stars: earnedStars.value,
-            xp: 150,
             duration: gameTime.value, // Envoyer la durée finale
+            team_id: props.currentSession?.team_id, // Kamal: Ajouter team_id pour la notification
         },
         {
             onSuccess: () => {
@@ -432,6 +446,9 @@ const handleSuccess = () => {
                 showSuccessModal.value = true;
                 isQuestionnaireActive.value = false;
                 runConfetti();
+
+                // Nettoyage de la persistance locale kamal
+                localStorage.removeItem(storageKey);
             },
         },
     );
@@ -455,8 +472,40 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 onMounted(() => {
+    // Kamal: Vérifier si la session en cours correspond à celle stockée, sinon reset
+    if (savedData && props.currentSession?.id) {
+        // Si l'ID de session a changé ou si les données sont corrompues, on nettoie
+        console.log("Session chargée:", storageKey);
+    }
+
     startTimer();
     updateGPS();
+
+    // Kamal: Écoute en temps réel via Reverb pour les membres de l'équipe
+    if (props.currentSession?.team_id) {
+        window.Echo.private(`team.${props.currentSession.team_id}`)
+            .listen('.position.updated', (e) => {
+                const index = teamMembers.value.findIndex(m => m.id === e.userId);
+                if (index !== -1) {
+                    teamMembers.value[index].lat = e.lat;
+                    teamMembers.value[index].lng = e.lng;
+                } else {
+                    teamMembers.value.push({
+                        id: e.userId,
+                        name: e.userName,
+                        lat: e.lat,
+                        lng: e.lng
+                    });
+                }
+            })
+            .listen('.mission.completed', (e) => {
+                showGameToast(`${e.userName} a terminé : ${e.locationName} ! 🏆`, "success");
+
+                // Si c'est une mission d'équipe, on peut mettre à jour la liste des membres qui ont fini
+                const member = teamMembers.value.find(m => m.id === e.userId);
+                if (member) member.completed = true;
+            });
+    }
 
     if (compassUnlocked.value) {
         compassActive.value = true;
@@ -465,6 +514,11 @@ onMounted(() => {
 
 onUnmounted(() => {
     if (timerInterval.value) clearInterval(timerInterval.value);
+
+    // Kamal: Nettoyage des écouteurs Echo
+    if (props.currentSession?.team_id) {
+        window.Echo.leave(`team.${props.currentSession.team_id}`);
+    }
 });
 
 watch(
@@ -570,7 +624,7 @@ const outGame = () => {
                         <p
                             class="text-xs md:text-sm text-foreground/90 italic leading-relaxed border-l-2 border-electric/30 pl-3"
                         >
-                            "{{ displayEnigma }}"
+                            "{{ displayEnigma || 'L\' enigme est temporairement indisponible. Reprenez la configuration. \n Merci !!!'}}"
                         </p>
                         <Transition name="fade">
                             <div v-if="showHint">
@@ -583,7 +637,7 @@ const outGame = () => {
                                     <div>
                                         {{
                                             activeEnigma?.indices?.[i - 1] ||
-                                            "Observez bien les détails environnementaux."
+                                            "Aucun indice disponible"
                                         }}
                                     </div>
                                 </div>
@@ -789,7 +843,7 @@ const outGame = () => {
                                     />
                                     <span
                                         class="text-2xl font-display text-white tracking-wider"
-                                        >{{ distanceToClosest || "---" }}</span
+                                        >{{ distanceDisplay }}</span
                                     >
                                 </div>
                             </div>
@@ -932,110 +986,14 @@ const outGame = () => {
             </div>
         </Transition>
 
-        <Transition name="fade-scale">
-            <div
-                v-if="showSuccessModal"
-                class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-3xl"
-            >
-                <div
-                    class="relative w-full max-w-sm overflow-hidden rounded-[2.5rem] border border-electric/30 bg-gradient-to-br from-[#09101d] via-gaming-darker/95 to-slate-950/95 p-8 shadow-[0_0_60px_rgba(34,197,94,0.25)]"
-                >
-                    <!-- <div class="absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-electric to-success" />
-                    <Trophy class="mx-auto mb-6 h-16 w-16 text-electric" />
-                    <h2 class="font-display text-4xl text-white">Félicitations</h2>
-                    <p class="mt-3 text-sm uppercase tracking-[0.3em] text-electric/70">Lieu validé</p>
-
-                    <div class="mt-8 grid grid-cols-2 gap-4">
-                        <div class="rounded-3xl border border-white/10 bg-white/5 p-5 text-center">
-                            <div class="text-[10px] uppercase tracking-[0.25em] text-white/50">XP gagnés</div>
-                            <div class="mt-3 text-3xl font-display text-electric">+150</div>
-                        </div>
-                        <div class="rounded-3xl border border-white/10 bg-white/5 p-5 text-center">
-                            <div class="text-[10px] uppercase tracking-[0.25em] text-white/50">Durée</div>
-                            <div class="mt-3 text-3xl font-display text-success">{{ formatTime(gameTime) }}</div>
-                        </div>
-                    </div>
-
-                    <div class="mt-8 flex items-center justify-center gap-2 text-white/80">
-                        <Star v-for="s in 3" :key="s" :class="cn('h-8 w-8', s <= earnedStars ? 'text-yellow-400 fill-yellow-400' : 'text-white/10')" />
-                    </div>
-
-                    <div class="mt-10 flex flex-col gap-3">
-                        <button
-                            @click="showHistoryModal = true"
-                            class="w-full rounded-3xl border border-electric/30 bg-electric/10 px-4 py-3 text-sm uppercase tracking-[0.25em] text-electric transition hover:border-electric hover:bg-electric/20"
-                        >
-                            📖 Découvrir l'histoire
-                        </button>
-                        <button
-                            @click="goBackToLobby"
-                            class="w-full rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-sm uppercase tracking-[0.25em] text-white transition hover:border-white/30 hover:bg-white/10"
-                        >
-                            Retour au Lobby
-                        </button>
-                    </div> -->
-
-
-
-                    <!-- <div class="relative z-10 space-y-6"> -->
-                    <!-- Image du lieu -->
-                    <div class="relative h-48 md:h-64 w-full rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
-                        <AppImage
-                            :src="selectedLocation?.location_images?.[0]?.image_path || selectedLocation?.cover_image"
-                            fallback="/images/placeholders/location.jpg"
-                            class="w-full h-full object-cover"
-                        />
-                        <div class="absolute inset-0 bg-gradient-to-t from-gaming-dark via-transparent to-transparent"></div>
-                    </div>
-
-                    <div class="flex items-center gap-4 mb-2">
-                        <div class="h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-neon-sm">
-                            <BookOpen class="h-7 w-7" />
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-amber-500 font-black uppercase tracking-[0.3em]">Chroniques de la Cité</div>
-                            <h2 class="font-display text-3xl text-white uppercase italic font-black">{{ selectedLocation?.name }}</h2>
-                        </div>
-                    </div>
-
-                    <div class="space-y-4 text-white/80 leading-relaxed text-sm">
-                        <p class="font-bold text-amber-500/80 italic">" {{ selectedLocation?.description }} "</p>
-                        <div class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent my-6"></div>
-                        <div class="bg-white/5 p-6 rounded-3xl border border-white/10 prose prose-invert max-w-none">
-                            {{ selectedLocation?.history }}
-                        </div>
-                    </div>
-
-                    <div class="pt-4">
-                        <button
-                            @click="showHistoryModal = false"
-                            class="w-full py-4 rounded-2xl bg-amber-500 text-black font-display font-bold text-lg tracking-widest hover:scale-105 active:scale-95 transition-all shadow-neon"
-                        >
-                            FERMER LES ARCHIVES
-                        </button>
-                    </div>
-                <!-- </div> -->
-                </div>
-            </div>
-        </Transition>
-
         <!-- Modal Histoire -->
         <Transition name="fade-scale">
             <div
                 v-if="showHistoryModal"
                 class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-3xl"
             >
-                <!-- <div class="relative z-10 space-y-6"> -->
+                <div class="relative z-10 space-y-6">
                     <!-- Image du lieu -->
-                    <div class="relative h-48 md:h-64 w-full rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
-                        <AppImage
-                            :src="selectedLocation?.location_images?.[0]?.image_path || selectedLocation?.cover_image"
-                            fallback="/images/placeholders/location.jpg"
-                            class="w-full h-full object-cover"
-                        />
-                        <div class="absolute inset-0 bg-gradient-to-t from-gaming-dark via-transparent to-transparent"></div>
-                    </div>
-
                     <div class="flex items-center gap-4 mb-2">
                         <div class="h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-neon-sm">
                             <BookOpen class="h-7 w-7" />
@@ -1045,6 +1003,15 @@ const outGame = () => {
                             <h2 class="font-display text-3xl text-white uppercase italic font-black">{{ selectedLocation?.name }}</h2>
                         </div>
                     </div>
+                    <div class="relative h-48 md:h-64 w-full rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
+                        <AppImage
+                            :src="selectedLocation?.location_images?.[0]?.image_path || selectedLocation?.cover_image"
+                            fallback="/images/placeholders/location.jpg"
+                            class="w-full h-full object-cover"
+                        />
+                        <div class="absolute inset-0 bg-gradient-to-t from-gaming-dark via-transparent to-transparent"></div>
+                    </div>
+
 
                     <div class="space-y-4 text-white/80 leading-relaxed text-sm">
                         <p class="font-bold text-amber-500/80 italic">" {{ selectedLocation?.description }} "</p>
@@ -1054,15 +1021,15 @@ const outGame = () => {
                         </div>
                     </div>
 
-                    <div class="pt-4">
+
                         <button
                             @click="showHistoryModal = false"
                             class="w-full py-4 rounded-2xl bg-amber-500 text-black font-display font-bold text-lg tracking-widest hover:scale-105 active:scale-95 transition-all shadow-neon"
                         >
                             FERMER LES ARCHIVES
                         </button>
-                    </div>
-                <!-- </div> -->
+
+                </div>
             </div>
         </Transition>
         <div

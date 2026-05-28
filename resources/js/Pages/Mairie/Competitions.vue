@@ -1,10 +1,11 @@
 <script setup>
 // kamal
 import { ref, computed } from 'vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import NeonButton from '@/Components/NeonButton.vue';
 import GlowInput from '@/Components/GlowInput.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 import {
     ChevronLeft, Plus, Edit2, Trash2, Calendar, Target, Award, Info, X, Clock, Settings, Trophy, Zap, Heart, Gem
 } from 'lucide-vue-next';
@@ -16,6 +17,8 @@ const props = defineProps({
 });
 
 const showModal = ref(false);
+const showDeleteConfirm = ref(false);
+const compToDelete = ref(null);
 
 /**
  * Formulaire réactif pour la gestion des compétitions.
@@ -77,8 +80,18 @@ const submit = () => {
  * Supprime le protocole de compétition après confirmation manuelle.
  */
 const deleteComp = (id) => {
-    if (confirm('Supprimer cette compétition ?')) {
-        competitionForm.delete(route('mairie.competitions.destroy', id));
+    compToDelete.value = id;
+    showDeleteConfirm.value = true;
+};
+
+const executeDelete = () => {
+    if (compToDelete.value) {
+        router.delete(route('mairie.competitions.destroy', compToDelete.value), {
+            onSuccess: () => {
+                showDeleteConfirm.value = false;
+                compToDelete.value = null;
+            },
+        });
     }
 };
 
@@ -164,6 +177,17 @@ const cardClass = "group relative overflow-hidden rounded-[2.5rem] bg-white/10 b
                 <p class="text-muted-foreground uppercase font-black tracking-widest">No competitions registered for this protocol.</p>
             </div>
         </div>
+
+        <!-- DELETE CONFIRMATION MODAL -->
+        <ConfirmModal 
+            :show="showDeleteConfirm"
+            title="Supprimer la compétition ?"
+            message="Êtes-vous sûr de vouloir supprimer cette compétition ? Cette action est irréversible."
+            variant="danger"
+            confirmText="Supprimer"
+            @close="showDeleteConfirm = false"
+            @confirm="executeDelete"
+        />
 
         <!-- MODAL EDITOR -->
         <div v-if="showModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
