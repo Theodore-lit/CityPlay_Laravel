@@ -32,12 +32,8 @@ const props = defineProps({
     currentSession: Object,
     initialTeamPositions: Array,
     auth: Object,
-    lobbySessionId: {
-        type: String,
-        required: true,
-    },
+    lobbySessionId: String,
 });
-console.log(props.lobbySessionId);
 
 // --- BOUSSOLE (Compass) ---
 const compassUnlocked = ref(
@@ -570,7 +566,7 @@ const outGame = () => {
                         <p
                             class="text-xs md:text-sm text-foreground/90 italic leading-relaxed border-l-2 border-electric/30 pl-3"
                         >
-                            "{{ displayEnigma }}"
+                            "{{ displayEnigma || 'L\' enigme est temporairement indisponible. Reprenez la configuration. \n Merci !!!'}}"
                         </p>
                         <Transition name="fade">
                             <div v-if="showHint">
@@ -583,7 +579,7 @@ const outGame = () => {
                                     <div>
                                         {{
                                             activeEnigma?.indices?.[i - 1] ||
-                                            "Observez bien les détails environnementaux."
+                                            "Aucun indice disponible"
                                         }}
                                     </div>
                                 </div>

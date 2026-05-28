@@ -94,7 +94,7 @@ const showToast = (message, type = "info") => {
     toast.value = { show: true, message, type };
     setTimeout(() => {
         toast.value.show = false;
-    }, 3000);
+    }, 5000);
 };
 
 const copyToClipboard = (text) => {
@@ -180,6 +180,11 @@ onMounted(() => {
         enigma: props.enigma,
     });
 });
+
+// Quand il n'y aura pas de session
+if(!props.lobbySessionId) {
+    showToast('Merci de reprendre votre configuration. Votre session vient d\'expirer', 'error')
+}
 </script>
 
 <template>
@@ -359,7 +364,7 @@ onMounted(() => {
                 </button>
                 <button
                     @click="startMission"
-                    :disabled="loading"
+                    :disabled="loading || !props.lobbySessionId"
                     class="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-primary to-purple-500 text-black font-black uppercase text-sm tracking-wider hover:shadow-lg hover:shadow-primary/50 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                     <Loader
