@@ -8,6 +8,7 @@ use App\Models\Enigma;
 use App\Models\EnigmaQuestion;
 use App\Models\EnigmaQuestionOption;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class EnigmeQuestionSeeder extends Seeder
 {
@@ -17,10 +18,12 @@ class EnigmeQuestionSeeder extends Seeder
     public function run(): void
     {
         // Nettoyage des tables pour repartir sur une base propre
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        Schema::disableForeignKeyConstraints();
         DB::table('enigma_questions')->truncate();
         DB::table('enigma_question_options')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        Schema::enableForeignKeyConstraints();
+
+
 
         // Mapping complet : Énigme (par nom de lieu) -> Questions -> Options
         $data = [
