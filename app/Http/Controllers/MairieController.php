@@ -15,28 +15,33 @@ use Illuminate\Support\Facades\Storage;
 class MairieController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Affiche le tableau de bord de la mairie.
+     * Redirige vers le hub de la ville gérée par l'utilisateur connecté.
      */
     public function dashboard()
     {
-        // Admin should not access mairie dashboard
+        // Les super_admins ont leur propre tableau de bord
         if (auth()->user()->role === 'super_admin') {
             return redirect()->route('admin.dashboard');
         }
 
-        // Mairie only sees their own cities
+        // Récupère la ville associée au compte mairie kamal
         $city = City::where('mairie_id', auth()->id())->first();
 
         if ($city) {
             return redirect()->route('mairie.city.hub', $city->id);
         }
 
-        // Fallback if no city created yet (though should not happen with current flow)
+        // Cas de secours si aucune ville n'est encore créée
         return Inertia::render('Admin/City', [
             'city' => [],
             ]);
     }
 
+    /**
+     * Crée une nouvelle ville et son compte mairie associé.
+     * Utilisé par les administrateurs.
+     */
     public function storeCity(Request $request)
     {
         $validated = $request->validate([
@@ -50,6 +55,7 @@ class MairieController extends Controller
 
         $user = auth()->user();
 
+        // Création automatique du compte mairie kamal
         $marie = User::create([
             'name' => $validated['city_name'],
             'email' => $validated['email'],
@@ -78,9 +84,12 @@ class MairieController extends Controller
         return redirect(route('admin.dashboard', absolute: false));
     }
 
+    /**
+     * Met à jour les informations globales d'une ville.
+     */
     public function updateCity(Request $request, City $city)
     {
-        // Check if user is creator or super_admin
+        // Vérification des droits kamal
         if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
@@ -95,7 +104,7 @@ class MairieController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            // Delete old image if exists
+            // Nettoyage de l'ancienne image kamal
             if ($diskPath = StorageUrl::diskPath($city->image_path)) {
                 Storage::disk('public')->delete($diskPath);
             }
@@ -108,6 +117,9 @@ class MairieController extends Controller
         return redirect()->back()->with('success', 'Ville mise à jour avec succès.');
     }
 
+    /**
+     * Active ou désactive une ville.
+     */
     public function toggleStatus(City $city)
     {
         $city->is_active = !$city->is_active;
@@ -116,9 +128,11 @@ class MairieController extends Controller
         return redirect()->back()->with('success', 'Statut de la ville mis à jour.');
     }
 
+    /**
+     * Affiche les détails d'une ville (Lieux, Énigmes, etc.).
+     */
     public function showCity(City $city)
     {
-        // Check if user is creator or super_admin
         if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
@@ -128,9 +142,11 @@ class MairieController extends Controller
         ]);
     }
 
+    /**
+     * Affiche le hub de gestion de la ville avec les compteurs.
+     */
     public function cityHub(City $city)
     {
-        // Check if user is creator or super_admin
         if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
@@ -140,6 +156,9 @@ class MairieController extends Controller
         ]);
     }
 
+    /**
+     * Ajoute un nouveau lieu à la ville avec ses récompenses XP.
+     */
     public function storeLocation(Request $request, City $city)
     {
         $validated = $request->validate([
@@ -147,6 +166,8 @@ class MairieController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'radius_meters' => 'required|integer|min:10',
+            'reward_xp_arrival' => 'nullable|integer|min:0', // XP gagnés à l'arrivée kamal
+            'reward_xp_enigma' => 'nullable|integer|min:0',  // XP gagnés par énigme kamal
             'description' => 'nullable|string',
             'category' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
@@ -162,6 +183,9 @@ class MairieController extends Controller
         return redirect()->back()->with('success', 'Lieu ajouté avec succès.');
     }
 
+    /**
+     * Met à jour un lieu existant et ses récompenses.
+     */
     public function updateLocation(Request $request, \App\Models\Location $location)
     {
         $validated = $request->validate([
@@ -169,13 +193,15 @@ class MairieController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'radius_meters' => 'required|integer|min:10',
+            'reward_xp_arrival' => 'nullable|integer|min:0', // XP gagnés à l'arrivée kamal
+            'reward_xp_enigma' => 'nullable|integer|min:0',  // XP gagnés par énigme kamal
             'description' => 'nullable|string',
             'category' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         if ($request->hasFile('image')) {
-            // Delete old images if exist (assuming first image for now based on previous code)
+            // Nettoyage des anciennes images kamal
             if (!empty($location->images) && is_array($location->images)) {
                 foreach (StorageUrl::diskPaths($location->images) as $oldPath) {
                     Storage::disk('public')->delete($oldPath);
@@ -190,6 +216,10 @@ class MairieController extends Controller
         return redirect()->back()->with('success', 'Lieu mis à jour avec succès.');
     }
 
+    /**
+     * Crée ou met à jour une énigme liée à un lieu.
+     * Gère également les questions à choix multiples.
+     */
     public function storeEnigma(Request $request, \App\Models\Location $location)
     {
         $validated = $request->validate([
@@ -199,7 +229,7 @@ class MairieController extends Controller
             'difficulty' => 'required|in:easy,medium,hard',
             'answer' => 'required|string',
             'indices' => 'nullable|array',
-            'reward_coins' => 'required|integer|min:0',
+            'reward_coins' => 'required|integer|min:0', // Utilisé comme XP kamal
             'reward_hearts' => 'required|integer|min:0',
             'type' => 'required|string', // text, qr, image
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
@@ -215,7 +245,7 @@ class MairieController extends Controller
         $enigma = $enigmaId ? \App\Models\Enigma::find($enigmaId) : null;
 
         if ($request->hasFile('image')) {
-            // Delete old image if exists
+            // Nettoyage de l'image kamal
             if ($enigma && ($diskPath = StorageUrl::diskPath($enigma->image_path))) {
                 Storage::disk('public')->delete($diskPath);
             }
@@ -232,10 +262,8 @@ class MairieController extends Controller
             $validated
         );
 
-        // Sync questions
+        // Synchronisation des questions : suppression et recréation kamal
         if (!empty($questions)) {
-            // Simple approach: delete existing questions and recreate
-            // (In production, you might want a more sophisticated sync)
             $enigma->questions()->delete();
 
             foreach ($questions as $qData) {
@@ -252,6 +280,9 @@ class MairieController extends Controller
         return redirect()->back()->with('success', 'Énigme enregistrée avec succès.');
     }
 
+    /**
+     * Met à jour uniquement l'image d'un lieu.
+     */
     public function storeLocationImage(Request $request, \App\Models\Location $location)
     {
         $request->validate([
@@ -266,6 +297,7 @@ class MairieController extends Controller
 
         return redirect()->back()->with('success', 'Image du lieu mise à jour.');
     }
+
 
     public function deleteLocation(\App\Models\Location $location)
     {
@@ -285,4 +317,5 @@ class MairieController extends Controller
 
         return redirect()->back()->with('success', 'Secteur supprimé avec succès.');
     }
+
 }

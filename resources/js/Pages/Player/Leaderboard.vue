@@ -6,10 +6,11 @@ import { Trophy, Crown, Medal, Flame } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import { cn } from '@/lib/utils';
 
-const tab = ref('hebdomadaire');
+const tab = ref('journalier');
 
 const props = defineProps({
-    topPlayers: Array
+    topPlayersGlobal: Array,
+    topPlayersDaily: Array
 });
 
 // Configuration des rangs du podium
@@ -20,14 +21,16 @@ const podiumConfig = {
 };
 
 const players = computed(() => {
-    if (!props.topPlayers || props.topPlayers.length === 0) {
+    const topPlayers = tab.value === 'journalier' ? props.topPlayersDaily : props.topPlayersGlobal;
+
+    if (!topPlayers || topPlayers.length === 0) {
         return [
             { name: "En attente...", xp: 0, country: "🇧🇯", streak: 0 },
             { name: "En attente...", xp: 0, country: "🇧🇯", streak: 0 },
             { name: "En attente...", xp: 0, country: "🇧🇯", streak: 0 },
         ];
     }
-    return props.topPlayers.map(p => ({
+    return topPlayers.map(p => ({
         name: p.name,
         xp: p.xp || 0,
         country: "🇧🇯",
@@ -51,7 +54,7 @@ const players = computed(() => {
 
       <div class="mt-8 mx-auto flex glass rounded-xl p-1 mb-12 w-full sm:w-auto max-w-xs">
         <button
-          v-for="t in ['hebdomadaire', 'global']"
+          v-for="t in ['journalier', 'global']"
           :key="t"
           @click="tab = t"
           :class="cn(

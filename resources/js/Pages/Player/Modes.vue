@@ -24,19 +24,19 @@ const selectMode = (mode) => {
       </div>
 
       <div class="text-center max-w-2xl mx-auto">
-        <div class="text-[10px] text-primary uppercase tracking-[0.3em] font-black mb-2 animate-pulse">Choisissez votre destinée</div>
+        <div class="text-[10px] text-primary uppercase tracking-[0.3em] font-black mb-2 animate-pulse">Choisissez votre mode de découverte</div>
         <h1 class="font-display text-3xl md:text-5xl neon-text uppercase tracking-tight">VOTRE <span class="text-primary">MISSION</span></h1>
       </div>
 
       <div class="mt-12 grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
         <!-- MODE QUIZ -->
-        <div 
+        <div
           @click="selectMode('quiz')"
           class="group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl p-6 md:p-8 cursor-pointer border border-white/20 hover:border-primary/40 hover-game flex flex-col justify-between shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all"
         >
           <div class="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-primary/20 blur-[60px] group-hover:bg-primary/30 transition-colors" />
           <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-          
+
           <div class="relative">
             <div class="flex items-center gap-4">
                 <div class="h-14 w-14 rounded-2xl bg-gradient-premium p-0.5 shadow-neon group-hover:scale-110 transition-transform duration-500 shrink-0">
@@ -52,7 +52,7 @@ const selectMode = (mode) => {
                     </div>
                 </div>
             </div>
-            
+
             <p class="mt-4 text-muted-foreground text-xs md:text-sm leading-relaxed line-clamp-2">
               Défiez votre esprit sur l'âme du Bénin. Histoire, culture et traditions : débloquez de nouveaux horizons.
             </p>
@@ -67,13 +67,13 @@ const selectMode = (mode) => {
         </div>
 
         <!-- MODE AVENTURE -->
-        <div 
+        <div
           @click="selectMode('aventure')"
           class="group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl p-6 md:p-8 cursor-pointer border border-white/20 hover:border-accent/40 hover-game flex flex-col justify-between shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all"
         >
           <div class="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-accent/20 blur-[60px] group-hover:bg-accent/30 transition-colors" />
           <div class="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-          
+
           <div class="relative">
             <div class="flex items-center gap-4">
                 <div class="h-14 w-14 rounded-2xl bg-gradient-accent p-0.5 shadow-purple group-hover:scale-110 transition-transform duration-500 shrink-0">
@@ -88,7 +88,7 @@ const selectMode = (mode) => {
                     </div>
                 </div>
             </div>
-            
+
             <p class="mt-4 text-muted-foreground text-xs md:text-sm leading-relaxed line-clamp-2">
               Missions GPS réelles et secrets historiques basés sur votre position exacte.
             </p>

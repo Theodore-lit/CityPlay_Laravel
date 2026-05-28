@@ -62,6 +62,7 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'category' => 'required|string',
+            'difficulty'=>'required|string|in:easy,medium,hard',
             'xp_reward' => 'required|integer|min:0',
             'time_limit' => 'required|integer|min:10',
         ]);

@@ -5,18 +5,14 @@ import SiteLayout from "@/Layouts/SiteLayout.vue";
 import MobileTabBar from "@/Components/MobileTabBar.vue";
 import NeonButton from "@/Components/NeonButton.vue";
 import MapComponent from "@/Components/MapComponent.vue";
-import Modal from "@/Components/Modal.vue";
+import confetti from "canvas-confetti";
 import {
     MapPin,
-    QrCode,
     Navigation,
-    Sparkles,
     Lock,
     Target,
-    Zap,
     ChevronLeft,
     Star,
-    Heart,
     Clock,
     Play,
     Info,
@@ -26,8 +22,7 @@ import {
     Pause,
     HelpCircle,
     Eye,
-    XCircle,
-    ArrowRight,
+    BookOpen,
 } from "lucide-vue-next";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +32,7 @@ const props = defineProps({
     currentSession: Object,
     initialTeamPositions: Array,
     auth: Object,
+    lobbySessionId: String,
 });
 
 // --- BOUSSOLE (Compass) ---
@@ -102,6 +98,8 @@ const totalErrors = ref(0);
 const timerInterval = ref(null);
 const mapRef = ref(null);
 const showHintModal = ref(false);
+const outModal = ref(false);
+const wasPausedBeforeOutModal = ref(false);
 
 // Modal Énigme / Questionnaire
 const showRiddleModal = ref(false);
@@ -117,31 +115,34 @@ const savedData = JSON.parse(localStorage.getItem(storageKey)) || null;
 // initialiser
 const currentQuestionIndex = ref(savedData?.currentQuestionIndex || 0);
 const questionnaireAnswers = ref(savedData?.questionnaireAnswers || []);
-const isPaused = ref(savedData?.isPaused || false);
-const pauseModal = ref(savedData?.pauseModal || false);
+const isPaused = ref(savedData?.isPaused !== undefined ? savedData.isPaused : false);
+const pauseModal = ref(isPaused.value);
 const gameTime = ref(
     savedData?.gameTime !== undefined ? savedData.gameTime : 0,
 );
 const usedHints = ref(savedData?.usedHints || 0);
 const showHint = ref(savedData?.showHint || false);
 
-// Computed pour vérifier si un overlay est actif
-const isAnyOverlayActive = computed(() => {
-    return (
-        pauseModal.value ||
-        showHintModal.value ||
-        showRiddleModal.value ||
-        showSuccessModal.value
-    );
-});
-
 // Modal Succès
 const showSuccessModal = ref(false);
+const showHistoryModal = ref(false);
 const earnedStars = ref(3);
 const earnedXp = ref(150);
 
 // Toast
 const toast = ref({ show: false, message: "", type: "info" });
+
+// Computed pour vérifier si un overlay est actif
+const isAnyOverlayActive = computed(() => {
+    return (
+        pauseModal.value ||
+        outModal.value ||
+        showHintModal.value ||
+        showRiddleModal.value ||
+        showSuccessModal.value ||
+        showHistoryModal.value
+    );
+});
 
 const updateGPS = () => {
     if ("geolocation" in navigator) {
@@ -226,6 +227,8 @@ const activeEnigma = computed(() => {
     );
 });
 
+console.log(activeEnigma.value)
+
 const displayEnigma = computed(() => {
     return (
         activeEnigma.value?.content ||
@@ -256,16 +259,44 @@ const showGameToast = (message, type = "info") => {
     }, 3000);
 };
 
-const togglePause = () => {
-    isPaused.value = !isPaused.value;
-    pauseModal.value = !pauseModal.value;
+const runConfetti = () => {
+    confetti({
+        particleCount: 180,
+        spread: 85,
+        origin: { y: 0.6 },
+        colors: ["#60a5fa", "#38bdf8", "#facc15", "#10b981"],
+    });
+    confetti({
+        particleCount: 120,
+        spread: 140,
+        origin: { y: 0.6 },
+        scalar: 0.8,
+        colors: ["#fff", "#e0f2fe", "#fde68a"],
+    });
 };
 
+const togglePause = () => {
+    // On inverse l'état de la pause
+    isPaused.value = !isPaused.value;
+    
+    // La modal doit correspondre EXACTEMENT à l'état de la pause
+    pauseModal.value = isPaused.value;
+};
+
+const resumeGame = () => {
+    outModal.value = false;
+    pauseModal.value = false; // On s'assure de fermer la modal de pause aussi
+    isPaused.value = false;   // On relance le jeu (pause = false)
+};
+
+const openOutModal = () => {
+    wasPausedBeforeOutModal.value = isPaused.value;
+    outModal.value = true;
+    isPaused.value = true;
+};
+
+
 const handleUseHint = () => {
-    if (usePage().props.auth.user.xp < 50) {
-        showGameToast("XP insuffisants pour un indice.", "error");
-        return;
-    }
     router.post(
         route("player.use-hint"),
         {},
@@ -280,6 +311,14 @@ const handleUseHint = () => {
     showHintModal.value = false;
 };
 
+const askIndice = () => {
+    if (usePage().props.auth.user.xp < 50) {
+        showGameToast("XP insuffisants pour un indice.", "error");
+        return;
+    }
+    showHintModal.value = true;
+}
+
 const verifyPosition = () => {
     if (isNearLocation.value && currentTarget.value) {
         isPaused.value = true; // Arrête le chrono dès la validation du lieu
@@ -290,14 +329,15 @@ const verifyPosition = () => {
             const locWithEnigmas = props.locations.find(
                 (l) => l.id === selectedLocation.value.id,
             );
-            const enigmas = locWithEnigmas?.enigmas || [];
-            currentRiddle.value =
-                enigmas.find((e) => e.is_site_specific) || enigmas[0];
+            const questions = activeEnigma.value?.questions || [];
+            // currentRiddle.value =
+            //     enigmas.find((e) => e.is_site_specific) || enigmas[0];
 
-            if (currentRiddle.value?.questions?.length > 0) {
+            if (questions?.length > 0) {
                 startQuestionnaire();
             } else {
-                showRiddleModal.value = true;
+                // Enigme sans questions : valide directement et affiche succès
+                handleSuccess();
             }
         }, 800);
     } else {
@@ -387,6 +427,7 @@ const handleSuccess = () => {
                 showRiddleModal.value = false;
                 showSuccessModal.value = true;
                 isQuestionnaireActive.value = false;
+                runConfetti();
             },
         },
     );
@@ -412,7 +453,6 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 onMounted(() => {
     startTimer();
     updateGPS();
-    console.log(activeEnigma?.indices);
 
     if (compassUnlocked.value) {
         compassActive.value = true;
@@ -457,11 +497,11 @@ watch(
 );
 
 const outGame = () => {
-    isPaused.value = false;
-    gameTime.value = 0;
+    outModal.value = false;
+    localStorage.removeItem(storageKey);
     // Nettoyer le localStorage lors de la sortie définitive si on veut repartir de zéro,
     // ou simplement quitter vers le lobby.
-    router.get(route("player.cities"));
+    router.get(route("player.mission-lobby", props.lobbySessionId));
 };
 </script>
 
@@ -473,14 +513,13 @@ const outGame = () => {
             class="mx-auto w-full px-2 sm:px-6 py-4 md:py-6 pb-28 md:pb-12 h-screen flex flex-col bg-gaming-darker"
         >
             <button
-                @click="outGame"
+                @click="openOutModal"
                 class="h-12 w-12 rounded-2xl glass grid place-items-center text-electric hover:scale-110 transition-all shadow-neon border border-electric/20"
             >
                 <ChevronLeft class="h-6 w-6" />
             </button>
             <!-- MODE AVENTURE -->
             <div
-                v-if="gameMode === 'aventure'"
                 class="flex flex-col gap-4 flex-1"
             >
                 <!-- HUD TOP -->
@@ -514,7 +553,7 @@ const outGame = () => {
                                 </div>
                             </div>
                             <button
-                                @click="showHintModal = true"
+                                @click="askIndice"
                                 :disabled="
                                     activeEnigma?.indices.length == usedHints ||
                                     isPaused
@@ -527,7 +566,7 @@ const outGame = () => {
                         <p
                             class="text-xs md:text-sm text-foreground/90 italic leading-relaxed border-l-2 border-electric/30 pl-3"
                         >
-                            "{{ displayEnigma }}"
+                            "{{ displayEnigma || 'L\' enigme est temporairement indisponible. Reprenez la configuration. \n Merci !!!'}}"
                         </p>
                         <Transition name="fade">
                             <div v-if="showHint">
@@ -540,7 +579,7 @@ const outGame = () => {
                                     <div>
                                         {{
                                             activeEnigma?.indices?.[i - 1] ||
-                                            "Observez bien les détails environnementaux."
+                                            "Aucun indice disponible"
                                         }}
                                     </div>
                                 </div>
@@ -754,7 +793,8 @@ const outGame = () => {
                                 @click="togglePause"
                                 class="flex cursor-pointer items-center gap-1 rounded-lg p-1 bg-amber-600"
                             >
-                                <p class="text-white text-lg">Pause</p>
+                                <p v-if="!isPaused" class="text-white text-lg">Pause</p>
+                                <p v-else class="text-white text-lg">Commencer</p>
                                 <div
                                     class="ml-2 p-1 rounded-md hover:bg-white/10 transition-colors"
                                 >
@@ -791,72 +831,6 @@ const outGame = () => {
                     </div>
                 </div>
             </div>
-
-            <!-- MODE CLASSIQUE -->
-            <div
-                v-else
-                class="grid gap-4 md:gap-6 lg:grid-cols-12 flex-1 min-h-0"
-            >
-                <div
-                    class="lg:col-span-8 relative rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-white/20 glass-strong shadow-lg group bg-gaming-dark h-[60vh] md:h-auto min-h-[450px]"
-                >
-                    <div class="absolute inset-0 z-0">
-                        <MapComponent
-                            :locations="locations"
-                            :userPosition="userPosition"
-                            :teamMembers="teamMembers"
-                        />
-                    </div>
-                </div>
-                <aside
-                    class="lg:col-span-4 space-y-4 overflow-y-auto max-h-[50vh] md:max-h-full custom-scrollbar pb-10"
-                >
-                    <div
-                        class="rounded-2xl glass-strong p-5 border border-electric/30"
-                    >
-                        <h2 class="font-display text-lg">
-                            Exploration de {{ city?.name }}
-                        </h2>
-                        <p class="text-xs text-muted-foreground mt-2">
-                            Activez le mode aventure pour commencer la quête.
-                        </p>
-                    </div>
-                    <div class="space-y-2">
-                        <div
-                            v-for="loc in locations"
-                            :key="loc.id"
-                            class="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/5"
-                        >
-                            <div
-                                class="h-10 w-10 rounded-lg bg-gaming-darker flex items-center justify-center"
-                            >
-                                <Lock
-                                    v-if="!loc.is_discovered"
-                                    class="h-4 w-4 text-muted-foreground/30"
-                                />
-                                <MapPin v-else class="h-4 w-4 text-electric" />
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div
-                                    class="text-sm font-bold truncate text-foreground"
-                                >
-                                    {{ loc.display_name }}
-                                </div>
-                                <div
-                                    class="text-[8px] text-muted-foreground uppercase"
-                                >
-                                    {{
-                                        loc.is_discovered
-                                            ? loc.category
-                                            : "Zone inconnue"
-                                    }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-            </div>
-
             <!-- TOAST -->
             <Transition name="toast">
                 <div
@@ -885,134 +859,121 @@ const outGame = () => {
         <MobileTabBar />
 
         <!-- MODALS -->
-        <Modal :show="showRiddleModal" @close="showRiddleModal = false">
+        <Transition name="fade-scale">
             <div
-                class="p-8 bg-gaming-darker border border-electric/20 rounded-[2.5rem] max-w-lg mx-auto"
+                v-if="showRiddleModal"
+                class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
             >
-                <h2>
-                    Félicitaion d'avoir gagner la partie. Voici des bonus pour
-                    vous
-                </h2>
-                <div v-if="isQuestionnaireActive" class="space-y-6">
-                    <div
-                        class="text-[10px] text-electric font-black uppercase tracking-widest"
-                    >
-                        Question {{ currentQuestionIndex + 1 }} /
-                        {{ currentRiddle?.questions?.length }}
-                    </div>
-                    <div
-                        class="p-6 rounded-3xl bg-white/5 border border-white/10 text-lg text-white font-display"
-                    >
-                        {{
-                            currentRiddle?.questions?.[currentQuestionIndex]
-                                ?.question_text
-                        }}
-                    </div>
-                    <div class="grid gap-3">
-                        <button
-                            v-for="(option, idx) in currentRiddle?.questions?.[
-                                currentQuestionIndex
-                            ]?.options"
-                            :key="idx"
-                            @click="selectQuestionOption(option)"
-                            class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-electric transition-all text-left"
-                        >
-                            {{ option.option_text }}
-                        </button>
-                    </div>
-                </div>
-                <div v-else class="space-y-6">
-                    <h2 class="font-display text-2xl">
-                        {{ selectedLocation?.display_name }}
-                    </h2>
-                    <p
-                        class="p-6 rounded-3xl bg-white/5 border border-white/10 italic text-foreground/90 leading-relaxed"
-                    >
-                        "{{ currentRiddle?.content }}"
-                    </p>
-                    <input
-                        v-model="riddleAnswer"
-                        @keyup.enter="submitRiddle"
-                        placeholder="Votre réponse..."
-                        class="w-full h-14 rounded-2xl bg-gaming-darker border border-electric/30 px-6 text-white outline-none focus:border-electric transition-all"
-                    />
-                    <NeonButton class="w-full" @click="submitRiddle"
-                        >Soumettre</NeonButton
-                    >
-                </div>
-            </div>
-        </Modal>
-
-        <Modal
-            :show="showSuccessModal"
-            @close="showSuccessModal = false"
-            class="fixed inset-0 bg-black/80 backdrop-blur-2xl z-[100]"
-        >
-            <div
-                class="relative z-[110] p-10 bg-gaming-darker border border-electric rounded-[3rem] text-center max-w-sm mx-auto"
-            >
-                <Trophy class="h-16 w-16 text-electric mx-auto mb-6" />
-                <h2 class="font-display text-3xl mb-2 text-white">
-                    FÉLICITATIONS !
-                </h2>
-                <div class="flex justify-center gap-2 mb-8">
-                    <Star
-                        v-for="s in 3"
-                        :key="s"
-                        :class="
-                            cn(
-                                'h-8 w-8',
-                                s <= earnedStars
-                                    ? 'text-yellow-400 fill-yellow-400'
-                                    : 'text-white/10',
-                            )
-                        "
-                    />
-                </div>
-                <div class="grid grid-cols-2 gap-4 mb-8">
-                    <div
-                        class="p-4 rounded-2xl bg-white/5 border border-white/10"
-                    >
-                        <div
-                            class="text-[10px] text-muted-foreground uppercase"
-                        >
-                            XP GAGNÉS
-                        </div>
-                        <div class="text-xl font-display text-electric">
-                            +150 PX
-                        </div>
-                    </div>
-                    <div
-                        class="p-4 rounded-2xl bg-white/5 border border-white/10"
-                    >
-                        <div
-                            class="text-[10px] text-muted-foreground uppercase"
-                        >
-                            DURÉE
-                        </div>
-                        <div class="text-xl font-display text-success">
-                            {{ formatTime(gameTime) }}
-                        </div>
-                    </div>
-                </div>
-                <div class="flex flex-col gap-3">
-                    <NeonButton
-                        size="xl"
-                        class="w-full rounded-2xl"
-                        @click="showSuccessModal = false"
-                        >CONTINUER</NeonButton
-                    >
+                <div
+                    class="relative w-full max-w-3xl rounded-[2rem] border border-electric/20 bg-gradient-to-br from-gaming-darker/95 to-slate-950/95 p-8 shadow-[0_0_50px_rgba(34,197,94,0.18)]"
+                >
                     <button
-                        @click="goBackToLobby"
-                        class="text-xs text-electric font-black uppercase tracking-[0.2em] hover:text-white transition-colors"
+                        @click="showRiddleModal = false"
+                        class="absolute right-5 top-5 h-11 w-11 rounded-2xl border border-white/10 bg-white/5 text-white transition hover:bg-white/10"
+                        aria-label="Fermer"
                     >
-                        REJOUER / LOBBY
+                        ✕
                     </button>
+
+                    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="grid h-14 w-14 place-items-center rounded-3xl bg-electric/10 border border-electric/30 text-electric">
+                                <Brain class="h-6 w-6" />
+                            </div>
+                            <div>
+                                <div class="text-[10px] uppercase tracking-[0.35em] text-electric/70 font-black">
+                                    Épreuve en cours
+                                </div>
+                                <h3 class="text-3xl font-display text-white">
+                                    Résous le questionnaire
+                                </h3>
+                            </div>
+                        </div>
+                        <div class="rounded-3xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white/80">
+                            Question {{ currentQuestionIndex + 1 }} / {{ currentRiddle?.questions?.length }}
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="rounded-[2rem] border border-white/10 bg-white/5 p-6 text-lg text-white font-display shadow-inner shadow-black/20">
+                            {{ currentRiddle?.questions?.[currentQuestionIndex]?.question_text }}
+                        </div>
+
+                        <div class="grid gap-4">
+                            <button
+                                v-for="(option, idx) in currentRiddle?.questions?.[currentQuestionIndex]?.options"
+                                :key="idx"
+                                @click="selectQuestionOption(option)"
+                                :class="cn(
+                                    'w-full rounded-3xl border px-6 py-4 text-left text-sm font-semibold transition-all',
+                                    questionnaireAnswers.value[currentQuestionIndex.value] === option
+                                        ? 'border-electric bg-electric/10 text-white'
+                                        : 'border-white/10 bg-white/5 text-white hover:border-electric hover:bg-electric/10',
+                                )"
+                            >
+                                {{ option.option_text }}
+                            </button>
+                        </div>
+
+                        <div class="flex flex-wrap gap-3 items-center justify-between text-xs uppercase tracking-[0.3em] text-white/60">
+                            <span class="rounded-full bg-white/5 px-3 py-2 text-white/90">
+                                Erreurs : {{ totalErrors }}
+                            </span>
+                            <span class="rounded-full bg-white/5 px-3 py-2 text-success">
+                                Prochaine étape : {{ currentQuestionIndex + 1 === currentRiddle?.questions?.length ? 'Terminer' : 'Suivante' }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </Modal>
+        </Transition>
 
-        <!-- Modal Indice -->
+        <!-- Modal Histoire -->
+        <Transition name="fade-scale">
+            <div
+                v-if="showHistoryModal"
+                class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-3xl"
+            >
+                <div class="relative z-10 space-y-6">
+                    <!-- Image du lieu -->
+                    <div class="flex items-center gap-4 mb-2">
+                        <div class="h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-neon-sm">
+                            <BookOpen class="h-7 w-7" />
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-amber-500 font-black uppercase tracking-[0.3em]">Chroniques de la Cité</div>
+                            <h2 class="font-display text-3xl text-white uppercase italic font-black">{{ selectedLocation?.name }}</h2>
+                        </div>
+                    </div>
+                    <div class="relative h-48 md:h-64 w-full rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
+                        <AppImage
+                            :src="selectedLocation?.location_images?.[0]?.image_path || selectedLocation?.cover_image"
+                            fallback="/images/placeholders/location.jpg"
+                            class="w-full h-full object-cover"
+                        />
+                        <div class="absolute inset-0 bg-gradient-to-t from-gaming-dark via-transparent to-transparent"></div>
+                    </div>
+
+
+                    <div class="space-y-4 text-white/80 leading-relaxed text-sm">
+                        <p class="font-bold text-amber-500/80 italic">" {{ selectedLocation?.description }} "</p>
+                        <div class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent my-6"></div>
+                        <div class="bg-white/5 p-6 rounded-3xl border border-white/10 prose prose-invert max-w-none">
+                            {{ selectedLocation?.history }}
+                        </div>
+                    </div>
+
+                    
+                        <button
+                            @click="showHistoryModal = false"
+                            class="w-full py-4 rounded-2xl bg-amber-500 text-black font-display font-bold text-lg tracking-widest hover:scale-105 active:scale-95 transition-all shadow-neon"
+                        >
+                            FERMER LES ARCHIVES
+                        </button>
+                
+                </div>
+            </div>
+        </Transition>
         <div
             v-if="showHintModal"
             class="fixed inset-0 z-[200] flex items-center justify-center p-4"
@@ -1049,6 +1010,41 @@ const outGame = () => {
             </div>
         </div>
 
+        <!-- Modal Out -->
+        <div
+            v-if="outModal"
+            class="fixed inset-0 z-[200] flex items-center justify-center p-4"
+        >
+            <!-- Backdrop très fort -->
+            <div class="absolute inset-0 bg-black/85 backdrop-blur-3xl"></div>
+
+            <div
+                class="relative max-w-md w-full p-8 md:p-10 rounded-3xl border border-electric/30 bg-gaming-darker/95 backdrop-blur-2xl shadow-2xl text-center"
+            >
+                <h3
+                    class="text-4xl font-display font-black text-red-400 tracking-wider mb-3"
+                >
+                    Quitter la partie ?
+                </h3>
+                <p class="text-white/80 mb-8 text-sm leading-relaxed">
+                    Si tu quittes maintenant, ta progression sera sauvegardée et tu reviendras au lobby.
+                </p>
+                <div class="flex gap-4 justify-center">
+                    <button
+                        @click="resumeGame"
+                        class="w-full py-4 rounded-2xl bg-white/10 border border-white/20 text-white font-display font-bold text-lg tracking-widest hover:bg-white/20 transition-all"
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        @click="outGame"
+                        class="w-full py-4 rounded-2xl bg-red-500/15 text-red-400 border border-red-500/30 font-display font-black text-lg tracking-widest hover:bg-red-500/25 transition-all"
+                    >
+                        Quitter
+                    </button>
+                </div>
+            </div>
+        </div>
         <!-- Modal Pause -->
         <div
             v-if="pauseModal"
@@ -1061,12 +1057,12 @@ const outGame = () => {
                 class="relative max-w-md w-full p-8 md:p-10 rounded-3xl border border-electric/30 bg-gaming-darker/95 backdrop-blur-2xl shadow-2xl text-center"
             >
                 <h3
-                    class="text-4xl font-display font-black text-white tracking-wider mb-2"
+                    class="text-4xl font-display font-black text-electric tracking-wider mb-3"
                 >
                     PAUSE
                 </h3>
-                <p class="text-muted-foreground mb-10">
-                    La mission est en pause
+                <p class="text-electric/80 mb-10 text-base leading-relaxed">
+                    La mission est en pause. Reprends quand tu es prêt.
                 </p>
 
                 <button
@@ -1113,5 +1109,19 @@ const outGame = () => {
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
+}
+
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.fade-scale-enter-from,
+.fade-scale-leave-to {
+    opacity: 0;
+    transform: scale(0.9);
+}
+
+.drop-shadow-neon {
+    filter: drop-shadow(0 0 8px rgba(0, 112, 255, 0.5));
 }
 </style>

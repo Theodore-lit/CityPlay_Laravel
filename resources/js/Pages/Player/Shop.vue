@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Boutique CityPlay - Gestion des achats de ressources et boosts.
+ * Logique d'économie interne et transactions XP/Diamants.
+ *
+ * Auteur: Kamal
+ */
 import { ref, computed, watch } from 'vue';
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import MobileTabBar from '@/Components/MobileTabBar.vue';
@@ -22,6 +28,7 @@ const successMessage = ref('');
 const errorMessage = ref('');
 const confirmModal = ref(null);
 
+// Surveillance des messages flash envoyés par le serveur kamal
 watch(() => page.props.flash, (flash) => {
     if (flash?.success) {
         successMessage.value = flash.success;
@@ -33,32 +40,51 @@ watch(() => page.props.flash, (flash) => {
     }
 }, { deep: true });
 
+// Catégories de la boutique kamal
 const categories = [
     { id: 'resources', label: 'Ressources', icon: ShoppingBag },
     { id: 'boosts', label: 'Boosts', icon: Zap },
 ];
 
+// Catalogue des articles kamal
 const items = {
     resources: [
         { id: 'heart', name: "Cœur Supplémentaire", icon: Heart, price: 500, currency: "XP", value: "+1 Vie", color: "text-destructive", route: 'player.buy.heart', description: 'Augmente votre nombre de vies pour continuer à jouer', badge: null },
-        { id: 'diamonds', name: "Pack Diamants", icon: Gem, price: 1000, currency: "XP", value: "+10 Diamants", color: "text-sky-400", route: 'player.buy.diamonds', description: 'Débloquez des diamants pour des achats premium', badge: 'POPULAIRE' },
+        { id: 'diamonds', name: "Pack Diamants", icon: Gem, price: 1000, currency: "XP", value: "+1 Diamants", color: "text-sky-400", route: 'player.buy.diamonds', description: 'Débloquez des diamants pour des achats premium', badge: 'POPULAIRE' },
         { id: 'explorer-pass', name: "Passe Exploration", icon: Package, price: 2000, currency: "XP", value: "24h Illimité", color: "text-amber-400", route: 'player.buy.explorer-pass', description: 'Explorez sans limite pendant 24 heures', badge: null },
     ],
     boosts: [
-        { id: 'xp-boost', name: "Boost XP x2", icon: Zap, price: 500, currency: "XP", value: "+250 XP", color: "text-yellow-400", route: 'player.buy.xp-boost', description: 'Gagnez plus d\'XP pendant une partie', badge: 'LIMITÉ' },
+        { id: 'xp-boost', name: "Boost Multiplicateur x2", icon: Zap, price: 10, currency: "DIAMONDS", value: "Multiplicateur x2", color: "text-yellow-400", route: 'player.buy.xp-boost', description: 'Doublez vos gains d\'XP, Cœurs et Diamants pendant 1 heure', badge: 'ULTIME' },
     ],
 };
 
-const canAfford = (price) => (props.user?.xp || 0) >= price;
+/**
+ * Vérifie si le joueur a les ressources nécessaires kamal
+ */
+const canAfford = (item) => {
+    if (item.currency === 'DIAMONDS') {
+        return (props.user?.diamonds || 0) >= item.price;
+    }
+    return (props.user?.xp || 0) >= item.price;
+};
 
+/**
+ * Affiche la fenêtre de confirmation d'achat kamal
+ */
 const showConfirmation = (item) => {
     confirmModal.value = item;
 };
 
+/**
+ * Ferme la fenêtre de confirmation kamal
+ */
 const closeConfirmation = () => {
     confirmModal.value = null;
 };
 
+/**
+ * Exécute l'achat via une requête POST au serveur kamal
+ */
 const buyItem = (item) => {
     if (!item.route) {
         errorMessage.value = 'Cet article n\'est pas disponible';
@@ -66,8 +92,12 @@ const buyItem = (item) => {
         return;
     }
 
-    if (!canAfford(item.price)) {
-        errorMessage.value = `${item.price - (props.user?.xp || 0)} XP manquants`;
+    if (!canAfford(item)) {
+        const missingAmount = item.currency === 'DIAMONDS'
+            ? item.price - (props.user?.diamonds || 0)
+            : item.price - (props.user?.xp || 0);
+
+        errorMessage.value = `${missingAmount} ${item.currency} manquants`;
         setTimeout(() => { errorMessage.value = ''; }, 3000);
         confirmModal.value = null;
         return;
@@ -203,10 +233,10 @@ const buyItem = (item) => {
                         </div>
                         <button
                             @click="showConfirmation(item)"
-                            :disabled="!canAfford(item.price) || loading === item.id"
+                            :disabled="!canAfford(item) || loading === item.id"
                             :class="cn(
                                 'w-full h-12 rounded-xl font-black uppercase text-sm tracking-wider transition-all duration-300',
-                                canAfford(item.price)
+                                canAfford(item)
                                     ? 'bg-gradient-to-r from-primary to-purple-500 text-black hover:shadow-lg hover:shadow-primary/50 disabled:opacity-50'
                                     : 'bg-white/10 text-white/40 cursor-not-allowed'
                             )"
@@ -214,8 +244,8 @@ const buyItem = (item) => {
                             <span v-if="loading === item.id" class="inline-block animate-spin mr-2">⏳</span>
                             {{ loading === item.id ? 'Achat...' : 'ACHETER' }}
                         </button>
-                        <p v-if="!canAfford(item.price)" class="text-[10px] text-red-400 mt-2 font-black uppercase">
-                            {{ item.price - (props.user?.xp || 0) }} XP manquants
+                        <p v-if="!canAfford(item)" class="text-[10px] text-red-400 mt-2 font-black uppercase">
+                            {{ item.price - (item.currency === 'DIAMONDS' ? (props.user?.diamonds || 0) : (props.user?.xp || 0)) }} {{ item.currency }} manquants
                         </p>
                     </div>
 
