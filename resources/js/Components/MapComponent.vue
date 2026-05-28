@@ -34,19 +34,24 @@ const initMap = () => {
     // Définit le centre initial
     const center = props.targetLocation
         ? [props.targetLocation.latitude, props.targetLocation.longitude]
-        : [6.366667, 2.433333];
+        : (props.userPosition ? [props.userPosition.lat, props.userPosition.lng] : [6.366667, 2.433333]);
 
-    // Création de l'instance de la carte sans fond de carte et sans zoom/drag
+    // Création de l'instance de la carte avec un fond sombre pour le radar (Kamal)
     map = L.map(mapContainer.value, {
         zoomControl: false,
         attributionControl: false,
-        dragging: false, // Empêche le déplacement
-        scrollWheelZoom: false, // Empêche le zoom à la molette
-        doubleClickZoom: false, // Empêche le double clic
-        boxZoom: false,
-        touchZoom: false, // Empêche le zoom tactile
-        keyboard: false // Désactive le clavier
+        dragging: true, // Kamal: Permettre le drag pour mieux voir si besoin
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        boxZoom: true,
+        touchZoom: true,
+        keyboard: true
     }).setView(center, 16);
+
+    // Kamal: Fond de carte sombre pour le style gaming
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19
+    }).addTo(map);
 
 
     // Ajout des cercles de radar concentriques

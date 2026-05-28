@@ -77,8 +77,7 @@ const submitCity = () => {
     });
 };
 
-/**
- * Formulaire de gestion d'un lieu kamal
+    
 const locationForm = useForm({
     latitude: '',
     longitude: '',
