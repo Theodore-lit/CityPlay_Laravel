@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
+import { throttle } from "lodash"; // Kamal: Import pour limiter les appels serveur
 import SiteLayout from "@/Layouts/SiteLayout.vue";
 import MobileTabBar from "@/Components/MobileTabBar.vue";
 import NeonButton from "@/Components/NeonButton.vue";
@@ -108,8 +109,8 @@ const selectedLocation = ref(null);
 const currentRiddle = ref(null);
 const riddleAnswer = ref("");
 const isQuestionnaireActive = ref(false);
-//Persistance des données //Theo
-const storageKey = `cityplay_progress_aventure_${props.currentSession?.id || "game"}`;
+//Persistance des données (Kamal : Ajout de l'ID utilisateur pour éviter les conflits de session)
+const storageKey = `cityplay_progress_u${props.auth?.user?.id}_s${props.currentSession?.id || "game"}`;
 const savedData = JSON.parse(localStorage.getItem(storageKey)) || null;
 
 // initialiser
@@ -144,16 +145,30 @@ const isAnyOverlayActive = computed(() => {
     );
 });
 
+// Kamal: Envoi de la position au serveur avec throttle (toutes les 2 secondes max)
+const sendPositionToServer = throttle((lat, lng) => {
+    if (!props.currentSession?.team_id) return;
+
+    axios.post(route('player.update-position'), {
+        lat,
+        lng,
+        team_id: props.currentSession.team_id
+    }).catch(err => console.error("Erreur sync position:", err));
+}, 2000);
+
 const updateGPS = () => {
     if ("geolocation" in navigator) {
         navigator.geolocation.watchPosition(
             (position) => {
-                // console.log(position.coords.latitude);
-                // console.log(position.coords.longitude);
+                const { latitude, longitude } = position.coords;
                 userPosition.value = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
+                    lat: latitude,
+                    lng: longitude,
                 };
+
+                // Diffusion aux autres membres de l'équipe kamal
+                sendPositionToServer(latitude, longitude);
+
                 // Mettre à jour l'angle de la boussole si nécessaire
                 if (currentTarget.value) {
                     needleAngle.value = calculateBearing(
@@ -167,7 +182,11 @@ const updateGPS = () => {
             (err) => {
                 console.error("Erreur GPS:", err);
             },
-            { enableHighAccuracy: true },
+            {
+                enableHighAccuracy: true,
+                maximumAge: 0, // Kamal: Forcer la récupération d'une position fraîche
+                timeout: 5000
+            },
         );
     }
 };
@@ -183,12 +202,12 @@ const rawDistance = computed(() => {
     );
 });
 
-const distanceToClosest = computed(() => {
-    if (rawDistance.value === null) return "---";
+// Kamal: Forcer la mise à jour de la distance dans le template
+const distanceDisplay = computed(() => {
+    if (rawDistance.value === null) return "Calcul en cours...";
     const dist = rawDistance.value;
-    return dist > 1000
-        ? (dist / 1000).toFixed(1) + "km"
-        : Math.round(dist) + "m";
+    if (dist > 1000) return (dist / 1000).toFixed(1) + " km";
+    return Math.round(dist) + " m";
 });
 
 const isNearLocation = computed(() => {
@@ -278,7 +297,7 @@ const runConfetti = () => {
 const togglePause = () => {
     // On inverse l'état de la pause
     isPaused.value = !isPaused.value;
-    
+
     // La modal doit correspondre EXACTEMENT à l'état de la pause
     pauseModal.value = isPaused.value;
 };
@@ -326,14 +345,13 @@ const verifyPosition = () => {
         setTimeout(() => {
             selectedLocation.value = currentTarget.value;
             riddleType.value = "site";
-            const locWithEnigmas = props.locations.find(
-                (l) => l.id === selectedLocation.value.id,
-            );
+
+            // Kamal: Récupérer les questions de l'énigme active
             const questions = activeEnigma.value?.questions || [];
-            // currentRiddle.value =
-            //     enigmas.find((e) => e.is_site_specific) || enigmas[0];
+            currentRiddle.value = activeEnigma.value;
 
             if (questions?.length > 0) {
+                questionnaireAnswers.value = new Array(questions.length).fill(null);
                 startQuestionnaire();
             } else {
                 // Enigme sans questions : valide directement et affiche succès
@@ -342,12 +360,12 @@ const verifyPosition = () => {
         }, 800);
     } else {
         const distMsg =
-            distanceToClosest.value !== "---"
-                ? ` (${distanceToClosest.value})`
+            distanceDisplay.value !== "Calcul en cours..."
+                ? ` (${distanceDisplay.value})`
                 : "";
         showGameToast(
             `Signal trop faible. Rapprochez-vous du point cible.${distMsg}`,
-            "warning",
+            "error",
         );
     }
 };
@@ -419,8 +437,8 @@ const handleSuccess = () => {
         route("player.complete-location", selectedLocation.value.id),
         {
             stars: earnedStars.value,
-            xp: 150,
             duration: gameTime.value, // Envoyer la durée finale
+            team_id: props.currentSession?.team_id, // Kamal: Ajouter team_id pour la notification
         },
         {
             onSuccess: () => {
@@ -428,6 +446,9 @@ const handleSuccess = () => {
                 showSuccessModal.value = true;
                 isQuestionnaireActive.value = false;
                 runConfetti();
+
+                // Nettoyage de la persistance locale kamal
+                localStorage.removeItem(storageKey);
             },
         },
     );
@@ -451,8 +472,40 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 onMounted(() => {
+    // Kamal: Vérifier si la session en cours correspond à celle stockée, sinon reset
+    if (savedData && props.currentSession?.id) {
+        // Si l'ID de session a changé ou si les données sont corrompues, on nettoie
+        console.log("Session chargée:", storageKey);
+    }
+
     startTimer();
     updateGPS();
+
+    // Kamal: Écoute en temps réel via Reverb pour les membres de l'équipe
+    if (props.currentSession?.team_id) {
+        window.Echo.private(`team.${props.currentSession.team_id}`)
+            .listen('.position.updated', (e) => {
+                const index = teamMembers.value.findIndex(m => m.id === e.userId);
+                if (index !== -1) {
+                    teamMembers.value[index].lat = e.lat;
+                    teamMembers.value[index].lng = e.lng;
+                } else {
+                    teamMembers.value.push({
+                        id: e.userId,
+                        name: e.userName,
+                        lat: e.lat,
+                        lng: e.lng
+                    });
+                }
+            })
+            .listen('.mission.completed', (e) => {
+                showGameToast(`${e.userName} a terminé : ${e.locationName} ! 🏆`, "success");
+
+                // Si c'est une mission d'équipe, on peut mettre à jour la liste des membres qui ont fini
+                const member = teamMembers.value.find(m => m.id === e.userId);
+                if (member) member.completed = true;
+            });
+    }
 
     if (compassUnlocked.value) {
         compassActive.value = true;
@@ -461,6 +514,11 @@ onMounted(() => {
 
 onUnmounted(() => {
     if (timerInterval.value) clearInterval(timerInterval.value);
+
+    // Kamal: Nettoyage des écouteurs Echo
+    if (props.currentSession?.team_id) {
+        window.Echo.leave(`team.${props.currentSession.team_id}`);
+    }
 });
 
 watch(
@@ -785,7 +843,7 @@ const outGame = () => {
                                     />
                                     <span
                                         class="text-2xl font-display text-white tracking-wider"
-                                        >{{ distanceToClosest || "---" }}</span
+                                        >{{ distanceDisplay }}</span
                                     >
                                 </div>
                             </div>
@@ -963,14 +1021,14 @@ const outGame = () => {
                         </div>
                     </div>
 
-                    
+
                         <button
                             @click="showHistoryModal = false"
                             class="w-full py-4 rounded-2xl bg-amber-500 text-black font-display font-bold text-lg tracking-widest hover:scale-105 active:scale-95 transition-all shadow-neon"
                         >
                             FERMER LES ARCHIVES
                         </button>
-                
+
                 </div>
             </div>
         </Transition>

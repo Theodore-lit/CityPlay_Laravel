@@ -93,6 +93,17 @@ class PlayerController extends Controller
             'longitude' => $lng
         ]);
 
+        // Diffusion instantanée de la position via Reverb kamal
+        if ($teamId) {
+            broadcast(new \App\Events\PlayerPositionUpdated(
+                $user->id,
+                $user->name,
+                $lat,
+                $lng,
+                $teamId
+            ))->toOthers();
+        }
+
         $teamPositions = [];
         if ($teamId) {
             $team = \App\Models\Team::find($teamId);
@@ -807,6 +818,16 @@ class PlayerController extends Controller
         $session = $session->first();
 
         if ($session) {
+            // Diffusion de la réussite aux autres membres de l'équipe (Kamal)
+            if ($session->team_id) {
+                broadcast(new \App\Events\MissionCompleted(
+                    $user->id,
+                    $user->name,
+                    $session->team_id,
+                    $location->name
+                ))->toOthers();
+            }
+
             // Récupération des récompenses de l'énigme actuelle avant de passer à la suivante
             if ($session->current_enigma_id) {
                 $enigma = \App\Models\Enigma::find($session->current_enigma_id);
