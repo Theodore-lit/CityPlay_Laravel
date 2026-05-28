@@ -2,12 +2,13 @@
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import NeonButton from '@/Components/NeonButton.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Heart, Star, Trophy, Frown } from 'lucide-vue-next';
+import { Heart, Star, Trophy, Frown , Smile } from 'lucide-vue-next';
 
 const props = defineProps({
     quiz: Object,
     city: Object,
     result: Object,
+    nextQuizId:Number,
 });
 
 const page = usePage();
@@ -31,13 +32,15 @@ const backUrl = props.city
                 <h1 class="font-display text-xl text-white">{{ quiz?.title }}</h1>
             </div>
 
-            <div class="h-24 w-24 rounded-3xl bg-gradient-electric mx-auto grid place-items-center shadow-neon mb-6 animate-bounce">
-                <Trophy v-if="(result?.stars ?? 0) >= 2" class="h-12 w-12 text-white" />
-                <Frown v-else class="h-12 w-12 text-white" />
-            </div>
+           <div class="h-24 w-24 rounded-3xl bg-gradient-electric mx-auto grid place-items-center shadow-neon mb-6 animate-bounce">
+               <Trophy v-if="(result?.stars ?? 0) === 3" class="h-12 w-12 text-white" />
+               
+               <Smile v-else-if="(result?.stars ?? 0) >= 2" class="h-12 w-12 text-white" />
 
-            <h2 class="font-display text-4xl text-white mb-2 uppercase">
-                {{ (result?.stars ?? 0) >= 2 ? 'FÉLICITATIONS !' : 'COURAGE !' }}
+                <Frown v-else class="h-12 w-12 text-white" />
+        </div>
+
+            <h2 class="font-display text-4xl text-white mb-2 uppercase"> {{ (result?.stars ?? 0) >= 2 ? 'FÉLICITATIONS !' : 'COURAGE !' }}
             </h2>
             <p class="text-muted-foreground text-sm mb-10">
                 {{ (result?.stars ?? 0) >= 2 ? 'Vous avez brillamment surmonté les épreuves.' : 'Continuez à vous entraîner pour décrocher toutes les étoiles.' }}
@@ -81,6 +84,19 @@ const backUrl = props.city
                 >
                     Réessayer
                 </button>
+                 <!-- NOUVEAU : Bouton Quiz Suivant -->
+    <Link v-if="nextQuizId" :href="route('player.quiz', nextQuizId)">
+        <NeonButton class="w-full sm:w-auto">
+            Quiz Suivant
+        </NeonButton>
+    </Link>
+
+    <!-- Bouton Retour (déjà configuré pour player.game via backUrl) -->
+    <!-- <Link :href="backUrl">
+        <NeonButton variant="outline" class="w-full sm:w-auto">
+            Retour au Jeu
+        </NeonButton>
+    </Link> -->
                 <Link :href="backUrl">
                     <NeonButton variant="outline" class="w-full sm:w-auto">
                         {{ city ? 'Retour au lobby' : 'Revenir aux villes' }}
