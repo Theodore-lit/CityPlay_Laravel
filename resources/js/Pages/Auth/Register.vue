@@ -2,6 +2,7 @@
 import AuthLayout from '@/Layouts/AuthLayout.vue';
 import GlowInput from '@/Components/GlowInput.vue';
 import NeonButton from '@/Components/NeonButton.vue';
+import checkbox from '@/Components/NeonButton.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { UserPlus, ArrowRight, ShieldCheck, RefreshCw } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
@@ -92,6 +93,15 @@ const resendOtp = () => {
                 autocomplete="new-password"
                 :error="form.errors.password_confirmation"
             />
+            <div class=flex flex:col relative gap-2>
+                <label class = "text-sm">Accepter les CGU</label>
+            <input
+                type="checkbox"
+                v-model="form.accepts_terms"
+                required
+                :error="form.errors.accepts_terms"
+            />
+            </div>
 
             <div class="pt-2">
                 <NeonButton

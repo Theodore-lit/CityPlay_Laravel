@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    // kamal
     /**
      * Run the migrations.
      */
@@ -19,6 +20,9 @@ return new class extends Migration
             $table->json('images')->nullable(); // Pour stocker plusieurs images
             $table->dateTime('event_date')->nullable();
             $table->string('location_name')->nullable();
+            $table->integer('diamond_price')->default(0); //kamal: Coût du pass en diamants
+            $table->boolean('has_vip_pass')->default(false); // kamal: pour savoir si l'évènement offre des pass ou non
+            $table->string('reward_type')->nullable(); // kamal: type de recompense 'ticket', 'meal', 'discount'
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

@@ -16,7 +16,7 @@ class StorageUrl
 
         $normalized = ltrim($path, '/');
 
-        if (str_starts_with($normalized, 'storage/')) {
+        if (str_starts_with($normalized, 'images/') || str_starts_with($normalized, 'storage/')) {
             return '/' . $normalized;
         }
 

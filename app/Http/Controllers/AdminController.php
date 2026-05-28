@@ -16,7 +16,14 @@ class AdminController extends Controller
     public function dashboard()
     {
         if (auth()->user()->role !== 'super_admin') {
-            return redirect()->route('mairie.dashboard');
+
+            $city = City::where('mairie_id', auth()->id())->first();
+
+            if ($city) {
+                return redirect()->route('mairie.cities.show', $city->id);
+            }
+
+            // return redirect()->route('mairie.dashboard');
         }
 
         return Inertia::render('Admin/Dashboard', [
@@ -34,8 +41,8 @@ class AdminController extends Controller
     public function cityQuizzes(City $city)
     {
         // Security check for Mairie
-        if (auth()->user()->role === 'mairie' && $city->creator_id !== auth()->id()) {
-            abort(403, 'Vous n\'êtes pas autorisé à gérer les quiz de cette ville.');
+        if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
+            abort(403);
         }
 
         return Inertia::render('Admin/Quizzes', [
@@ -46,7 +53,7 @@ class AdminController extends Controller
     public function storeQuiz(Request $request, City $city)
     {
         // Security check for Mairie
-        if (auth()->user()->role === 'mairie' && $city->creator_id !== auth()->id()) {
+        if (auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'mairie') {
             abort(403);
         }
 
@@ -55,6 +62,7 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'category' => 'required|string',
+            'difficulty'=>'required|string|in:easy,medium,hard',
             'xp_reward' => 'required|integer|min:0',
             'time_limit' => 'required|integer|min:10',
         ]);
@@ -73,7 +81,7 @@ class AdminController extends Controller
     public function storeQuestion(Request $request, Quiz $quiz)
     {
         // Security check for Mairie
-        if (auth()->user()->role === 'mairie' && $quiz->city->creator_id !== auth()->id()) {
+        if (auth()->user()->role !== 'mairie' && auth()->user()->role !== 'super_admin') {
             abort(403);
         }
 
@@ -100,7 +108,7 @@ class AdminController extends Controller
     public function deleteQuiz(Quiz $quiz)
     {
         // Security check for Mairie
-        if (auth()->user()->role === 'mairie' && $quiz->city->creator_id !== auth()->id()) {
+        if (auth()->user()->role !== 'mairie' && auth()->user()->role !== 'super_admin') {
             abort(403);
         }
 
@@ -111,7 +119,7 @@ class AdminController extends Controller
     public function deleteQuestion(Question $question)
     {
         // Security check for Mairie
-        if (auth()->user()->role === 'mairie' && $question->quiz->city->creator_id !== auth()->id()) {
+        if (auth()->user()->role !== 'mairie' && auth()->user()->role !== 'super_admin') {
             abort(403);
         }
 

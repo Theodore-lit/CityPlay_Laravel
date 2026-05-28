@@ -2,8 +2,8 @@
 import { Head, Link } from '@inertiajs/vue3';
 import SiteLayout from '@/Layouts/SiteLayout.vue';
 import NeonButton from '@/Components/NeonButton.vue';
-import { 
-  ArrowRight, MapPin, Trophy, Sparkles, Compass, Zap, Star, Shield, Gamepad2, QrCode 
+import {
+  ArrowRight, MapPin, Trophy, Sparkles, Compass, Zap, Star, Shield, Gamepad2, QrCode
 } from 'lucide-vue-next';
 
 // Images - Note: using Vite's URL for images
@@ -52,11 +52,11 @@ const testimonials = [
   <SiteLayout>
     <section class="relative min-h-[85vh] overflow-hidden flex items-center">
       <div class="absolute inset-0">
-        <img :src="heroImg" alt="Cinematic Benin skyline" class="h-full w-full object-cover opacity-40" />
+        <!-- <img :src="heroImg" alt="Cinematic Benin skyline" class="h-full w-full object-cover opacity-40" /> -->
         <div class="absolute inset-0 bg-gradient-to-b from-gaming-darker/60 via-gaming-darker/80 to-gaming-darker" />
         <div class="absolute inset-0 grid-bg opacity-20" />
       </div>
-      
+
       <div class="relative mx-auto max-w-7xl px-6 w-full">
         <div class="max-w-3xl animate-fade-up">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-[10px] uppercase tracking-wider font-bold text-electric/80">
@@ -69,12 +69,12 @@ const testimonials = [
           <p class="mt-4 max-w-lg text-sm md:text-base text-muted-foreground/80 leading-relaxed">
             Un jeu d'aventure touristique cinématique. Résolvez des énigmes dans les palais royaux et devenez l'ultime explorateur.
           </p>
-          
+
           <div class="mt-8 flex flex-wrap gap-4">
-            <NeonButton :href="auth.user ? route('player.modes') : route('register')" size="lg" class="shadow-lg shadow-electric/20">
+            <NeonButton :href="auth.user ? auth.user.role === 'super_admin' ? route('admin.dashboard') : auth.user.role === 'mairie' ? route('mairie.dashboard') : route('player.leaderboard') : route('login')" size="lg" class="shadow-lg shadow-electric/20">
               Explorer le Bénin <ArrowRight class="ml-2 h-4 w-4" />
             </NeonButton>
-            <NeonButton :href="route('player.cities')" variant="outline" size="lg" class="border-electric/30 text-electric/90">
+            <NeonButton :href="auth.user ? auth.user.role === 'super_admin' ? route('admin.dashboard') : auth.user.role === 'mairie' ? route('mairie.dashboard') : route('player.modes') : route('login')" variant="outline" size="lg" class="border-electric/30 text-electric/90">
               <Compass class="mr-2 h-4 w-4" /> Destinations
             </NeonButton>
           </div>
@@ -97,7 +97,7 @@ const testimonials = [
           </div>
           <h2 class="mt-4 font-display text-2xl md:text-4xl font-bold">Un Nouveau Type de Tourisme</h2>
         </div>
-        
+
         <div class="grid gap-6 md:grid-cols-3">
           <div
             v-for="(f, i) in features"

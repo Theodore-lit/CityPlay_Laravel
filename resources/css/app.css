@@ -10,12 +10,12 @@
   /* STYLE CLAIR : Visibilité Maximale & Gaming */
   --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --font-display: "Space Grotesk", "Plus Jakarta Sans", system-ui, sans-serif;
-
-  --background: oklch(96.031% 0.01015 238.85 / 0); /* Fond gris perle doux */
+ 
+  --background: oklch(98.511% 0.00011 271.152 / 0); /* Fond gris perle doux (opaque) */
   --foreground: oklch(0.15 0.02 240); /* Texte quasi noir pour lisibilité parfaite */
-  
+
   /* Couleur Primaire basée sur NeonButton */
-  --primary: oklch(0.60 0.20 255); 
+  --primary: oklch(0.60 0.20 255);
   --primary-foreground: #ffffff;
 
   --secondary: oklch(0.85 0.05 200);
@@ -23,20 +23,20 @@
 
   --accent: oklch(0.65 0.25 350); /* Rose/Violet gaming pour contraste */
   --accent-foreground: #ffffff;
-
-  --card: #ffffff; /* Cartes blanches sur fond gris */
+ 
+  --card: #dfdddd3f; /* Cartes blanches sur fond gris */
   --card-foreground: var(--foreground);
 
   --muted: oklch(0.90 0.01 240);
   --muted-foreground: oklch(0.40 0.02 240);
 
-  --border: oklch(0.20 0.04 240 / 0.15); /* Bordures visibles */
+  --border: oklch(19.973% 0.03974 239.912 / 0.068); /* Bordures visibles */
   --input: #ffffff;
   --input-border: oklch(0.20 0.04 240 / 0.2);
-  
+
   --shadow-neon: 0 10px 25px -5px oklch(0.60 0.20 255 / 0.3);
   --shadow-neon-hover: 0 15px 35px -5px oklch(0.60 0.20 255 / 0.5);
-  
+
   --gaming-darker: oklch(0.94 0.01 240);
   --gaming-dark: oklch(0.92 0.01 240);
   --gaming-panel: #ffffff;
@@ -45,7 +45,7 @@
 /* STYLE SOMBRE : Futuriste Haute Visibilité */
 html.dark, .dark {
   --background: oklch(42.249% 0.12054 253.227 / 0.116); /* Noir profond */
-  --foreground: oklch(0.98 0.01 240); /* Blanc éclatant */
+  --foreground: oklch(98.128% 0.0101 238.855); /* Blanc éclatant */
 
   --primary: oklch(0.70 0.18 250); /* Cyan électrique */
   --primary-foreground: #000000;
@@ -72,21 +72,21 @@ html.dark, .dark {
 
 @layer base {
   * { border-color: var(--border); }
-  html, body { 
-    background: var(--background); 
-    color: var(--foreground); 
+  html, body {
+    background: transparent;
+    color: var(--foreground);
     transition: background-color 0.3s ease, color 0.3s ease;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   /* Forcer la visibilité des textes d'input */
   input, textarea, select {
     color: var(--foreground) !important;
     background-color: var(--input) !important;
     border-color: var(--border) !important;
   }
-  
+
   /* Fix pour les textes blancs qui devraient être sombres en mode clair */
   .light .text-white:not(.bg-primary *, .bg-electric *, .bg-gradient-premium *, .bg-gradient-accent *) {
     color: var(--foreground) !important;
@@ -102,13 +102,14 @@ html.dark, .dark {
   }
 
   /* Image de fond globale au premier plan */
+  /* background-image: url('../images/bg.png'); */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
-    z-index: 9999; /* Premier plan */
+    z-index: 1000; /* Premier plan */
     pointer-events: none; /* Ne bloque pas les clics */
-    background-image: url('/storage/images/bg.png');
+    background-image: url('../images/cityplayBg.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -117,15 +118,27 @@ html.dark, .dark {
 
   /* Filtres adaptatifs selon le mode */
   .dark body::before {
-    opacity: 0.3; /* Visibilité augmentée pour la clarté */
-    filter: brightness(1) saturate(1); /* Image nette et naturelle */
+    opacity: 0.3;
+  filter: brightness(1) saturate(1);
   }
+ 
+  /* .light body::before {
+  opacity: 0.45; /* On augmente l'opacité pour mieux voir les détails de la ville */
+  /* filter: brightness(0.75) saturate(1.1); /* On baisse la luminosité à 75% pour casser le blanc */
+/* }  */
 
-  .light body::before {
-    opacity: 0.25; /* Augmenté pour moins de blancheur, plus de présence de l'image */
-    filter: brightness(0.9) saturate(1.1); /* Légèrement plus de contraste pour la netteté */
-  }
 
+.light body::before {
+  opacity: 0.6; 
+  /* Plus d'opacité car le filtre en dessous va l'adoucir */
+  /* On applique un voile bleu nuit/gris transparent SOUS l'image */
+  background-image: 
+    linear-gradient(rgba(15, 23, 42, 0), rgbrgba(15, 23, 42, 0))
+    url('../images/cityplayBg.png');
+  filter: brightness(0.85) saturate(1);
+}
+
+ 
   body {
     min-height: 100vh;
     background-attachment: fixed;
@@ -143,20 +156,19 @@ html.dark, .dark {
 @layer utilities {
   /* GLASSMORPHISM GLOBAL */
   .bg-card, .bg-card\/30, .bg-card\/40, .bg-card\/60, .bg-card\/80, .bg-card\/90, .bg-card\/95 {
-    backdrop-filter: blur(24px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    box-shadow: 
-      0 4px 6px -1px rgba(0, 0, 0, 0.1), 
-      0 2px 4px -1px rgba(0, 0, 0, 0.06),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
-  }
-
+  background-color: rgba(255, 255, 255, 0.82) !important; /* Fond de carte blanc opaque à 82% */
+  backdrop-filter: blur(20px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
+}
+ 
   .dark .bg-card, .dark .bg-card\/30, .dark .bg-card\/40, .dark .bg-card\/60, .dark .bg-card\/80, .dark .bg-card\/90, .dark .bg-card\/95 {
     background-color: oklch(0.16 0.06 255 / 0.96) !important; /* Presque opaque (96%) */
     border-color: oklch(0.78 0.15 232 / 0.4) !important;
-    box-shadow: 
-      0 10px 15px -3px rgba(0, 0, 0, 0.3), 
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.3),
       0 4px 6px -2px rgba(0, 0, 0, 0.1),
       inset 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
   }
@@ -167,28 +179,27 @@ html.dark, .dark {
     backdrop-filter: blur(24px) saturate(200%) !important;
     -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
     border: 1px solid var(--border);
-    box-shadow: 
+    box-shadow:
       0 4px 12px rgba(0, 0, 0, 0.1),
       inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   .glass-strong {
-    background: color-mix(in srgb, var(--card), transparent 2%) !important; /* Quasi totalement opaque (98%) */
-    backdrop-filter: blur(45px) saturate(240%) !important;
-    -webkit-backdrop-filter: blur(45px) saturate(240%) !important;
+    background: rgba(255, 255, 255, 0.05);
+    /* background: rgba(15, 17, 21, 0.85); Fond beaucoup plus opaque pour garantir la visibilité */
+    backdrop-filter: blur(24px) saturate(200%);
     border: 1px solid var(--border);
-    box-shadow: 
-      0 20px 25px -5px rgba(0, 0, 0, 0.2), 
-      0 10px 10px -5px rgba(0, 0, 0, 0.1),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
+  .backdrop-blur-3xl {
+    backdrop-filter: blur(32px);
+}
+
   .dark .glass-strong {
-    background: oklch(0.16 0.06 255 / 0.98) !important; /* 98% opaque */
-    border: 1px solid oklch(0.78 0.15 232 / 0.5) !important;
-    box-shadow: 
+    background: oklch(12.852% 0.03939 252.809 / 0.98) !important; /* 98% opaque */
+    border: 1px solid oklch(77.515% 0.14446 229.313 / 0.356) !important;
+    box-shadow:
       0 25px 50px -12px rgba(0, 0, 0, 0.5),
       inset 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
@@ -196,7 +207,7 @@ html.dark, .dark {
 
   .dark .glass {
     background: oklch(0.15 0.03 240 / 0.95) !important; /* 95% opaque */
-    box-shadow: 
+    box-shadow:
       0 10px 15px -3px rgba(0, 0, 0, 0.4),
       inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
@@ -278,3 +289,27 @@ html.dark, .dark {
     border: 2px solid var(--background);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+ 
+
+ @keyframes flag-wave {
+  0%, 100% { 
+    transform: translateY(0) scale(1) rotate(0deg) skewX(0deg);
+    opacity: 0.18;
+  }
+  25% {
+    transform: translateY(-8px) scale(1.02) rotate(1deg) skewX(3deg);
+  }
+  50% { 
+    transform: translateY(-15px) scale(1.05) rotate(-1deg) skewX(-3deg); /* Amplitude augmentée */
+    opacity: 0.25; /* Plus visible quand il s'élève */
+  }
+  75% {
+    transform: translateY(-7px) scale(1.02) rotate(0.5deg) skewX(2deg);
+  }
+}
+
+.animate-flag-wave {
+  /* Réduction du temps à 5s pour que le mouvement soit plus énergique et fluide */
+  animation: flag-wave 5s ease-in-out infinite; 
+}
+

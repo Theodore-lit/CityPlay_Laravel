@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
+use phpDocumentor\Reflection\Location;
 
 #[Fillable(['name', 'email', 'otp_code', 'otp_expires_at', 'is_verified', 'password', 'role', 'secret_code', 'coins', 'hearts', 'xp', 'level', 'avatar', 'is_active', 'last_activity_at', 'deactivate_on_logout', 'latitude', 'longitude'])]
 #[Hidden(['password', 'remember_token', 'otp_code'])]
@@ -30,10 +32,36 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'deactivate_on_logout' => 'boolean',
             'password' => 'hashed',
-            'is_active' => 'boolean',
             'expired_at' => 'datetime',
             'last_active_at' => 'datetime',
+            'boost_expires_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Ajoute une récompense au joueur en tenant compte du boost actif.
+     * @param string $type xp, hearts, diamonds, coins
+     * @param int $amount
+     * @return int Le montant total ajouté
+     */
+    public function addReward($type, $amount)
+    {
+        if ($amount <= 0) return 0;
+
+        $multiplier = ($this->boost_expires_at && $this->boost_expires_at->isFuture()) ? 2 : 1;
+        $total = $amount * $multiplier;
+
+        $this->increment($type, $total);
+
+        // Enregistrer les XP gagnés par jour
+        if ($type === 'xp') {
+            \App\Models\DailyXpEarning::updateOrCreate(
+                ['user_id' => $this->id, 'date' => now()->toDateString()],
+                ['xp_earned' => \DB::raw('xp_earned + ' . $total)]
+            );
+        }
+
+        return $total;
     }
 
     /**
@@ -88,5 +116,23 @@ class User extends Authenticatable
     public function quizResults()
     {
         return $this->hasMany(QuizResult::class);
+    }
+
+    /**
+     * Compétitions auxquelles l'utilisateur participe.
+     */
+    public function competitions()
+    {
+        return $this->belongsToMany(Competition::class, 'competition_user')
+            ->withPivot(['current_amount', 'is_winner', 'reward_claimed'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Lots (prizes) gagnés par l'utilisateur.
+     */
+    public function prizes()
+    {
+        return $this->hasMany(UserPrize::class);
     }
 }

@@ -11,24 +11,26 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Super Admin
-        User::create([
-            'name' => 'Super Admin',
-            'email' => 'admin@cityplay.com',
-            'password' => Hash::make('password'),
-            'role' => 'super_admin',
-            'is_verified' => true,
-        ]);
+        User::updateOrCreate(
+            ['email' => 'geoffroylima@gmail.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('password'),
+                'role' => 'super_admin',
+            ]
+        );
 
         // Comptes Mairies pour les villes principales
         $cities = ['Cotonou', 'Ouidah', 'Porto-Novo', 'Parakou', 'Abomey'];
         foreach ($cities as $cityName) {
-            User::create([
-                'name' => "Mairie de $cityName",
-                'email' => strtolower($cityName) . '@mairie.bj',
-                'password' => Hash::make('password'),
-                'role' => 'mairie',
-                'is_verified' => true,
-            ]);
+            User::updateOrCreate(
+                ['email' => strtolower($cityName) . '@mairie.bj'],
+                [
+                    'name' => "Mairie de $cityName",
+                    'password' => Hash::make('password'),
+                    'role' => 'mairie',
+                ]
+            );
         }
 
         // 20 Joueurs avec des données
@@ -56,17 +58,18 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($players as $index => $playerData) {
-            User::create([
-                'name' => $playerData['name'],
-                'email' => $playerData['email'],
-                'password' => Hash::make('password'),
-                'role' => 'joueur',
-                'is_verified' => true,
-                'coins' => rand(50, 500),
-                'hearts' => rand(1, 5),
-                'xp' => rand(100, 5000),
-                'level' => rand(1, 10),
-            ]);
+            User::updateOrCreate(
+                ['email' => $playerData['email']],
+                [
+                    'name' => $playerData['name'],
+                    'password' => Hash::make('password'),
+                    'role' => 'joueur',
+                    'coins' => rand(50, 500),
+                    'hearts' => rand(1, 5),
+                    'xp' => rand(100, 5000),
+                    'level' => rand(1, 10),
+                ]
+            );
         }
     }
 }

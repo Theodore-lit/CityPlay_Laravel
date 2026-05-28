@@ -1,6 +1,7 @@
 <script setup>
+// kamal
 import { Link, usePage } from "@inertiajs/vue3";
-import { Compass, Menu, X, User, LogOut, Bell } from "lucide-vue-next";
+import { Compass, Menu, X, User, LogOut, Bell, Settings } from "lucide-vue-next";
 import { ref, computed } from "vue";
 import NeonButton from "./NeonButton.vue";
 import Modal from "./Modal.vue";
@@ -60,10 +61,10 @@ const links = computed(() => {
     if (user.value?.role === "joueur") {
         return [
             { to: "dashboard", label: "Tableau de bord" },
-            { to: "player.cities", label: "Villes" },
             { to: "player.modes", label: "Jouer" },
             { to: "player.leaderboard", label: "Classement" },
-            { to: "player.rewards", label: "Récompenses" },
+            { to: "player.rewards.index", label: "Récompenses" },
+            { to: "player.hub", label: "Hub & Paramètres" },
         ];
     }
 });
@@ -75,6 +76,10 @@ const isActive = (routeName) => route().current(routeName);
 
 const notifications = computed(() => page.props.auth.notifications || []); // Liste des notifications non lues
 const showNotifications = ref(false); // Toggle du menu notifications
+
+const missionInvitations = computed(() =>
+    notifications.value.filter(n => n.data?.type === 'mission_invitation')
+);
 
 /**
  * Marque une notification comme lue via une requête serveur.
@@ -245,7 +250,7 @@ const markAsRead = (id) => {
 
                             <button
                                 @click="handleLogoutClick"
-                                class="h-10 w-10 rounded-xl bg-destructive/10 border border-destructive/20 grid place-items-center text-destructive hover:bg-destructive hover:text-white transition-all shadow-sm"
+                                class="h-10 w-10 rounded-xl bg-white/5 border border-white/10 grid place-items-center text-muted-foreground hover:text-red-500 hover:border-red-500/50 transition-all shadow-sm"
                                 title="Déconnexion"
                             >
                                 <LogOut class="h-5 w-5" />

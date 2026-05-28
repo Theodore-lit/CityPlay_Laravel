@@ -6,14 +6,16 @@ import GlowInput from '@/Components/GlowInput.vue';
 import GpsSearchInput from '@/Components/GpsSearchInput.vue';
 import Pagination from '@/Components/Pagination.vue';
 import AppImage from '@/Components/AppImage.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
-import { 
-  Users, Map, Target, TrendingUp, Activity, DollarSign, 
-  Plus, Settings, Building2, Brain, ChevronRight, LayoutDashboard, ShieldCheck, Zap,
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import {
+  Users, Map, Target, TrendingUp, Activity, DollarSign,
+  Plus, Settings, Building2, Brain, ChevronRight, LayoutDashboard, ShieldCheck, Zap, Edit2,
   Share2, Ban, CheckCircle, MapPin
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import { cn } from '@/lib/utils';
+
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
 const props = defineProps({
     cities: Object,
@@ -69,10 +71,10 @@ const openCityModal = (city = null) => {
 };
 
 const submitCity = () => {
-    const url = cityForm.id 
+    const url = cityForm.id
         ? route('mairie.cities.update', cityForm.id)
         : route('admin.mairie-city.store');
-        
+
     cityForm.post(url, {
         forceFormData: true,
         onSuccess: () => {
@@ -99,17 +101,42 @@ const submitMairie = () => {
     });
 };
 
+const showUserConfirm=ref(false);
+const userToToggle=ref(null);
+
 const toggleUser = (userId) => {
-    if (confirm('Êtes-vous sûr de vouloir changer le statut de cet utilisateur ? S\'il est désactivé, il ne pourra plus se connecter.')) {
-        useForm({}).patch(route('admin.users.toggle', userId));
-    }
+    // if (confirm('Êtes-vous sûr de vouloir changer le statut de cet utilisateur ? S\'il est désactivé, il ne pourra plus se connecter.')) {
+    //     useForm({}).patch(route('admin.users.toggle', userId));
+    // }
+    userToToggle.value=userId;
+    showUserConfirm.value=true;
+const executeUser = () => {
+     router.patch(route('admin.users.toggle', userToToggle.value), {
+        onSuccess: () => { showUserConfirm.value = false; }
+     });
+};}
+
+// Toast theo
+const toast = ref({ show: false, message: "", type: "info" });
+
+const showToast = (message, type = "info") => {
+    toast.value = { show: true, message, type };
+    setTimeout(() => {
+        toast.value.show = false;
+    }, 3000);
+};
+
+const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast("Lien copié dans le presse-papier !", "success");
+    });
 };
 
 const copyShareLink = async (city) => {
     const shareData = {
-        title: `Aventure CityPlay : ${city.name}`,
-        text: `Rejoins-moi pour explorer ${city.name} et résoudre des énigmes passionnantes sur CityPlay !`,
-        url: `${window.location.origin}/player/game/${city.id}`
+        title: `CityPlay Exploration`,
+        text: `Rejoins-nous pour explorer le Bénin et résoudre des énigmes passionnantes sur CityPlay !`,
+        url: `${window.location.origin}/modes`
     };
 
     try {
@@ -117,7 +144,7 @@ const copyShareLink = async (city) => {
             await navigator.share(shareData);
         } else {
             await navigator.clipboard.writeText(shareData.url);
-            alert('Lien de jeu copié (votre navigateur ne supporte pas le partage direct).');
+            showToast('Lien de jeu copié (votre navigateur ne supporte pas le partage direct).');
         }
     } catch (err) {
         console.error('Erreur lors du partage :', err);
@@ -136,7 +163,35 @@ const copyShareLink = async (city) => {
   <Head title="Super Admin — CityPlay" />
 
   <SiteLayout>
+
+<!-- TOAST -->
+            <Transition name="toast">
+                <div
+                    v-if="toast.show"
+                    :class="
+                        cn(
+                            'absolute top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl border backdrop-blur-xl shadow-2xl flex items-center gap-3 min-w-[280px]',
+                            toast.type === 'success'
+                                ? 'bg-success/10 border-success/30 text-success'
+                                : toast.type === 'error'
+                                  ? 'bg-destructive/10 border-destructive/30 text-destructive'
+                                  : 'bg-warning/10 border-warning/30 text-warning',
+                        )
+                    "
+                >
+                    <component
+                        :is="toast.type === 'success' ? CheckCircle2 : Info"
+                        class="h-5 w-5"
+                    />
+                    <span class="text-xs font-bold uppercase tracking-widest">{{
+                        toast.message
+                    }}</span>
+                </div>
+            </Transition>
+
     <div class="mx-auto max-w-7xl px-4 sm:px-6 py-10 pb-28 md:pb-12">
+
+
       <div class="flex items-center justify-between flex-wrap gap-4 mb-8">
         <div>
           <div class="text-xs text-electric uppercase tracking-widest font-bold">Quartier Général</div>
@@ -151,11 +206,11 @@ const copyShareLink = async (city) => {
 
       <!-- STATS -->
       <div class="mb-10 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div v-for="s in adminStats" :key="s.label" class="rounded-3xl bg-gaming-dark/40 backdrop-blur-xl p-6 border border-white/5 hover:border-electric/30 transition-all group relative overflow-hidden shadow-xl">
+        <div v-for="s in adminStats" :key="s.label" class="rounded-3xl bg-white/5 backdrop-blur-xl p-6 border border-white/5 hover:border-electric/30 transition-all group relative overflow-hidden shadow-xl">
           <div class="absolute inset-0 bg-gradient-to-br from-electric/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
-              <div :class="`h-12 w-12 rounded-2xl bg-white/5 border border-white/10 grid place-items-center group-hover:scale-110 group-hover:border-electric/50 transition-all ${s.color}`">
+              <div :class="`h-12 w-12 rounded-2xl bg-gaming-darker border border-white/10 grid place-items-center group-hover:scale-110 group-hover:border-electric/50 transition-all ${s.color}`">
                   <component :is="s.icon" class="h-6 w-6" />
               </div>
               <span class="text-[10px] font-black uppercase tracking-[0.2em] text-electric bg-electric/10 border border-electric/20 px-2 py-1 rounded-lg shadow-neon-sm">{{ s.delta }}</span>
@@ -167,7 +222,7 @@ const copyShareLink = async (city) => {
       </div>
 
       <!-- CITIES TABLE -->
-            <div class="rounded-[2.5rem] bg-gaming-dark/40 backdrop-blur-xl border border-white/5 overflow-hidden shadow-2xl shadow-black/50 group/table">
+            <div class="bg-white/5 rounded-[2.5rem] backdrop-blur-xl border border-white/5 overflow-hidden shadow-3xl shadow-black/50 group/table">
                 <div class="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-electric/10 via-white/5 to-transparent relative overflow-hidden">
                     <div class="absolute inset-0 bg-grid-white/[0.02] bg-[size:20px_20px]"></div>
                     <h2 class="font-display text-2xl flex items-center gap-4 text-white relative z-10">
@@ -250,7 +305,7 @@ const copyShareLink = async (city) => {
                                         <button @click="copyShareLink(city)" class="h-10 w-10 rounded-xl bg-white/5 border border-white/10 grid place-items-center text-cyan-neon hover:bg-cyan-neon hover:text-white hover:shadow-neon-cyan transition-all" title="Partager le lien">
                                             <Share2 class="h-5 w-5" />
                                         </button>
-                                        <Link :href="route('mairie.cities.show', city.id)" class="h-10 w-10 rounded-xl bg-electric/10 border border-electric/20 grid place-items-center text-electric hover:bg-electric hover:text-white hover:shadow-neon-sm transition-all">
+                                        <Link :href="route('mairie.city.hub', city.id)" class="h-10 w-10 rounded-xl bg-electric/10 border border-electric/20 grid place-items-center text-electric hover:bg-electric hover:text-white hover:shadow-neon-sm transition-all">
                                             <ChevronRight class="h-5 w-5" />
                                         </Link>
                                     </div>
@@ -268,7 +323,7 @@ const copyShareLink = async (city) => {
         <div class="lg:col-span-9 space-y-8">
 
             <!-- USERS TABLE -->
-            <div class="rounded-[2.5rem] bg-gaming-dark/40 backdrop-blur-xl border border-white/5 overflow-hidden shadow-2xl shadow-black/50 group/table">
+            <div class="rounded-[2.5rem] bg-white/6 backdrop-blur-xl border border-white/5 overflow-hidden shadow-3xl shadow-black/50 group/table">
                 <div class="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-purple-neon/10 via-white/5 to-transparent relative overflow-hidden">
                     <div class="absolute inset-0 bg-grid-white/[0.02] bg-[size:20px_20px]"></div>
                     <h2 class="font-display text-2xl flex items-center gap-4 text-white relative z-10">
@@ -318,7 +373,7 @@ const copyShareLink = async (city) => {
                                     <div class="flex items-center gap-2.5">
                                         <div :class="cn(
                                             'h-2 w-2 rounded-full',
-                                            player.is_active ? 'bg-success shadow-[0_0_12px_rgba(34,197,94,0.5)]' : 'bg-destructive shadow-[0_0_12px_rgba(239,68,68,0.5)]'
+                                            player.is_active ? 'bg-green-400 shadow-[0_0_12px_rgba(34,197,94,0.5)]' : 'bg-reed-400 shadow-[0_0_12px_rgba(239,68,68,0.5)]'
                                         )"></div>
                                         <span class="text-[10px] uppercase font-black tracking-widest text-white/90">{{ player.is_active ? 'Opérationnel' : 'Neutralisé' }}</span>
                                     </div>
@@ -327,8 +382,8 @@ const copyShareLink = async (city) => {
                                     <button @click="toggleUser(player.id)" :class="cn(
                                         'h-10 px-6 rounded-xl font-black uppercase tracking-[0.1em] text-[10px] transition-all border flex items-center gap-2 ml-auto',
                                         player.is_active 
-                                            ? 'bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive hover:text-white hover:shadow-neon-red' 
-                                            : 'bg-success/10 border-success/30 text-success hover:bg-success hover:text-white hover:shadow-neon-green'
+                                            ? 'bg-red-600 border-red-200 text-white hover:bg-white hover:text-red-600 hover:shadow-neon-red' 
+                                            : 'bg-green-600 border-green-200 text-white hover:bg-white hover:text-green-600 hover:shadow-neon-green'
                                     )">
                                         <Ban v-if="player.is_active" class="h-3.5 w-3.5" />
                                         <CheckCircle v-else class="h-3.5 w-3.5" />
@@ -354,7 +409,7 @@ const copyShareLink = async (city) => {
                 </div>
                 <h2 class="font-display text-2xl text-white mb-2 font-black italic tracking-tight">Espace admin optimisé</h2>
                 <p class="text-xs text-purple-neon/60 uppercase tracking-[0.2em] font-bold mb-8">Capacités du système</p>
-                
+
                 <div class="space-y-6">
                     <div class="flex items-start gap-4 group">
                         <div class="mt-1 h-1.5 w-1.5 rounded-full bg-purple-neon group-hover:scale-150 transition-transform shadow-neon-purple"></div>
@@ -409,14 +464,14 @@ const copyShareLink = async (city) => {
             <h2 class="font-display text-2xl text-white mb-6">Nouvelle Ville & Mairie</h2>
             <form @submit.prevent="submitMairie" class="space-y-6">
                 <div class="space-y-4">
-                    <GpsSearchInput 
-                        v-model="mairieForm.city_name" 
-                        label="Nom de la Ville (Recherche GPS)" 
+                    <GpsSearchInput
+                        v-model="mairieForm.city_name"
+                        label="Nom de la Ville (Recherche GPS)"
                         placeholder="Ex: Cotonou, Bénin"
                         @select="onCitySelect"
-                        required 
+                        required
                     />
-                    
+
                     <div class="grid gap-4 md:grid-cols-2">
                         <GlowInput v-model="mairieForm.email" type="email" label="Email Mairie" placeholder="contact@mairie.bj" required />
                         <GlowInput v-model="mairieForm.radius_meters" type="number" label="Rayon Tactique (mètres)" placeholder="5000" required />
@@ -488,7 +543,19 @@ const copyShareLink = async (city) => {
         </div>
     </div>
 
-    <MobileTabBar />
+
+     <ConfirmModal 
+    :show="showUserConfirm"
+    title="Supprimer ce quiz ?"
+    message="Êtes-vous sûr de vouloir changer le statut de cet utilisateur ? S'il est désactivé, il ne pourra plus se connecter."
+    variant="danger"
+    confirmText="Bannir"
+    @close="showUserConfirm = false"
+    @confirm="executeUser"
+   
+/>
+
+    <!-- <MobileTabBar /> -->
   </SiteLayout>
 </template>
 

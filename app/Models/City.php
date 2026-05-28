@@ -88,7 +88,8 @@ class City extends Model
     }
 
     /**
-     * Relation : Une ville contient plusieurs événements.
+     * Relation avec les événements de la ville.
+     * kamal
      */
     public function events()
     {
