@@ -32,7 +32,6 @@ return new class extends Migration
             $table->timestamps();
             $table->boolean('accepted_terms')->default(false);
             $table->timestamp('accepted_terms_at')->nullable();
-            $table->boolean('is_active')->default(true);
             $table->timestamp('expired_at')->nullable();
         });
 

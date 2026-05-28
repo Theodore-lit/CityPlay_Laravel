@@ -7,15 +7,16 @@ use App\Models\Location;
 use App\Models\City;
 use App\Models\LocationImage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class LocationSeeder extends Seeder
 {
     public function run(): void
     {
         // Nettoyage pour éviter les doublons d'images
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        Schema::disableForeignKeyConstraints();
         LocationImage::truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        Schema::enableForeignKeyConstraints();
 
         $cotonou = City::where('name', 'Cotonou')->first();
         $ouidah = City::where('name', 'Ouidah')->first();
