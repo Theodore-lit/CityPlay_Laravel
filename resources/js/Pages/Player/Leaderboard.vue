@@ -30,6 +30,7 @@ const players = computed(() => {
             { name: "En attente...", xp: 0, country: "🇧🇯", streak: 0 },
         ];
     }
+    
     return topPlayers.map(p => ({
         name: p.name,
         xp: p.xp || 0,
