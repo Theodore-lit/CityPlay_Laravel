@@ -74,7 +74,7 @@ watch(
         };
         localStorage.setItem(storageKey, JSON.stringify(dataToSave));
     },
-    { deep: true }
+    { deep: true } //surveille le contenu de la variable 
 );
 
 // ==========================================
@@ -281,11 +281,12 @@ const calculateStars = () => {
                     </div>
 
                     <!-- Le Bouton Pause -->
-                    <button @click="togglePause"
+                    <button v-if="quiz.difficulty === 'easy'"
+                     @click="togglePause"
                         class="glass p-2 rounded-xl flex items-center justify-center text-electric hover:bg-white/10 transition-colors"
                         :class="{ 'text-destructive border-destructive/30': isPaused }" title="Pause / Reprendre">
                         <!-- Icône dynamique : change selon l'état pause -->
-                        <Pause v-if="!isPaused" class="h-4 w-4" />
+                        <Pause v-if="!isPaused " class="h-4 w-4" />
                         <Play v-else class="h-4 w-4" />
                     </button>
                 </div>
@@ -329,7 +330,7 @@ const calculateStars = () => {
                         {{ currentQuestion?.question_text || 'Chargement...' }}
                     </h2>
                     <div class="flex justify-end mb-4">
-                        <button v-if="!showHint && currentQuestion?.hint && !isPaused" @click="triggerHint"
+                        <button v-if="!showHint && currentQuestion?.hint && !isPaused " @click="triggerHint"
                             type="button"
                             class="glass px-4 py-2 rounded-xl flex items-center gap-2 text-sm text-amber-400 hover:bg-amber-500/10 border border-amber-500/20 transition-all active:scale-95 group">
                             <Lightbulb class="h-4 w-4 fill-current text-amber-400 animate-pulse" />
