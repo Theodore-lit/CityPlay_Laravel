@@ -205,9 +205,8 @@ onMounted(() => {
                     <h1
                         class="font-display text-4xl text-foreground uppercase italic font-black"
                     >
-                        {{ location?.name || "Mission" }}
                         <span class="text-white/40">{{
-                            city?.name || ""
+                           'Exloration dans la ville de' + city?.name.split(",")[0] || "Exploration"
                         }}</span>
                     </h1>
                 </div>
@@ -223,14 +222,14 @@ onMounted(() => {
                         <p
                             class="text-xs text-white/60 uppercase font-black tracking-widest"
                         >
-                            Lieu de la mission
+                            Votre Mission
                         </p>
                         <p class="text-2xl font-black text-foreground">
-                            {{ location.name }}
+                            {{ props.enigma.title || 'Enigme sans titre'}}
                         </p>
                     </div>
                 </div>
-                <p class="text-white/70 mb-6">{{ location.description }}</p>
+                <p class="text-white/70 mb-6">{{ props.enigma?.content }}</p>
 
                 <div class="grid grid-cols-3 gap-4">
                     <div class="bg-white/10 rounded-xl p-4">
