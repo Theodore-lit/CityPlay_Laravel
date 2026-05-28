@@ -112,6 +112,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/mairie/city/{city}', [MairieController::class, 'showCity'])->name('mairie.cities.show');
         Route::post('/mairie/city/{city}/location', [MairieController::class, 'storeLocation'])->name('mairie.locations.store');
         Route::post('/mairie/location/{location}/update', [MairieController::class, 'updateLocation'])->name('mairie.locations.update');
+        Route::delete('/mairie/location/{location}', [MairieController::class, 'deleteLocation'])->name('mairie.locations.delete');
         Route::post('/mairie/location/{location}/enigma', [MairieController::class, 'storeEnigma'])->name('mairie.enigmas.store');
         Route::post('/mairie/location/{location}/image', [MairieController::class, 'storeLocationImage'])->name('mairie.locations.image');
 
