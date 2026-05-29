@@ -56,7 +56,7 @@ const performLogout = (deactivate = false) => {
                     </div>
 
                     <!-- BLOC DE DROITE (PLUS ESPACÉ) -->
-                    <div class="hidden sm:flex sm:items-center space-x-10">
+                    <div class="flex items-center space-x-10">
                         
                         <!-- STATS DES JOUEURS -->
                         <div v-if="user.role === 'joueur'" class="flex items-center space-x-8 bg-gaming-dark/70 px-8 py-3 rounded-2xl border-2 border-gaming-blue/30 shadow-inner">

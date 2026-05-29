@@ -40,7 +40,7 @@ const initMap = () => {
     map = L.map(mapContainer.value, {
         zoomControl: false,
         attributionControl: false,
-        dragging: true, // Kamal: Permettre le drag pour mieux voir si besoin
+        dragging: false, // Theodore: empêcher le drag pour mieux voir si besoin
         scrollWheelZoom: false,
         doubleClickZoom: true,
         boxZoom: false,

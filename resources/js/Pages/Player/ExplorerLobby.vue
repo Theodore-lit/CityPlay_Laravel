@@ -336,10 +336,10 @@ const formatTime = (seconds) => {
                         ]"
                     >
                         <!-- Badge Session en cours kamal -->
-                        <div v-if="location.unfinished_session" class="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-3 py-1 rounded-full bg-electric text-white text-[10px] font-black uppercase tracking-widest shadow-neon animate-pulse">
+                        <!-- <div v-if="location.unfinished_session" class="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-3 py-1 rounded-full bg-electric text-white text-[10px] font-black uppercase tracking-widest shadow-neon animate-pulse">
                             <RefreshCw class="h-3 w-3 animate-spin" />
                             En cours
-                        </div>
+                        </div> -->
 
                         <!-- Image de fond -->
                         <div

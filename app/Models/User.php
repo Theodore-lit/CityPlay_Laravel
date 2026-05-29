@@ -55,10 +55,14 @@ class User extends Authenticatable
 
         // Enregistrer les XP gagnés par jour
         if ($type === 'xp') {
-            \App\Models\DailyXpEarning::updateOrCreate(
+            // 1. On récupère ou on crée la ligne avec 0 XP par défaut
+            $dailyEarning = \App\Models\DailyXpEarning::firstOrCreate(
                 ['user_id' => $this->id, 'date' => now()->toDateString()],
-                ['xp_earned' => \DB::raw('xp_earned + ' . $total)]
+                ['xp_earned' => 0]
             );
+
+            // 2. On incrémente proprement (gère l'UPDATE SQL de manière sécurisée)
+            $dailyEarning->increment('xp_earned', $total);
         }
 
         return $total;
