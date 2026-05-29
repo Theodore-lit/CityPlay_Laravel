@@ -491,6 +491,7 @@ class PlayerController extends Controller
         $mode = session('game_mode', 'aventure');
         $requestedLocationId = $request->input('location_id');
         $enigmaId = $request->input('enigma_id');
+        $lobbySessionId = $request->input('lobby_session_id');
 
         // GESTION DU MODE QUIZ DANS UNE VILLE
         if ($mode === 'quiz') {
@@ -531,15 +532,25 @@ class PlayerController extends Controller
 
         // GESTION DU MODE AVENTURE (SOLO OU ÉQUIPE)
         // Recherche d'une session en cours pour l'utilisateur ou son équipe
-        $session = \App\Models\GameSession::where('city_id', $city->id)
-            ->where('status', 'in_progress')
-            ->where(function ($query) use ($user) {
-                $query->where('user_id', $user->id)
-                    ->orWhereIn('team_id', $user->teams->pluck('id'));
-            })
-            ->where('current_enigma_id', $enigmaId)
-            ->where('current_location_id', $requestedLocationId)
-            ->first();
+        $session = null;
+        
+        // First, try to find by lobby_session_id if provided
+        if ($lobbySessionId) {
+            $session = \App\Models\GameSession::where('lobby_session_id', $lobbySessionId)
+                ->where('user_id', $user->id)
+                ->first();
+        }
+        
+        // If not found by lobby_session_id, try the original query
+        if (!$session) {
+            $session = \App\Models\GameSession::where('city_id', $city->id)
+                ->where('status', 'in_progress')
+                ->where(function ($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                        ->orWhereIn('team_id', $user->teams->pluck('id'));
+                })
+                ->first();
+        }
 
         // Si un location_id différent est demandé, mettre à jour la session
         if ($requestedLocationId && (!$session || $session->current_location_id != $requestedLocationId)) {
@@ -610,6 +621,10 @@ class PlayerController extends Controller
 
             return $location;
         });
+
+        // dd($session);
+
+
 
         return Inertia::render('Player/Game', [
             'city' => $city,
@@ -1072,7 +1087,10 @@ class PlayerController extends Controller
         \App\Models\GameSession::where('lobby_session_id', $lobbySessionId)
             ->update(['status' => 'in_progress']);
 
-        return redirect()->route('player.game', $lobbySession->city_id)
+        return redirect()->route('player.game', [
+            'city' => $lobbySession->city_id,
+            'lobby_session_id' => $lobbySessionId
+        ])
             ->with('success', 'Aventure lancée avec les joueurs !');
     }
 }

@@ -246,7 +246,7 @@ const activeEnigma = computed(() => {
     );
 });
 
-console.log(activeEnigma.value)
+console.log(props)
 
 const displayEnigma = computed(() => {
     return (

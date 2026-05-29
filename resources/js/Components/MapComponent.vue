@@ -41,11 +41,11 @@ const initMap = () => {
         zoomControl: false,
         attributionControl: false,
         dragging: true, // Kamal: Permettre le drag pour mieux voir si besoin
-        scrollWheelZoom: true,
+        scrollWheelZoom: false,
         doubleClickZoom: true,
-        boxZoom: true,
-        touchZoom: true,
-        keyboard: true
+        boxZoom: false,
+        touchZoom: false,
+        keyboard: false
     }).setView(center, 16);
 
     // Kamal: Fond de carte sombre pour le style gaming
