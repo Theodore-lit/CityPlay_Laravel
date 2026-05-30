@@ -86,7 +86,7 @@ onBeforeUnmount(() => {
     >
       <div class="flex flex-col items-center gap-4">
         <div
-          class="relative flex h-28 w-28 items-center justify-center rounded-2xl glass border border-primary/20 shadow-[0_8px_32px_oklch(0.70_0.18_250/0.12)]"
+          class="relative flex h-28 w-28 items-center justify-center rounded-2xl border border-primary/20 shadow-[0_8px_32px_oklch(0.70_0.18_250/0.12)]"
         >
           <svg
             class="h-16 w-16"
@@ -129,8 +129,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .loader-overlay {
   background: oklch(1 0 0 / 0.12);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(13px) saturate(140%);
+  -webkit-backdrop-filter: blur(13px) saturate(140%)
 }
 
 :global(.dark) .loader-overlay {

@@ -40,12 +40,12 @@ const initMap = () => {
     map = L.map(mapContainer.value, {
         zoomControl: false,
         attributionControl: false,
-        dragging: true, // Kamal: Permettre le drag pour mieux voir si besoin
-        scrollWheelZoom: true,
+        dragging: false, // Theodore: empêcher le drag pour mieux voir si besoin
+        scrollWheelZoom: false,
         doubleClickZoom: true,
-        boxZoom: true,
-        touchZoom: true,
-        keyboard: true
+        boxZoom: false,
+        touchZoom: false,
+        keyboard: false
     }).setView(center, 16);
 
     // Kamal: Fond de carte sombre pour le style gaming

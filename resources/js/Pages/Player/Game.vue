@@ -246,7 +246,7 @@ const activeEnigma = computed(() => {
     );
 });
 
-console.log(activeEnigma.value)
+console.log(props)
 
 const displayEnigma = computed(() => {
     return (
@@ -439,9 +439,10 @@ const handleSuccess = () => {
             stars: earnedStars.value,
             duration: gameTime.value, // Envoyer la durée finale
             team_id: props.currentSession?.team_id, // Kamal: Ajouter team_id pour la notification
+            lobby_session_id: props.lobbySessionId,
         },
         {
-            onSuccess: () => {
+            onSuccess: (response) => {
                 showRiddleModal.value = false;
                 showSuccessModal.value = true;
                 isQuestionnaireActive.value = false;
@@ -449,9 +450,18 @@ const handleSuccess = () => {
 
                 // Nettoyage de la persistance locale kamal
                 localStorage.removeItem(storageKey);
+
+                // Store the response data in case we need it
+                window.completeResponse = response.props;
             },
         },
     );
+};
+
+const continueGame = () => {
+    showSuccessModal.value = false;
+    // Reload the page to get fresh props
+    router.reload({ preserveScroll: true });
 };
 
 const goBackToLobby = () => {
@@ -981,6 +991,37 @@ const outGame = () => {
                                 Prochaine étape : {{ currentQuestionIndex + 1 === currentRiddle?.questions?.length ? 'Terminer' : 'Suivante' }}
                             </span>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </Transition>
+
+        <!-- Modal Succès -->
+        <Transition name="fade-scale">
+            <div
+                v-if="showSuccessModal"
+                class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-3xl"
+            >
+                <div class="relative z-10 space-y-6 max-w-md w-full p-8 md:p-10 rounded-3xl border border-success/30 bg-gaming-darker/95 backdrop-blur-2xl shadow-2xl text-center">
+                    <div class="h-20 w-20 mx-auto rounded-full bg-success/10 border border-success/20 flex items-center justify-center text-success shadow-neon-success mb-4">
+                        <CheckCircle2 class="h-12 w-12" />
+                    </div>
+                    <h2 class="font-display text-3xl text-white uppercase italic font-black mb-2">Mission Réussie !</h2>
+                    <p class="text-white/80 mb-8 text-sm leading-relaxed">Tu as découvert le lieu avec succès !</p>
+                    
+                    <div class="space-y-4">
+                        <button
+                            @click="continueGame"
+                            class="w-full py-4 rounded-2xl bg-success text-black font-display font-bold text-lg tracking-widest hover:scale-105 active:scale-95 transition-all shadow-neon-success"
+                        >
+                            CONTINUER L'AVENTURE
+                        </button>
+                        <button
+                            @click="goBackToLobby"
+                            class="w-full py-4 rounded-2xl border border-white/20 text-white hover:bg-white/5 transition-all"
+                        >
+                            RETOUR AU LOBBY
+                        </button>
                     </div>
                 </div>
             </div>

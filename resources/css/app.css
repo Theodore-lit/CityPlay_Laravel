@@ -7,47 +7,46 @@
 :root {
   --radius: 1rem;
 
-  /* STYLE CLAIR : Visibilité Maximale & Gaming */
+  /* LIGHT MODE - Clean, bright, just the background image */
   --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --font-display: "Space Grotesk", "Plus Jakarta Sans", system-ui, sans-serif;
  
-  --background: oklch(98.511% 0.00011 271.152 / 0); /* Fond gris perle doux (opaque) */
-  --foreground: oklch(0.15 0.02 240); /* Texte quasi noir pour lisibilité parfaite */
+  --background: transparent; /* No solid color - just the image */
+  --foreground: oklch(0.15 0.02 240);
 
-  /* Couleur Primaire basée sur NeonButton */
   --primary: oklch(0.60 0.20 255);
   --primary-foreground: #ffffff;
 
   --secondary: oklch(0.85 0.05 200);
   --secondary-foreground: var(--foreground);
 
-  --accent: oklch(0.65 0.25 350); /* Rose/Violet gaming pour contraste */
+  --accent: oklch(0.65 0.25 350);
   --accent-foreground: #ffffff;
  
-  --card: #dfdddd3f; /* Cartes blanches sur fond gris */
+  --card: rgba(255, 255, 255, 0.85);
   --card-foreground: var(--foreground);
 
   --muted: oklch(0.90 0.01 240);
   --muted-foreground: oklch(0.40 0.02 240);
 
-  --border: oklch(19.973% 0.03974 239.912 / 0.068); /* Bordures visibles */
+  --border: oklch(19.973% 0.03974 239.912 / 0.2);
   --input: #ffffff;
   --input-border: oklch(0.20 0.04 240 / 0.2);
 
   --shadow-neon: 0 10px 25px -5px oklch(0.60 0.20 255 / 0.3);
   --shadow-neon-hover: 0 15px 35px -5px oklch(0.60 0.20 255 / 0.5);
 
-  --gaming-darker: oklch(0.94 0.01 240);
-  --gaming-dark: oklch(0.92 0.01 240);
+  --gaming-darker: rgba(255, 255, 255, 0.9);
+  --gaming-dark: rgba(255, 255, 255, 0.85);
   --gaming-panel: #ffffff;
 }
 
-/* STYLE SOMBRE : Futuriste Haute Visibilité */
+/* DARK MODE - Neon futuristic */
 html.dark, .dark {
-  --background: oklch(42.249% 0.12054 253.227 / 0.116); /* Noir profond */
-  --foreground: oklch(98.128% 0.0101 238.855); /* Blanc éclatant */
+  --background: oklch(42.249% 0.12054 253.227 / 0.116);
+  --foreground: oklch(98.128% 0.0101 238.855);
 
-  --primary: oklch(0.70 0.18 250); /* Cyan électrique */
+  --primary: oklch(0.70 0.18 250);
   --primary-foreground: #000000;
 
   --secondary: oklch(18.371% 0.03381 241.788);
@@ -80,14 +79,12 @@ html.dark, .dark {
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Forcer la visibilité des textes d'input */
   input, textarea, select {
     color: var(--foreground) !important;
     background-color: var(--input) !important;
     border-color: var(--border) !important;
   }
 
-  /* Fix pour les textes blancs qui devraient être sombres en mode clair */
   .light .text-white:not(.bg-primary *, .bg-electric *, .bg-gradient-premium *, .bg-gradient-accent *) {
     color: var(--foreground) !important;
   }
@@ -101,71 +98,93 @@ html.dark, .dark {
     position: relative;
   }
 
-  /* Image de fond globale au premier plan */
-  /* background-image: url('../images/bg.png'); */
+  /* Background image - BEHIND content by default */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
-    z-index: 1000; /* Premier plan */
-    pointer-events: none; /* Ne bloque pas les clics */
+    z-index: -1; 
+    pointer-events: none;
     background-image: url('../images/cityplayBg.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: opacity 0.5s ease, filter 0.5s ease;
+    transition: opacity 0.5s ease, filter 0.5s ease, z-index 0.5s ease;
   }
 
-  /* Filtres adaptatifs selon le mode */
+  /* Dark mode: background image ON TOP (original style) */
   .dark body::before {
     opacity: 0.3;
-  filter: brightness(1) saturate(1);
+    filter: brightness(1) saturate(1);
+    z-index: 1000;
   }
- 
-  /* .light body::before {
-  opacity: 0.45; /* On augmente l'opacité pour mieux voir les détails de la ville */
-  /* filter: brightness(0.75) saturate(1.1); /* On baisse la luminosité à 75% pour casser le blanc */
-/* }  */
 
+  .dark body {
+    background-color: oklch(0.1 0.02 240);
+  }
 
-.light body::before {
-  opacity: 0.6; 
-  /* Plus d'opacité car le filtre en dessous va l'adoucir */
-  /* On applique un voile bleu nuit/gris transparent SOUS l'image */
-  background-image: 
-    linear-gradient(rgba(15, 23, 42, 0), rgbrgba(15, 23, 42, 0))
-    url('../images/cityplayBg.png');
-  filter: brightness(0.85) saturate(1);
-}
+  /* Light mode: background image BEHIND, no filters */
+  .light body::before {
+    opacity: 1;
+    filter: none;
+    z-index: -1;
+  }
 
- 
+  .light body {
+    background-color: transparent;
+  }
+
   body {
     min-height: 100vh;
     background-attachment: fixed;
   }
 
-  .dark body {
-    /* Suppression des gradients bleus qui teintent l'image par transparence */
-    background-color: oklch(0.1 0.02 240); /* Fond neutre sombre */
+  /* Make sure main content is over the background image in dark mode */
+  .dark .bg-gaming-darker,
+  .dark .glass,
+  .dark .glass-strong,
+  .dark .bg-card {
+    position: relative;
+    z-index: 1001;
   }
 
-  h1, h2, h3, .font-display { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; }
-  .dark h1, .dark h2, .dark h3, .dark .font-display { letter-spacing: 0.08em; text-transform: uppercase; }
+  /* Also set modals to higher z-index */
+  .dark [role="dialog"],
+  .dark .fixed.inset-0.z-\\[120\\],
+  .dark .fixed.inset-0.z-\\[200\\] {
+    z-index: 2000;
+  }
+
+  /* Make sure theme toggle and settings buttons stay in place */
+  .dark button[aria-label="Changer le thème"],
+  .dark a[title="Paramètres & Hub"] {
+    z-index: 2001 !important;
+    position: relative;
+  }
+
+  h1, h2, h3, .font-display { 
+    font-family: var(--font-display); 
+    font-weight: 800; 
+    letter-spacing: -0.02em; 
+  }
+  .dark h1, .dark h2, .dark h3, .dark .font-display { 
+    letter-spacing: 0.08em; 
+    text-transform: uppercase; 
+  }
 }
 
 @layer utilities {
-  /* GLASSMORPHISM GLOBAL */
   .bg-card, .bg-card\/30, .bg-card\/40, .bg-card\/60, .bg-card\/80, .bg-card\/90, .bg-card\/95 {
-  background-color: rgba(255, 255, 255, 0.82) !important; /* Fond de carte blanc opaque à 82% */
-  backdrop-filter: blur(20px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
-  box-shadow:
-    0 10px 25px -5px rgba(0, 0, 0, 0.1),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
-}
+    background-color: rgba(255, 255, 255, 0.82) !important;
+    backdrop-filter: blur(20px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
+    box-shadow:
+      0 10px 25px -5px rgba(0, 0, 0, 0.1),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
+  }
  
   .dark .bg-card, .dark .bg-card\/30, .dark .bg-card\/40, .dark .bg-card\/60, .dark .bg-card\/80, .dark .bg-card\/90, .dark .bg-card\/95 {
-    background-color: oklch(0.16 0.06 255 / 0.96) !important; /* Presque opaque (96%) */
+    background-color: oklch(16.112% 0.05895 257.738 / 0.527) !important;
     border-color: oklch(0.78 0.15 232 / 0.4) !important;
     box-shadow:
       0 10px 15px -3px rgba(0, 0, 0, 0.3),
@@ -173,9 +192,8 @@ html.dark, .dark {
       inset 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
   }
 
-  /* GLASSMORPHISM PREMIUM */
   .glass {
-    background: color-mix(in srgb, var(--card), transparent 4%) !important; /* 96% opaque */
+    background: color-mix(in srgb, var(--card), transparent 4%) !important;
     backdrop-filter: blur(24px) saturate(200%) !important;
     -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
     border: 1px solid var(--border);
@@ -187,17 +205,16 @@ html.dark, .dark {
 
   .glass-strong {
     background: rgba(255, 255, 255, 0.05);
-    /* background: rgba(15, 17, 21, 0.85); Fond beaucoup plus opaque pour garantir la visibilité */
     backdrop-filter: blur(24px) saturate(200%);
     border: 1px solid var(--border);
   }
 
   .backdrop-blur-3xl {
     backdrop-filter: blur(32px);
-}
+  }
 
   .dark .glass-strong {
-    background: oklch(12.852% 0.03939 252.809 / 0.98) !important; /* 98% opaque */
+    background: oklch(12.852% 0.03939 252.809 / 0.98) !important;
     border: 1px solid oklch(77.515% 0.14446 229.313 / 0.356) !important;
     box-shadow:
       0 25px 50px -12px rgba(0, 0, 0, 0.5),
@@ -206,14 +223,13 @@ html.dark, .dark {
   }
 
   .dark .glass {
-    background: oklch(0.15 0.03 240 / 0.95) !important; /* 95% opaque */
+    background: oklch(0.15 0.03 240 / 0.95) !important;
     box-shadow:
       0 10px 15px -3px rgba(0, 0, 0, 0.4),
       inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   }
 
-  /* GAME UI EFFECTS */
   .hover-game {
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
@@ -252,7 +268,6 @@ html.dark, .dark {
   }
   .animate-float-game { animation: float-game 6s ease-in-out infinite; }
 
-  /* Gradient Variants */
   .bg-gradient-premium {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
   }
@@ -280,18 +295,16 @@ html.dark, .dark {
   }
 }
 
-/* Scrollbar Style */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--background); }
 ::-webkit-scrollbar-thumb {
-    background: var(--muted);
-    border-radius: 10px;
-    border: 2px solid var(--background);
+  background: var(--muted);
+  border-radius: 10px;
+  border: 2px solid var(--background);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
- 
 
- @keyframes flag-wave {
+@keyframes flag-wave {
   0%, 100% { 
     transform: translateY(0) scale(1) rotate(0deg) skewX(0deg);
     opacity: 0.18;
@@ -300,8 +313,8 @@ html.dark, .dark {
     transform: translateY(-8px) scale(1.02) rotate(1deg) skewX(3deg);
   }
   50% { 
-    transform: translateY(-15px) scale(1.05) rotate(-1deg) skewX(-3deg); /* Amplitude augmentée */
-    opacity: 0.25; /* Plus visible quand il s'élève */
+    transform: translateY(-15px) scale(1.05) rotate(-1deg) skewX(-3deg);
+    opacity: 0.25;
   }
   75% {
     transform: translateY(-7px) scale(1.02) rotate(0.5deg) skewX(2deg);
@@ -309,7 +322,5 @@ html.dark, .dark {
 }
 
 .animate-flag-wave {
-  /* Réduction du temps à 5s pour que le mouvement soit plus énergique et fluide */
-  animation: flag-wave 5s ease-in-out infinite; 
+  animation: flag-wave 5s ease-in-out infinite;
 }
-

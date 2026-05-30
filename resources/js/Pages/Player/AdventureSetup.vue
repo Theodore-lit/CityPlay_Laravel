@@ -123,12 +123,12 @@ onMounted(() => {
                     <button @click="transportMode = 'bike'" :class="['p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2', transportMode === 'bike' ? 'bg-electric/10 border-electric shadow-neon' : 'glass border-white/10']">
                         <Bike class="h-6 w-6" />
                         <span class="text-[10px] font-black uppercase">Pied / Vélo</span>
-                        <span class="text-[8px] text-muted-foreground font-bold">&lt; 8 KM</span>
+                        <span class="text-[8px] text-muted-foreground font-bold">&lt; 2 KM</span>
                     </button>
                     <button @click="transportMode = 'moto'" :class="['p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2', transportMode === 'moto' ? 'bg-electric/10 border-electric shadow-neon' : 'glass border-white/10']">
                         <Zap class="h-6 w-6" />
                         <span class="text-[10px] font-black uppercase">Moto</span>
-                        <span class="text-[8px] text-muted-foreground font-bold">&lt; 20 KM</span>
+                        <span class="text-[8px] text-muted-foreground font-bold">&lt; 10 KM</span>
                     </button>
                     <button @click="transportMode = 'car'" :class="['p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2', transportMode === 'car' ? 'bg-electric/10 border-electric shadow-neon' : 'glass border-white/10']">
                         <Car class="h-6 w-6" />

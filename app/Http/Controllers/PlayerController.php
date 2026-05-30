@@ -491,6 +491,7 @@ class PlayerController extends Controller
         $mode = session('game_mode', 'aventure');
         $requestedLocationId = $request->input('location_id');
         $enigmaId = $request->input('enigma_id');
+        $lobbySessionId = $request->input('lobby_session_id');
 
         // GESTION DU MODE QUIZ DANS UNE VILLE
         if ($mode === 'quiz') {
@@ -531,15 +532,25 @@ class PlayerController extends Controller
 
         // GESTION DU MODE AVENTURE (SOLO OU ÉQUIPE)
         // Recherche d'une session en cours pour l'utilisateur ou son équipe
-        $session = \App\Models\GameSession::where('city_id', $city->id)
-            ->where('status', 'in_progress')
-            ->where(function ($query) use ($user) {
-                $query->where('user_id', $user->id)
-                    ->orWhereIn('team_id', $user->teams->pluck('id'));
-            })
-            ->where('current_enigma_id', $enigmaId)
-            ->where('current_location_id', $requestedLocationId)
-            ->first();
+        $session = null;
+        
+        // First, try to find by lobby_session_id if provided
+        if ($lobbySessionId) {
+            $session = \App\Models\GameSession::where('lobby_session_id', $lobbySessionId)
+                ->where('user_id', $user->id)
+                ->first();
+        }
+        
+        // If not found by lobby_session_id, try the original query
+        if (!$session) {
+            $session = \App\Models\GameSession::where('city_id', $city->id)
+                ->where('status', 'in_progress')
+                ->where(function ($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                        ->orWhereIn('team_id', $user->teams->pluck('id'));
+                })
+                ->first();
+        }
 
         // Si un location_id différent est demandé, mettre à jour la session
         if ($requestedLocationId && (!$session || $session->current_location_id != $requestedLocationId)) {
@@ -611,6 +622,10 @@ class PlayerController extends Controller
             return $location;
         });
 
+        // dd($session);
+
+
+
         return Inertia::render('Player/Game', [
             'city' => $city,
             'locations' => $locations,
@@ -668,12 +683,18 @@ class PlayerController extends Controller
 
         // Filtrage géographique basé sur le mode de transport
         if ($lat && $lng) {
-            $maxDistance = 8000; // Pied/Vélo : 8 km
-            if ($transport === 'moto') $maxDistance = 20000; // Moto : 20 km
+            $maxDistance = 2000; // Pied/Vélo : 2 km
+            if ($transport === 'moto') $maxDistance = 15000; // Moto : 10 km
             if ($transport === 'car') $maxDistance = 100000; // Voiture : 100 km
 
-            $availableLocations = $availableLocations->filter(function ($location) use ($lat, $lng, $maxDistance) {
+            $availableLocations = $availableLocations->filter(function ($location) use ($lat, $lng, $maxDistance, $transport) {
                 $distance = $this->calculateDistance($lat, $lng, $location->latitude, $location->longitude);
+                if ($transport === 'moto') {
+                    return $distance <= $maxDistance && $distance > 2000;
+                }
+                if ($transport === 'car') {
+                    return $distance <= $maxDistance && $distance > 15000;
+                }
                 return $distance <= $maxDistance;
             });
         }
@@ -795,6 +816,7 @@ class PlayerController extends Controller
         $stars = $request->input('stars', 1);
         $teamId = $request->input('team_id');
         $duration = $request->input('duration', 0); // Durée en secondes envoyée par le front
+        $lobbySessionId = $request->input('lobby_session_id');
 
         // XP de résolution d'énigme défini par la mairie
         $xpToAward = $location->reward_xp_enigma ?? 150;
@@ -806,16 +828,26 @@ class PlayerController extends Controller
         );
 
         // Advance session to next location in sequence
-        $session = \App\Models\GameSession::where('city_id', $location->city_id)
-            ->where('status', 'in_progress');
-
-        if ($teamId) {
-            $session = $session->where('team_id', $teamId);
-        } else {
-            $session = $session->where('user_id', $user->id)->whereNull('team_id');
+        $session = null;
+        
+        if ($lobbySessionId) {
+            $session = \App\Models\GameSession::where('lobby_session_id', $lobbySessionId)
+                ->where('user_id', $user->id)
+                ->first();
         }
+        
+        if (!$session) {
+            $session = \App\Models\GameSession::where('city_id', $location->city_id)
+                ->where('status', 'in_progress');
 
-        $session = $session->first();
+            if ($teamId) {
+                $session = $session->where('team_id', $teamId);
+            } else {
+                $session = $session->where('user_id', $user->id)->whereNull('team_id');
+            }
+
+            $session = $session->first();
+        }
 
         if ($session) {
             // Diffusion de la réussite aux autres membres de l'équipe (Kamal)
@@ -854,6 +886,12 @@ class PlayerController extends Controller
                         'current_location_id' => $nextLocationId,
                         'current_enigma_id' => $nextEnigma->id ?? \App\Models\Enigma::where('location_id', $nextLocationId)->first()->id ?? null
                     ]);
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Lieu complété ! Passage au suivant !',
+                        'isComplete' => false
+                    ]);
                 } else {
                     // End of city!
                     $winnerId = null;
@@ -890,10 +928,20 @@ class PlayerController extends Controller
                     ]);
 
                     $message = $diamondBonus > 0 ? "Félicitations ! Vous êtes vainqueur et gagnez des diamants !" : "Lieu terminé ! Une autre équipe a remporté le bonus.";
-                    return back()->with('success', $message);
+                    return response()->json([
+                        'success' => true,
+                        'message' => $message,
+                        'isComplete' => true
+                    ]);
                 }
             }
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lieu complété !',
+            'isComplete' => false
+        ]);
     }
 
     // $user->addReward('xp', $xpToAward);
@@ -1072,7 +1120,10 @@ class PlayerController extends Controller
         \App\Models\GameSession::where('lobby_session_id', $lobbySessionId)
             ->update(['status' => 'in_progress']);
 
-        return redirect()->route('player.game', $lobbySession->city_id)
+        return redirect()->route('player.game', [
+            'city' => $lobbySession->city_id,
+            'lobby_session_id' => $lobbySessionId
+        ])
             ->with('success', 'Aventure lancée avec les joueurs !');
     }
 }

@@ -18,7 +18,6 @@ const page = usePage();
 const user = computed(() => page.props.auth.user);
 const currentPath = computed(() => page.url);
 
-const open = ref(false); // État du menu mobile
 const showLogoutModal = ref(false); // Contrôle du modal de déconnexion/archivage
 const deactivateOnLogout = ref(user.value?.deactivate_on_logout || false); // Option d'archivage
 
@@ -134,7 +133,7 @@ const markAsRead = (id) => {
                 </template>
             </nav>
 
-            <div class="hidden md:block">
+            <div class="block">
                 <div class="flex items-center gap-3">
                     <template v-if="user">
                         <div
@@ -229,7 +228,7 @@ const markAsRead = (id) => {
 
                             <Link
                                 :href="route('profile.edit')"
-                                class="flex items-center gap-2 group p-1 pr-3 rounded-xl bg-white/5 border border-white/10 hover:border-primary/50 transition-all"
+                                class="hidden md:flex items-center gap-2 group p-1 pr-3 rounded-xl bg-white/5 border border-white/10 hover:border-primary/50 transition-all"
                             >
                                 <div
                                     class="h-8 w-8 rounded-lg bg-primary/20 grid place-items-center border border-primary/30 group-hover:bg-primary/30"
@@ -245,6 +244,14 @@ const markAsRead = (id) => {
                                         class="text-[8px] text-muted-foreground uppercase tracking-tighter"
                                         >{{ user.role }}</span
                                     >
+                                </div>
+                            </Link>
+
+                            <Link :href="route('profile.edit')" class="block rounded-xl bg-white/5 border border-white/10 grid place-items-center text-muted-foreground hover:text-primary hover:border-primary/50 transition-all relative md:hidden">
+                            <div
+                                    class="h-8 w-8 rounded-lg bg-primary/20 grid place-items-center border border-primary/30 group-hover:bg-primary/30"
+                                >
+                                    <User class="h-4 w-4 text-primary" />
                                 </div>
                             </Link>
 
@@ -271,7 +278,7 @@ const markAsRead = (id) => {
                 </div>
             </div>
 
-            <div class="md:hidden flex items-center gap-1">
+            <!-- <div class="md:hidden flex items-center gap-1">
                 <button
                     class="p-2 text-electric"
                     @click="open = !open"
@@ -280,7 +287,7 @@ const markAsRead = (id) => {
                     <X v-if="open" />
                     <Menu v-else />
                 </button>
-            </div>
+            </div> -->
         </div>
 
         <!-- MODAL DE DÉCONNEXION -->
@@ -335,47 +342,5 @@ const markAsRead = (id) => {
             </div>
         </Modal>
 
-        <!-- Mobile menu -->
-        <div
-            v-if="open"
-            class="md:hidden glass-strong border-t border-electric/20 px-4 py-3 space-y-1 animate-fade-up"
-        >
-            <template v-for="l in links" :key="l.to">
-                <Link
-                    :href="route(l.to)"
-                    @click="open = false"
-                    :class="
-                        cn(
-                            'block px-4 py-2 rounded-lg text-sm',
-                            isActive(l.to)
-                                ? 'text-electric bg-electric/10'
-                                : 'text-muted-foreground',
-                        )
-                    "
-                >
-                    {{ l.label }}
-                </Link>
-            </template>
-            <template v-if="user">
-                <button
-                    @click="
-                        handleLogoutClick();
-                        open = false;
-                    "
-                    class="block w-full text-left px-4 py-2 rounded-lg text-electric font-bold"
-                >
-                    Déconnexion
-                </button>
-            </template>
-            <template v-else>
-                <Link
-                    :href="route('login')"
-                    @click="open = false"
-                    class="block px-4 py-2 rounded-lg text-electric font-bold"
-                >
-                    Connexion →
-                </Link>
-            </template>
-        </div>
     </header>
 </template>

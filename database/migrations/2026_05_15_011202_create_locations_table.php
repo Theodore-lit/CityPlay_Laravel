@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('locations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('city_id')->constrained()->onDelete('cascade');
+            $table->foreignId('city_id')->constrained('cities')->onDelete('cascade');
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('category'); // historique, restaurant, monument, culture, mystere, nature
